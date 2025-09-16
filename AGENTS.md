@@ -9,6 +9,10 @@ ScribeCat — local Node server (`server.mjs`) + static web app in `web/`.
   - `npm ci` (fallback `npm i` if no lockfile)
 - Start dev server:
   - `node server.mjs`
+- Prep desktop build assets before packaging:
+  - `npm run prepare-tauri-assets`
+  - `npm run tauri:build`
+  - `tauri dev` calls the staging helper automatically.
 
 ## Environment
 Provide:
@@ -26,3 +30,4 @@ Provide:
 
 ## Scripts (optional)
 - Test (later): `npm test`
+- Desktop build: `npm run prepare-tauri-assets && npm run tauri:build`

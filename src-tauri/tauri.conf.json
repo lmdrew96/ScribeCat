@@ -5,10 +5,10 @@
   "version": "1.0.0",
 
   "build": {
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "",
+    "beforeDevCommand": "node scripts/prepare-tauri-assets.mjs",
+    "beforeBuildCommand": "node scripts/prepare-tauri-assets.mjs",
     "devUrl": "index.html",
-    "frontendDist": "."
+    "frontendDist": "dist-tauri"
   },
 
   "security": {
