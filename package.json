@@ -13,9 +13,6 @@
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
-    "dotenv": "^17.2.2"
-  },
   "devDependencies": {
     "@tauri-apps/cli": "^2.8.4"
   }

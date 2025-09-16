@@ -5,17 +5,15 @@
   "version": "1.0.0",
 
   "build": {
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
-  },
-
-  "security": {
-    "csp": null
+    "beforeDevCommand": "node src-tauri/scripts/prepare-dist.mjs",
+    "beforeBuildCommand": "node src-tauri/scripts/prepare-dist.mjs",
+    "frontendDist": "./dist"
   },
 
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "ScribeCat",
@@ -30,8 +28,8 @@
     "active": true,
     "targets": "all",
     "icon": [
-      "icons/scribecat-512.png",
-      "icons/icon32.png"
+      "../icons/scribecat-512.png",
+      "../icons/icon32.png"
     ]
   }
 }
