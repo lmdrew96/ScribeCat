@@ -1,0 +1,17 @@
+{
+  "name": "scribecat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local API server and static web app for ScribeCat",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  }
+}

@@ -7,6 +7,22 @@ import dotenv from "dotenv";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
 
+// Allow newer env var names from AGENTS.md while keeping legacy ones
+function aliasEnv(target, candidates) {
+  if (process.env[target]) return;
+  for (const key of candidates) {
+    if (process.env[key]) {
+      process.env[target] = process.env[key];
+      return;
+    }
+  }
+}
+
+aliasEnv("AAI_API_KEY", ["ASSEMBLYAI_API_KEY"]);
+aliasEnv("AIRTABLE_PAT", ["AIRTABLE_API_KEY"]);
+aliasEnv("AIRTABLE_BASE", ["AIRTABLE_BASE_ID"]);
+aliasEnv("AIRTABLE_TABLE", ["AIRTABLE_TABLE_NAME"]);
+
 const PORT = 8787;
 let lastCanvasCourses = []; // [{id,name}]
 
