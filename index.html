@@ -219,6 +219,7 @@
   const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
+  let quitInFlight=false;
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
@@ -640,9 +641,27 @@
   })();
   classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
 
-  function quitScribeCat(){
-    [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
-    fetch(API+'/api/quit',{method:'POST'}).catch(()=>{});
+  async function quitScribeCat(){
+    if(quitInFlight) return;
+    quitInFlight=true;
+    const buttons=[quitDrawerBtn, quitTopBtn];
+    buttons.forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
+    try{
+      await fetch(API+'/api/quit',{method:'POST'});
+    }catch(_){ }
+    const tauri=window.__TAURI__;
+    if(tauri){
+      try{
+        if(tauri?.window?.getCurrent){
+          await tauri.window.getCurrent().close();
+          return;
+        }
+        if(tauri?.app?.exit){
+          await tauri.app.exit(0);
+          return;
+        }
+      }catch(_){ }
+    }
     setTimeout(()=>{ window.close(); },200);
     setTimeout(()=>{ window.location.href='about:blank'; },600);
   }
