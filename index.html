@@ -44,6 +44,7 @@
   .pill{border-radius:999px;padding:2px 8px;font-size:11px;border:1px solid var(--border);background:var(--chip);opacity:.72}
   .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
   .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--chip);display:inline-flex;gap:8px;align-items:center;color:var(--ink)}
+  .chip.danger{background:var(--bad);border-color:var(--bad);color:#fff}
 
   /* Controls */
   .controls{padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
@@ -97,6 +98,7 @@
       <div id="stApi" class="pill warn">API</div>
       <div id="stMic" class="pill warn">Mic</div>
       <div id="stStream" class="pill warn">Stream</div>
+      <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
       <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
     </div>
   </div>
@@ -208,7 +210,7 @@
 (function(){
   const API = "http://127.0.0.1:8787";
   const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
-  const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream")<div id="clockChip" class="pill">--:--:--</div>;
+  const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
   const classSel=byId("classSel"), titleBox=byId("titleBox");
   const micSel=byId("micSel"), vu=byId("vuBar");
   const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
@@ -216,6 +218,7 @@
   const live=byId("live"), notes=byId("notes");
   const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
+  const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
@@ -637,7 +640,13 @@
   })();
   classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
 
-  byId('quitBtn').onclick=()=>{ fetch(API+'/api/quit',{method:"POST"}).catch(()=>{}); window.close(); setTimeout(()=>{ location.href='about:blank'; },250); };
+  function quitScribeCat(){
+    [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
+    fetch(API+'/api/quit',{method:'POST'}).catch(()=>{});
+    setTimeout(()=>{ window.close(); },200);
+    setTimeout(()=>{ window.location.href='about:blank'; },600);
+  }
+  [quitDrawerBtn, quitTopBtn].forEach(btn=>btn&&btn.addEventListener('click', quitScribeCat));
 })();
 </script>
 </body>
