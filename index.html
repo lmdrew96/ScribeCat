@@ -223,6 +223,106 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
+  const BACKUP_KEY = "sc_session_backup_v1";
+  let backupTimer = null;
+  let backupEnabled = true;
+  try {
+    const testKey = "__sc_backup_test__";
+    localStorage.setItem(testKey, "1");
+    localStorage.removeItem(testKey);
+  } catch (err) {
+    backupEnabled = false;
+    console.warn("ScribeCat backups disabled: storage unavailable", err);
+  }
+
+  function clearBackup(){
+    if (!backupEnabled) return;
+    if (backupTimer) { clearTimeout(backupTimer); backupTimer = null; }
+    try { localStorage.removeItem(BACKUP_KEY); }
+    catch (_){}
+  }
+
+  function persistBackup(){
+    if (!backupEnabled) return;
+    backupTimer = null;
+    const snapshot = {
+      v: 1,
+      savedAt: Date.now(),
+      classValue: classSel.value,
+      titleValue: titleBox.value,
+      notesHTML: notes.innerHTML,
+      liveHTML: live.innerHTML,
+      transcriptText,
+      sentBuf,
+      lastLineId,
+      autoScroll: autoScroll.checked,
+      scrollTop: live.scrollTop
+    };
+    try {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(snapshot));
+    } catch (err) {
+      backupEnabled = false;
+      console.warn("ScribeCat backup write failed", err);
+    }
+  }
+
+  function queueBackup(){
+    if (!backupEnabled) return;
+    if (backupTimer) clearTimeout(backupTimer);
+    backupTimer = setTimeout(persistBackup, 1000);
+  }
+
+  function readBackup(){
+    if (!backupEnabled) return null;
+    try { return JSON.parse(localStorage.getItem(BACKUP_KEY) || "null"); }
+    catch (_) { return null; }
+  }
+
+  function maybeRestoreBackup(){
+    if (!backupEnabled) return;
+    const data = readBackup();
+    if (!data || (typeof data.notesHTML !== "string" && typeof data.liveHTML !== "string")) return;
+    const stamp = data.savedAt ? new Date(data.savedAt) : null;
+    let msg = "Restore unsaved ScribeCat session?";
+    if (stamp && !Number.isNaN(stamp.getTime())) msg = `Restore unsaved ScribeCat session from ${stamp.toLocaleString()}?`;
+    if (!window.confirm(msg)) return;
+    if (typeof data.notesHTML === "string") notes.innerHTML = data.notesHTML;
+    if (typeof data.liveHTML === "string") {
+      live.innerHTML = data.liveHTML;
+      const lines = Array.from(live.querySelectorAll('.line'));
+      lineCounter = lines.length;
+      currentLineEl = live.querySelector('.liveLine') || null;
+      const last = currentLineEl || lines[lines.length - 1] || null;
+      lastLineId = last ? (last.id || null) : null;
+      window.lastLineId = lastLineId || null;
+    }
+    if (typeof data.classValue === "string" && data.classValue) {
+      const existing = Array.from(classSel.options).find(opt => (opt.value || opt.textContent) === data.classValue);
+      if (existing) {
+        classSel.value = existing.value || existing.textContent;
+      } else {
+        classSel.insertAdjacentHTML('afterbegin', `<option>${data.classValue}</option>`);
+        classSel.value = data.classValue;
+      }
+    }
+    if (typeof data.titleValue === "string") titleBox.value = data.titleValue;
+    if (typeof data.transcriptText === "string") transcriptText = data.transcriptText;
+    if (typeof data.sentBuf === "string") sentBuf = data.sentBuf;
+    if (typeof data.autoScroll === "boolean") autoScroll.checked = data.autoScroll;
+    if (typeof data.scrollTop === "number") {
+      setTimeout(()=>{ live.scrollTop = data.scrollTop; userNearBottom = nearBottom(live); }, 0);
+    } else {
+      userNearBottom = nearBottom(live);
+    }
+    queueBackup();
+  }
+
+  window.addEventListener('beforeunload', ()=>{
+    if (!backupEnabled) return;
+    if (backupTimer) clearTimeout(backupTimer);
+    persistBackup();
+  });
+
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
@@ -273,7 +373,7 @@
   let wavChunks=[], wavSampleRate=44100, audioBlob=null, lineCounter=0, lastLineId=null, currentLineEl=null;
 
   function nearBottom(el,px=48){ return (el.scrollHeight - el.scrollTop - el.clientHeight) <= px; }
-  live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
+  live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); queueBackup(); }, {passive:true});
   function clock(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
   function mmss(){ const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0"); return `${mm}:${ss}`; }window.mmss = mmss;
   function makeTimestampSpan(){
@@ -292,12 +392,14 @@
       window.lastLineId = id;
     }
     if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+    queueBackup();
     return div;
   }
   function setCurrentLineText(html){
     if (!currentLineEl){ currentLineEl = makeLine(html, true); return; }
     currentLineEl.innerHTML = makeTimestampSpan() + html;
     if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+    queueBackup();
   }
   function finalizeCurrentLine(finalText){
     if (currentLineEl){
@@ -307,10 +409,12 @@
       window.lastLineId = lastLineId;
       currentLineEl = null;
       if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+      queueBackup();
       return;
     }
     // If we somehow didn't have a live line, append a fresh finalized one
     makeLine(finalText, false);
+    queueBackup();
   }
   function updateTailHTML(html){ setCurrentLineText(html); }
 
@@ -442,18 +546,19 @@
   document.addEventListener('keydown', (e)=>{
     if (!notes.contains(document.activeElement)) return; // only when editing notes
     // Tab indent/outdent
-    if (e.key==='Tab'){
-      e.preventDefault();
-      const block=window.getSelection()?.anchorNode?.parentElement;
-      if(block){ const cur=parseInt(block.style.marginLeft||'0',10); const delta=e.shiftKey?-24:24; block.style.marginLeft=Math.max(0,cur+delta)+'px'; }
-      return;
-    }
-    const cmd = (e.metaKey||e.ctrlKey) && e.shiftKey;
-    if (cmd && e.key==='8'){ e.preventDefault(); document.execCommand('insertUnorderedList'); return; }
-    if (cmd && e.key==='7'){ e.preventDefault(); document.execCommand('insertOrderedList'); return; }
-    // Em dash: Cmd-Shift-- (Mac-like). Arrow: Cmd-Shift-. 
-    if ((e.metaKey||e.ctrlKey) && e.shiftKey && e.key === '_'){ e.preventDefault(); document.execCommand('insertText', false, '—'); return; }
-    if ((e.metaKey||e.ctrlKey) && e.shiftKey && e.key === '>'){ e.preventDefault(); document.execCommand('insertText', false, '→'); return; }
+      if (e.key==='Tab'){
+        e.preventDefault();
+        const block=window.getSelection()?.anchorNode?.parentElement;
+        if(block){ const cur=parseInt(block.style.marginLeft||'0',10); const delta=e.shiftKey?-24:24; block.style.marginLeft=Math.max(0,cur+delta)+'px'; }
+        queueBackup();
+        return;
+      }
+      const cmd = (e.metaKey||e.ctrlKey) && e.shiftKey;
+      if (cmd && e.key==='8'){ e.preventDefault(); document.execCommand('insertUnorderedList'); queueBackup(); return; }
+      if (cmd && e.key==='7'){ e.preventDefault(); document.execCommand('insertOrderedList'); queueBackup(); return; }
+      // Em dash: Cmd-Shift-- (Mac-like). Arrow: Cmd-Shift-.
+      if ((e.metaKey||e.ctrlKey) && e.shiftKey && e.key === '_'){ e.preventDefault(); document.execCommand('insertText', false, '—'); queueBackup(); return; }
+      if ((e.metaKey||e.ctrlKey) && e.shiftKey && e.key === '>'){ e.preventDefault(); document.execCommand('insertText', false, '→'); queueBackup(); return; }
   }, true);
 
   // === Autoformat: Word/Google-like shortcuts for Notes ===
@@ -512,7 +617,8 @@
     }
   }
 
-  notes.addEventListener("input", autoformatInput, { passive: true });
+    notes.addEventListener("input", autoformatInput, { passive: true });
+    notes.addEventListener("input", queueBackup, { passive: true });
 
   // Tab / Shift-Tab: indent/outdent (list-aware)
   notes.addEventListener("keydown", (e) => {
@@ -548,6 +654,7 @@
       const href = lastLineId ? `#${lastLineId}` : '#';
       notes.focus();
       document.execCommand('insertHTML', false, `<a href="${href}">${label}</a> `);
+      queueBackup();
     }
   });
 
@@ -568,22 +675,22 @@
     const rng=sel.getRangeAt(0); if(rng.collapsed) return false;
     try{ const span=document.createElement('span'); Object.assign(span.style, style); rng.surroundContents(span); return true; }catch(e){ return false; }
   }
-  sizeSel.onchange=()=>{ const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
-  sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
-  famSel.onchange = ()=>{ const fam=famSel.value; if(!applyStyleToSelection({fontFamily:fam})){ notes.style.fontFamily=fam; } };
+  sizeSel.onchange=()=>{ const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } queueBackup(); };
+  sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } queueBackup(); };
+  famSel.onchange = ()=>{ const fam=famSel.value; if(!applyStyleToSelection({fontFamily:fam})){ notes.style.fontFamily=fam; } queueBackup(); };
 
-  byId("boldBtn").onclick=()=>document.execCommand('bold');
-  byId("italicBtn").onclick=()=>document.execCommand('italic');
-  byId("undoBtn").onclick=()=>document.execCommand('undo');
-  byId("redoBtn").onclick=()=>document.execCommand('redo');
-  byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
+  byId("boldBtn").onclick=()=>{ document.execCommand('bold'); queueBackup(); };
+  byId("italicBtn").onclick=()=>{ document.execCommand('italic'); queueBackup(); };
+  byId("undoBtn").onclick=()=>{ document.execCommand('undo'); queueBackup(); };
+  byId("redoBtn").onclick=()=>{ document.execCommand('redo'); queueBackup(); };
+  byId("unhlBtn").onclick=()=>{ document.execCommand('removeFormat'); queueBackup(); };
 
   const fontColorBtn=byId("fontColorBtn"), fontColor=byId("fontColor"), hlBtn=byId("hlBtn"), hlColor=byId("hlColor"), hexBox=byId("hexBox");
   fontColorBtn.onclick=()=>fontColor.click();
   hlBtn.onclick=()=>hlColor.click();
-  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } };
-  hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
-  hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
+  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } queueBackup(); };
+  hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); queueBackup(); };
+  hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); queueBackup(); } };
 
   /* ======== SUMMARY (unchanged) ======== */
   function summarize(){
@@ -592,6 +699,7 @@
     const h2=document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
     const ul=document.createElement('ul'); bullets.forEach(b=>{ const li=document.createElement('li'); li.textContent=b; ul.appendChild(li); });
     notes.appendChild(h2); notes.appendChild(ul);
+    queueBackup();
   }
   summaryBtn.onclick=summarize;
 
@@ -625,6 +733,7 @@
       const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload(audioUrl))});
       await r.json();
       tag(stApi,"ok","API");
+      clearBackup();
       alert("Saved: audio downloaded, Airtable updated, Make triggered (if configured).");
     }catch(e){
       tag(stApi,"warn","API");
@@ -638,7 +747,10 @@
   (function bootClasses(){ const saved=JSON.parse(localStorage.getItem("lc_classes")||"[]"); renderClassOptions(saved);
     if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); alert('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
   })();
-  classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
+  classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; queueBackup(); };
+  titleBox.addEventListener('input', queueBackup, { passive: true });
+  autoScroll.addEventListener('change', queueBackup);
+  maybeRestoreBackup();
 
   function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
