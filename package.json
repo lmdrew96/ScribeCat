@@ -7,8 +7,9 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "tauri:dev": "npm run prepare:assets && tauri dev",
+    "tauri:build": "npm run prepare:assets && tauri build"
   },
   "engines": {
     "node": ">=20"

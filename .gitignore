@@ -1,0 +1,11 @@
+node_modules/
+.trash/
+.DS_Store
+src-tauri/.DS_Store
+fonts/*.ttf
+icons/*.png
+nugget-*.png
+nugget.png
+favicon.ico
+extension/scribecat-canvas-helper/icon128.png
+extension/scribecat-canvas-helper.crx
