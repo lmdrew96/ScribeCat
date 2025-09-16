@@ -40,7 +40,10 @@
   .nugget{width:48px;height:48px;object-fit:contain;flex:0 0 48px}
   .title{font-family:"Galaxy Caterpillar", var(--ui);font-size:clamp(24px,5vw,44px);line-height:1;flex:1;white-space:nowrap;overflow:hidden}
   .badge{padding:4px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--sub);opacity:.85}
-  .status{display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:44%}
+  .status{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:58%;min-width:0}
+  .status-group{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .status-group.actions{gap:8px}
+  .status .badge{min-width:0;white-space:nowrap}
   .pill{border-radius:999px;padding:2px 8px;font-size:11px;border:1px solid var(--border);background:var(--chip);opacity:.72}
   .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
   .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--chip);display:inline-flex;gap:8px;align-items:center;color:var(--ink)}
@@ -95,11 +98,20 @@
       <div class="title">ScribeCat</div>
     </div>
     <div class="status">
-      <div id="stApi" class="pill warn">API</div>
-      <div id="stMic" class="pill warn">Mic</div>
-      <div id="stStream" class="pill warn">Stream</div>
-      <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
-      <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
+      <div class="status-group badges">
+        <span id="clock" class="badge">—</span>
+        <span id="status" class="badge">idle</span>
+        <span id="polish" class="badge" style="display:none">polishing…</span>
+      </div>
+      <div class="status-group pills">
+        <div id="stApi" class="pill warn">API</div>
+        <div id="stMic" class="pill warn">Mic</div>
+        <div id="stStream" class="pill warn">Stream</div>
+      </div>
+      <div class="status-group actions">
+        <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
+        <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
+      </div>
     </div>
   </div>
 </div>
@@ -211,6 +223,10 @@
   const API = "http://127.0.0.1:8787";
   const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
   const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
+  const clockEl=byId("clock"), statusBadge=byId("status"), polishBadge=byId("polish");
+  const setStatus = (text)=>{ if (statusBadge) statusBadge.textContent = text; };
+  if (clockEl){ const updateClock = ()=>{ clockEl.textContent = clock(); }; updateClock(); setInterval(updateClock, 1000); }
+  if (polishBadge) polishBadge.style.display='none';
   const classSel=byId("classSel"), titleBox=byId("titleBox");
   const micSel=byId("micSel"), vu=byId("vuBar");
   const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
@@ -331,13 +347,21 @@
   async function openWS(){
     try{
       const tr = await fetch(API+"/api/aai-token?expires_in_seconds=300");
-      if (!tr.ok) throw new Error("token");
+      if (!tr.ok){ setStatus('token err'); throw new Error("token"); }
       const {token} = await tr.json();
       const s = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`);
       s.binaryType="arraybuffer";
-      s.onopen=()=>tag(stStream,"ok","Stream");
-      s.onclose=()=>tag(stStream,"warn","Stream");
-      s.onerror=()=>tag(stStream,"bad","Stream");
+      s.onopen=()=>{ tag(stStream,"ok","Stream"); setStatus('live'); };
+      s.onclose=(e)=>{
+        tag(stStream,"warn","Stream");
+        if (running) {
+          const code = e?.code ? `closed (${e.code})` : 'closed';
+          setStatus(code);
+        } else {
+          setStatus('stopped');
+        }
+      };
+      s.onerror=()=>{ tag(stStream,"bad","Stream"); setStatus('ws error'); };
       s.onmessage=(m)=>{ if(typeof m.data!=="string") return; try{
         const j=JSON.parse(m.data);
         const txt=j.formatted_transcript||j.transcript||(j.turn&&(j.turn.formatted_transcript||j.turn.transcript))||j.text;
@@ -358,7 +382,7 @@
         }
       }catch(_){}};
       return s;
-    }catch(e){ tag(stStream,"warn","Stream"); return null; }
+    }catch(e){ tag(stStream,"warn","Stream"); if(statusBadge && statusBadge.textContent==='starting…') setStatus('stream err'); return null; }
   }
 
   async function listMics(){
@@ -378,6 +402,7 @@
 
   async function start(){
     if (running) return;
+    setStatus('starting…');
     running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf=""; audioBlob=null; wavChunks=[]; lineCounter=0; lastLineId=null;
     try{
       const deviceId = micSel.value || undefined;
@@ -387,6 +412,7 @@
       source = audioCtx.createMediaStreamSource(mediaStream);
       processor = audioCtx.createScriptProcessor(4096,1,1);
       ws = await openWS();
+      if (!ws) setStatus('stream err');
       processor.onaudioprocess = (e)=>{
         if (paused) return;
         const ch=e.inputBuffer.getChannelData(0);
@@ -406,6 +432,7 @@
     }catch(e){
       appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
       tag(stMic,"bad","Mic");
+      setStatus('mic error');
       running=false;
     }
   }
@@ -424,7 +451,7 @@
     if (mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
     if (ws){ try{ ws.close(); }catch(_){} ws=null; }
     vu.style.width="0%";
-    finalizeCurrentLine("Session stopped."); summaryBtn.style.display=''; tag(stStream,"warn","Stream"); running=false;
+    finalizeCurrentLine("Session stopped."); summaryBtn.style.display=''; tag(stStream,"warn","Stream"); running=false; setStatus('stopped');
 
     try{
       const total = wavChunks.reduce((acc,a)=>acc + a.length, 0);
@@ -433,8 +460,8 @@
     }catch(_){ audioBlob=null; }
   }
   startBtn.onclick=()=>{ startBtn.style.display='none'; pauseBtn.style.display=''; stopBtn.style.display=''; resumeBtn.style.display='none'; summaryBtn.style.display='none'; start(); };
-  pauseBtn.onclick=()=>{ paused=true; pauseBtn.style.display='none'; resumeBtn.style.display=''; };
-  resumeBtn.onclick=()=>{ paused=false; pauseBtn.style.display=''; resumeBtn.style.display='none'; };
+  pauseBtn.onclick=()=>{ paused=true; pauseBtn.style.display='none'; resumeBtn.style.display=''; setStatus('paused'); };
+  resumeBtn.onclick=()=>{ paused=false; pauseBtn.style.display=''; resumeBtn.style.display='none'; setStatus('live'); };
   stopBtn.onclick=()=>{ stop(); pauseBtn.style.display='none'; resumeBtn.style.display='none'; stopBtn.style.display='none'; startBtn.style.display=''; };
 
   /* ======== SHORTCUTS (Docs/Word-ish) ======== */
@@ -607,6 +634,7 @@
     };
   }
   async function saveAll(){
+    setStatus('saving…');
     // Download WAV locally
     try{
       const nameBase = sanitizeName(titleBox.value || classSel.value || "Lecture");
@@ -625,9 +653,11 @@
       const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload(audioUrl))});
       await r.json();
       tag(stApi,"ok","API");
+      setStatus('saved ✓');
       alert("Saved: audio downloaded, Airtable updated, Make triggered (if configured).");
     }catch(e){
       tag(stApi,"warn","API");
+      setStatus('save failed');
       alert("Server save failed. Your audio was downloaded locally.");
     }
   }
