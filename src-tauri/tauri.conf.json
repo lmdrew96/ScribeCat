@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "identifier": "com.scribecat.app",
+  "identifier": "com.scribecat.desktop",
   "productName": "ScribeCat",
   "version": "1.0.0",
 
