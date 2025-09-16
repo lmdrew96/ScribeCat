@@ -23,7 +23,7 @@
     --btn:#ffffff; --btn-text:#111; --chip:#fff;
 
     --ok:#2eb450; --warn:#aa7a15; --bad:#e62e4d;
-    --ui:Inter, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
+    --ui:"Inter", system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
     --notes:Inter, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
   }
 
@@ -230,20 +230,25 @@
   stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
+  const FONT_FALLBACK = 'system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif';
+  const DEFAULT_UI_FONT = `"Inter", ${FONT_FALLBACK}`;
   const THEMES = {
-  "Clean":      {bg:'#f6f7fb',surface:'#fff',ink:'#101319',sub:'#6a7180',border:'#e3e7ef',brand:'#ffd200',accent:'#506fff',accent2:'#ff5c8a',btn:'#fff',btnText:'#111'},
-  "Dark Ink":   {bg:'#0f1115',surface:'#161a22',ink:'#f1f5f9',sub:'#93a4b3',border:'#232b3a',brand:'#ffd200',accent:'#8aa9ff',accent2:'#ff95b2',btn:'#1f2532',btnText:'#fff'},
-  "Slate Pop":  {bg:'#f2f5f7',surface:'#ffffff',ink:'#1c212b',sub:'#5f6e80',border:'#d7e0e9',brand:'#ffd200',accent:'#ff5c8a',accent2:'#2e6aff',btn:'#fff',btnText:'#111'},
-  "Ocean":      {bg:'#e9f1f7',surface:'#ffffff',ink:'#0b2239',sub:'#4d6174',border:'#d2e0eb',brand:'#ffd200',accent:'#2e6aff',accent2:'#0ea5e9',btn:'#fff',btnText:'#0b2239'},
-  "Paper":      {bg:'#fbfbf7',surface:'#fff',ink:'#111',sub:'#666',border:'#ecebe6',brand:'#ffd200',accent:'#2f6fff',accent2:'#c2410c',btn:'#fff',btnText:'#111'},
-  "Plum":       {bg:'#f7f4fa',surface:'#fff',ink:'#201226',sub:'#6c5a76',border:'#e8e1ee',brand:'#ffd200',accent:'#7b3eff',accent2:'#ff5ea8',btn:'#fff',btnText:'#201226'},
-  "Forest":     {bg:'#f2f7f4',surface:'#fff',ink:'#0c2116',sub:'#476453',border:'#d9e7df',brand:'#ffd200',accent:'#1f8a6f',accent2:'#3b82f6',btn:'#fff',btnText:'#0c2116'},
-  "Charcoal":   {bg:'#15181d',surface:'#1b2027',ink:'#f2f4f8',sub:'#97a3b0',border:'#28303a',brand:'#ffd200',accent:'#7aa2ff',accent2:'#ff8fb0',btn:'#242b35',btnText:'#f2f4f8'},
-  "Citrus":     {bg:'#fffdf6',surface:'#ffffff',ink:'#1f1407',sub:'#6b5a44',border:'#efe7d6',brand:'#ffd200',accent:'#ff7d26',accent2:'#0ea5e9',btn:'#fff',btnText:'#1f1407'},
-  "Neon Night": {bg:'#0b0e18',surface:'#101425',ink:'#eaf1ff',sub:'#9fb0c9',border:'#1a2140',brand:'#ffd200',accent:'#4be9b9',accent2:'#a78bfa',btn:'#16203a',btnText:'#eaf1ff'},
-  "Rose Slate": {bg:'#f9f4f6',surface:'#ffffff',ink:'#28151b',sub:'#6d545f',border:'#ecdbe1',brand:'#ffd200',accent:'#ff5c8a',accent2:'#7c3aed',btn:'#fff',btnText:'#28151b'},
-  "High Noon":  {bg:'#fff8e6',surface:'#ffffff',ink:'#2b1a00',sub:'#7a5a2b',border:'#f1e4c7',brand:'#ffd200',accent:'#d97706',accent2:'#2563eb',btn:'#fff',btnText:'#2b1a00'}
-};
+    "Clean":      {bg:'#f6f7fb',surface:'#fff',ink:'#101319',sub:'#6a7180',border:'#e3e7ef',brand:'#ffd200',accent:'#506fff',accent2:'#ff5c8a',btn:'#fff',btnText:'#111',uiFont:DEFAULT_UI_FONT},
+    "Dark Ink":   {bg:'#0f1115',surface:'#161a22',ink:'#f1f5f9',sub:'#93a4b3',border:'#232b3a',brand:'#ffd200',accent:'#8aa9ff',accent2:'#ff95b2',btn:'#1f2532',btnText:'#fff',uiFont:`"IBM Plex Sans", ${FONT_FALLBACK}`},
+    "Slate Pop":  {bg:'#f2f5f7',surface:'#ffffff',ink:'#1c212b',sub:'#5f6e80',border:'#d7e0e9',brand:'#ffd200',accent:'#ff5c8a',accent2:'#2e6aff',btn:'#fff',btnText:'#111',uiFont:`"Work Sans", ${FONT_FALLBACK}`},
+    "Ocean":      {bg:'#e9f1f7',surface:'#ffffff',ink:'#0b2239',sub:'#4d6174',border:'#d2e0eb',brand:'#ffd200',accent:'#2e6aff',accent2:'#0ea5e9',btn:'#fff',btnText:'#0b2239',uiFont:`"Manrope", ${FONT_FALLBACK}`},
+    "Paper":      {bg:'#fbfbf7',surface:'#fff',ink:'#111',sub:'#666',border:'#ecebe6',brand:'#ffd200',accent:'#2f6fff',accent2:'#c2410c',btn:'#fff',btnText:'#111',uiFont:`"Source Sans 3", ${FONT_FALLBACK}`},
+    "Plum":       {bg:'#f7f4fa',surface:'#fff',ink:'#201226',sub:'#6c5a76',border:'#e8e1ee',brand:'#ffd200',accent:'#7b3eff',accent2:'#ff5ea8',btn:'#fff',btnText:'#201226',uiFont:`"Poppins", ${FONT_FALLBACK}`},
+    "Forest":     {bg:'#f2f7f4',surface:'#fff',ink:'#0c2116',sub:'#476453',border:'#d9e7df',brand:'#ffd200',accent:'#1f8a6f',accent2:'#3b82f6',btn:'#fff',btnText:'#0c2116',uiFont:`"Noto Sans", ${FONT_FALLBACK}`},
+    "Charcoal":   {bg:'#15181d',surface:'#1b2027',ink:'#f2f4f8',sub:'#97a3b0',border:'#28303a',brand:'#ffd200',accent:'#7aa2ff',accent2:'#ff8fb0',btn:'#242b35',btnText:'#f2f4f8',uiFont:`"Space Grotesk", ${FONT_FALLBACK}`},
+    "Citrus":     {bg:'#fffdf6',surface:'#ffffff',ink:'#1f1407',sub:'#6b5a44',border:'#efe7d6',brand:'#ffd200',accent:'#ff7d26',accent2:'#0ea5e9',btn:'#fff',btnText:'#1f1407',uiFont:`"Montserrat", ${FONT_FALLBACK}`},
+    "Neon Night": {bg:'#0b0e18',surface:'#101425',ink:'#eaf1ff',sub:'#9fb0c9',border:'#1a2140',brand:'#ffd200',accent:'#4be9b9',accent2:'#a78bfa',btn:'#16203a',btnText:'#eaf1ff',uiFont:`"Outfit", ${FONT_FALLBACK}`},
+    "Rose Slate": {bg:'#f9f4f6',surface:'#ffffff',ink:'#28151b',sub:'#6d545f',border:'#ecdbe1',brand:'#ffd200',accent:'#ff5c8a',accent2:'#7c3aed',btn:'#fff',btnText:'#28151b',uiFont:`"Raleway", ${FONT_FALLBACK}`},
+    "High Noon":  {bg:'#fff8e6',surface:'#ffffff',ink:'#2b1a00',sub:'#7a5a2b',border:'#f1e4c7',brand:'#ffd200',accent:'#d97706',accent2:'#2563eb',btn:'#fff',btnText:'#2b1a00',uiFont:`"Libre Baskerville", ${FONT_FALLBACK}`},
+    "Azure Focus": {bg:'#edf3ff',surface:'#ffffff',ink:'#081838',sub:'#4f5b7c',border:'#d6e1ff',brand:'#ffd200',accent:'#1b4bff',accent2:'#b81c5a',btn:'#ffffff',btnText:'#081838',uiFont:`"Roboto", ${FONT_FALLBACK}`},
+    "Midnight Signal": {bg:'#060910',surface:'#0c1320',ink:'#f1f5ff',sub:'#94a2c7',border:'#1b263d',brand:'#ffd200',accent:'#5d8eff',accent2:'#12d38a',btn:'#1d2330',btnText:'#f1f5ff',uiFont:`"Fira Sans", ${FONT_FALLBACK}`},
+    "Cinder Glow": {bg:'#121416',surface:'#1c1f24',ink:'#f8faff',sub:'#9ba3af',border:'#2b3038',brand:'#ffd200',accent:'#ffb224',accent2:'#4fbcff',btn:'#262b35',btnText:'#f8faff',uiFont:`"Open Sans", ${FONT_FALLBACK}`}
+  };
   themeSel.innerHTML = Object.keys(THEMES).map(n=>`<option>${n}</option>`).join("");
   function applyThemeVars(t){
     const r=document.documentElement.style;
@@ -261,6 +266,8 @@
     r.setProperty('--sub',t.sub); r.setProperty('--border',t.border); r.setProperty('--brand',t.brand);
     r.setProperty('--accent',t.accent); r.setProperty('--accent-2',t.accent2);
     r.setProperty('--btn',t.btn); r.setProperty('--btn-text',t.btnText);
+    const font=t.uiFont||DEFAULT_UI_FONT;
+    r.setProperty('--ui',font);
     warn.style.display = needsWarn ? 'block' : 'none';
   }
   applyThemeVars(THEMES["Clean"]);
