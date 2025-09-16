@@ -98,6 +98,7 @@
       <div id="stApi" class="pill warn">API</div>
       <div id="stMic" class="pill warn">Mic</div>
       <div id="stStream" class="pill warn">Stream</div>
+      <span id="polishBadge" class="badge" style="display:none" role="status" aria-live="polite" aria-atomic="true">polishing…</span>
       <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
       <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
     </div>
@@ -210,7 +211,7 @@
 (function(){
   const API = "http://127.0.0.1:8787";
   const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
-  const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
+  const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream"), polishBadge=byId("polishBadge");
   const classSel=byId("classSel"), titleBox=byId("titleBox");
   const micSel=byId("micSel"), vu=byId("vuBar");
   const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
@@ -271,6 +272,7 @@
   let audioCtx, source, processor, mediaStream;
   let userNearBottom=true, sentBuf="", transcriptText="";
   let wavChunks=[], wavSampleRate=44100, audioBlob=null, lineCounter=0, lastLineId=null, currentLineEl=null;
+  let isPolishing=false, polishHideTimer=null;
 
   function nearBottom(el,px=48){ return (el.scrollHeight - el.scrollTop - el.clientHeight) <= px; }
   live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
@@ -299,20 +301,117 @@
     currentLineEl.innerHTML = makeTimestampSpan() + html;
     if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
   }
-  function finalizeCurrentLine(finalText){
+  function finalizeCurrentLine(finalText, opts={}){
+    const isSystem = typeof opts === 'boolean' ? opts : !!opts.system;
     if (currentLineEl){
-      currentLineEl.classList.remove('liveLine');
-      currentLineEl.innerHTML = makeTimestampSpan() + finalText;
-      lastLineId = currentLineEl.id;
+      const lineEl = currentLineEl;
+      lineEl.classList.remove('liveLine');
+      lineEl.innerHTML = makeTimestampSpan() + finalText;
+      if (isSystem){ lineEl.dataset.system = 'true'; } else { delete lineEl.dataset.system; } // flag system lines for polish skip
+      lastLineId = lineEl.id;
       window.lastLineId = lastLineId;
       currentLineEl = null;
       if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
       return;
     }
     // If we somehow didn't have a live line, append a fresh finalized one
-    makeLine(finalText, false);
+    const line = makeLine(finalText, false);
+    if (isSystem){ line.dataset.system = 'true'; }
   }
   function updateTailHTML(html){ setCurrentLineText(html); }
+
+  function hidePolishBadge(){
+    if (!polishBadge) return;
+    if (polishHideTimer){ clearTimeout(polishHideTimer); polishHideTimer=null; }
+    polishBadge.style.display='none';
+  }
+  function showPolishBadge(message, persist=false){
+    if (!polishBadge) return;
+    if (polishHideTimer){ clearTimeout(polishHideTimer); polishHideTimer=null; }
+    polishBadge.style.display='inline-flex';
+    polishBadge.textContent = message;
+    polishBadge.setAttribute('aria-label', message);
+    if (!persist){
+      polishHideTimer = setTimeout(()=>{ polishBadge.style.display='none'; polishHideTimer=null; }, 2000);
+    }
+  }
+  function collectTranscriptForPolish(){
+    return Array.from(live.querySelectorAll('.line'))
+      .filter(el=>el.dataset.system!=='true')
+      .map(el=>el.textContent.trim())
+      .filter(Boolean)
+      .join("\n");
+  }
+  function setLineTextFromPolish(el, text){
+    const ts = el.querySelector('.ts');
+    const tsClone = ts ? ts.cloneNode(true) : null;
+    el.innerHTML='';
+    if (tsClone){
+      el.appendChild(tsClone);
+      el.appendChild(document.createTextNode(' '));
+    }
+    el.appendChild(document.createTextNode(text));
+  }
+  function applyPolishedTranscript(polished){
+    const trimmed = typeof polished === 'string' ? polished.trim() : '';
+    if (!trimmed) return;
+    const rawLines = trimmed.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+    const transcriptEls = Array.from(live.querySelectorAll('.line')).filter(el=>el.dataset.system!=='true');
+    if (!transcriptEls.length){ transcriptText = trimmed; return; }
+    if (!rawLines.length) return;
+    const lines = rawLines.slice();
+    const count = transcriptEls.length;
+    if (lines.length > count){
+      const extras = lines.splice(count-1);
+      lines[count-1] = [lines[count-1], ...extras].filter(Boolean).join(' ');
+    } else if (lines.length < count){
+      for (let i=lines.length; i<count; i++) lines[i] = transcriptEls[i].textContent.trim();
+    }
+    transcriptText = lines.join("\n");
+    for (let i=0; i<count; i++){
+      const lineText = lines[i] || '';
+      setLineTextFromPolish(transcriptEls[i], lineText);
+    }
+    for (let i=transcriptEls.length-1; i>=0; i--){ // keep timestamp anchors intact
+      const text = transcriptEls[i].textContent.trim();
+      if (text){
+        lastLineId = transcriptEls[i].id;
+        window.lastLineId = lastLineId;
+        break;
+      }
+    }
+    if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+  }
+  async function autoPolishTranscript(){
+    if (!b_autopolish.checked) return;
+    if (isPolishing) return;
+    const textForPolish = collectTranscriptForPolish();
+    if (!textForPolish) return;
+    isPolishing = true;
+    showPolishBadge('polishing…', true);
+    try{
+      const r = await fetch(API+"/api/polish",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify({transcript_text: textForPolish})});
+      if (r.ok){
+        const j = await r.json().catch(()=>null);
+        const polished = j && typeof j.polished === 'string' ? j.polished : '';
+        if (polished.trim()){
+          applyPolishedTranscript(polished);
+          showPolishBadge('polished ✓');
+        } else {
+          showPolishBadge('no changes');
+        }
+      } else {
+        showPolishBadge('polish failed');
+      }
+    }catch(err){
+      console.warn('Auto-polish failed', err);
+      showPolishBadge('polish failed');
+    }finally{
+      isPolishing = false;
+    }
+  }
+
+  if (b_autopolish){ b_autopolish.addEventListener('change', ()=>{ if (!b_autopolish.checked) hidePolishBadge(); }); }
 
   document.addEventListener('click',(e)=>{
     const a=e.target.closest('a[href^="#t-"]');
@@ -402,7 +501,7 @@
         }
       };
       source.connect(processor); processor.connect(audioCtx.destination);
-      finalizeCurrentLine("Session started");
+      finalizeCurrentLine("Session started", true);
     }catch(e){
       appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
       tag(stMic,"bad","Mic");
@@ -424,13 +523,14 @@
     if (mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
     if (ws){ try{ ws.close(); }catch(_){} ws=null; }
     vu.style.width="0%";
-    finalizeCurrentLine("Session stopped."); summaryBtn.style.display=''; tag(stStream,"warn","Stream"); running=false;
+    finalizeCurrentLine("Session stopped.", true); summaryBtn.style.display=''; tag(stStream,"warn","Stream"); running=false;
 
     try{
       const total = wavChunks.reduce((acc,a)=>acc + a.length, 0);
       const pcm = new Int16Array(total); let off=0; for(const c of wavChunks){ pcm.set(c,off); off+=c.length; }
       audioBlob = wavEncode(pcm, wavSampleRate);
     }catch(_){ audioBlob=null; }
+    autoPolishTranscript();
   }
   startBtn.onclick=()=>{ startBtn.style.display='none'; pauseBtn.style.display=''; stopBtn.style.display=''; resumeBtn.style.display='none'; summaryBtn.style.display='none'; start(); };
   pauseBtn.onclick=()=>{ paused=true; pauseBtn.style.display='none'; resumeBtn.style.display=''; };
