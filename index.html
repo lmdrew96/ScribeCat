@@ -79,7 +79,7 @@
   /* Contrast helpers */
   .theme-warning{position:fixed;right:12px;bottom:8px;font-size:12px;color:#fff;background:#e62e4d;padding:6px 10px;border-radius:10px;display:none}
 /* Hover-only timestamps in transcript */
-#live .line .ts{opacity:0;transition:opacity .15s ease;cursor:pointer}
+#live .line .ts{opacity:0;transition:opacity .15s ease;cursor:pointer;margin-right:6px}
 #live .line:hover .ts{opacity:.65}
 
 /* Bottom footer bar */
@@ -276,41 +276,79 @@
   live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
   function clock(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
   function mmss(){ const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0"); return `${mm}:${ss}`; }window.mmss = mmss;
-  function makeTimestampSpan(){
-  const tsOn = (tsChk.checked || b_timestamps.checked);
-  return tsOn ? `<span class="ts">[${mmss()}]</span> ` : '';
-}
+  function shouldStickToBottom(){
+    return (autoScroll.checked && b_autoscroll.checked && userNearBottom);
+  }
+  function scrollLiveToBottom(){
+    live.scrollTop = Math.max(0, live.scrollHeight - live.clientHeight);
+    userNearBottom = true;
+  }
+  function renderLineContent(lineEl, html){
+    if (!lineEl) return;
+    const tsValue = lineEl.dataset.ts || (lineEl.dataset.ts = mmss());
+    const showTs = tsChk.checked || b_timestamps.checked;
+    let tsSpan = lineEl.querySelector('.ts');
+    if (showTs){
+      if (!tsSpan){
+        tsSpan = document.createElement('span');
+        tsSpan.className = 'ts';
+        lineEl.insertBefore(tsSpan, lineEl.firstChild);
+      } else if (tsSpan !== lineEl.firstChild){
+        lineEl.insertBefore(tsSpan, lineEl.firstChild);
+      }
+      tsSpan.textContent = `[${tsValue}] `;
+    } else if (tsSpan){
+      tsSpan.remove();
+    }
+    let bodySpan = lineEl.querySelector('.lineText');
+    if (!bodySpan){
+      bodySpan = document.createElement('span');
+      bodySpan.className = 'lineText';
+      lineEl.appendChild(bodySpan);
+    }
+    bodySpan.innerHTML = html || '';
+  }
   function makeLine(html, isLive){
-    const id = `t-${mmss().replace(':','')}-${(++lineCounter)}`;
+    const stick = shouldStickToBottom();
+    const stamp = mmss();
+    const id = `t-${stamp.replace(':','')}-${(++lineCounter)}`;
     const div = document.createElement('div');
     div.className = isLive ? 'line liveLine' : 'line';
     div.id = id;
-    div.innerHTML = makeTimestampSpan() + html;
+    div.dataset.ts = stamp;
+    renderLineContent(div, html);
     live.appendChild(div);
     if (!isLive){
       lastLineId = id;
       window.lastLineId = id;
     }
-    if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+    if (stick) scrollLiveToBottom();
     return div;
   }
   function setCurrentLineText(html){
-    if (!currentLineEl){ currentLineEl = makeLine(html, true); return; }
-    currentLineEl.innerHTML = makeTimestampSpan() + html;
-    if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
-  }
-  function finalizeCurrentLine(finalText){
-    if (currentLineEl){
-      currentLineEl.classList.remove('liveLine');
-      currentLineEl.innerHTML = makeTimestampSpan() + finalText;
-      lastLineId = currentLineEl.id;
-      window.lastLineId = lastLineId;
-      currentLineEl = null;
-      if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+    if (!currentLineEl || !currentLineEl.isConnected || currentLineEl.parentElement !== live || !currentLineEl.classList.contains('liveLine')){
+      currentLineEl = makeLine(html, true);
       return;
     }
-    // If we somehow didn't have a live line, append a fresh finalized one
-    makeLine(finalText, false);
+    const stick = shouldStickToBottom();
+    renderLineContent(currentLineEl, html);
+    if (stick) scrollLiveToBottom();
+  }
+  function finalizeCurrentLine(finalText){
+    if (currentLineEl && currentLineEl.isConnected && currentLineEl.parentElement === live && currentLineEl.classList.contains('liveLine')){
+      const line = currentLineEl;
+      line.classList.remove('liveLine');
+      const stick = shouldStickToBottom();
+      renderLineContent(line, finalText);
+      lastLineId = line.id;
+      window.lastLineId = lastLineId;
+      currentLineEl = null;
+      if (stick) scrollLiveToBottom();
+      return;
+    }
+    const fresh = makeLine(finalText, false);
+    lastLineId = fresh.id;
+    window.lastLineId = lastLineId;
   }
   function updateTailHTML(html){ setCurrentLineText(html); }
 
