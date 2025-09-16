@@ -173,7 +173,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ===== OpenAI polish/summarize/chat =====
-    if (p === "/api/summarize" && req.method === "POST"){
+    if (p === "/api/summarize" && req.method === "POST"){ 
       const b = await bodyJSON(req);
       const prompt = `Summarize this university lecture transcript into:
 - 5-10 bullet key points
@@ -203,6 +203,57 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
       });
       const j = await r.json(); if (!r.ok) return json(res, r.status, j);
       return json(res, 200, { polished: j.choices?.[0]?.message?.content || transcript, skipped:false });
+    }
+
+    if (p === "/api/ask" && req.method === "POST"){
+      const b = await bodyJSON(req);
+      const type = String(b.mode || b.kind || b.intent || b.type || "").toLowerCase();
+      const includeContext = b.include_context !== false;
+      const notes = typeof b.notes_html === "string" ? b.notes_html.replace(/<[^>]+>/g, " ") : "";
+      const transcript = typeof b.transcript_text === "string" ? b.transcript_text : "";
+      const system = (typeof b.system_prompt === "string" && b.system_prompt.trim())
+        ? b.system_prompt.trim()
+        : "You are ScribeCat, a study copilot. Be concise and structured.";
+      const prompt = (typeof b.prompt === "string" && b.prompt.trim()) ? b.prompt.trim()
+        : (typeof b.message === "string" && b.message.trim()) ? b.message.trim() : "";
+      const history = Array.isArray(b.history) ? b.history : [];
+
+      const msgs = [{ role:"system", content: system }];
+      for (const h of history){
+        if (!h || typeof h !== "object") continue;
+        const role = h.role === "assistant" ? "assistant" : "user";
+        const content = typeof h.content === "string" ? h.content.trim() : "";
+        if (content) msgs.push({ role, content });
+      }
+
+      if (includeContext){
+        const cleanNotes = notes.replace(/\s+/g, " ").trim().slice(0, 6000);
+        const cleanTranscript = transcript.replace(/\s+/g, " ").trim().slice(0, 16000);
+        const contextParts = [];
+        if (cleanNotes) contextParts.push(`Notes:\n${cleanNotes}`);
+        if (cleanTranscript) contextParts.push(`Transcript:\n${cleanTranscript}`);
+        if (contextParts.length){
+          msgs.push({ role:"user", content: `CONTEXT\n${contextParts.join("\n\n")}` });
+        }
+      }
+
+      if (prompt){
+        msgs.push({ role:"user", content: prompt });
+      }
+
+      const model = (typeof b.model === "string" && b.model.trim()) ? b.model.trim() : "gpt-4o-mini";
+      const temperature = Number.isFinite(b.temperature) ? b.temperature : 0.3;
+
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method:"POST",
+        headers:{ "authorization":`Bearer ${process.env.OPENAI_API_KEY}`, "content-type":"application/json" },
+        body: JSON.stringify({ model, messages: msgs, temperature })
+      });
+      const j = await r.json(); if (!r.ok) return json(res, r.status, j);
+      const answer = j.choices?.[0]?.message?.content || "";
+      const payload = { answer, reply: answer, text: answer };
+      if (type === "summary") payload.summary_md = answer;
+      return json(res, 200, payload);
     }
 
     if (p === "/api/openai-chat" && req.method === "POST"){
