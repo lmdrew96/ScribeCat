@@ -65,8 +65,55 @@
   .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
 
   .notes{outline:none}
-  .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  .toolbar select,.toolbar input[type="number"]{height:30px}
+  .toolbar{
+    margin-left:auto;
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, max-content));
+    gap:12px 16px;
+    align-items:center;
+    justify-content:flex-end;
+  }
+  .toolbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .toolbar-group--color{gap:6px}
+  .font-size-controls{display:flex;gap:6px;align-items:center}
+  .toolbar select,
+  .toolbar input[type="number"],
+  .toolbar input[type="text"]{height:30px}
+  #fontSizeBox{width:70px}
+  #hexBox{width:90px;padding:0 6px;border-radius:8px}
+  .btn-italic{font-style:italic}
+  .toolbar-color-input{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    border:0;
+    clip:rect(0 0 0 0);
+    clip-path:inset(50%);
+    overflow:hidden;
+    white-space:nowrap;
+  }
+  .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+    clip-path:inset(50%);
+    border:0;
+    white-space:nowrap;
+  }
+  @media (max-width:1100px){
+    .toolbar{grid-template-columns:repeat(2, minmax(0, max-content))}
+    .toolbar-group--formatting{grid-column:1 / -1;justify-self:end}
+  }
+  @media (max-width:680px){
+    .toolbar{grid-template-columns:1fr;justify-content:flex-start}
+    .toolbar-group--formatting{justify-self:start}
+  }
 
   /* Settings drawer */
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
@@ -139,21 +186,32 @@
   <div class="panel">
     <div class="head">
       <div>Notes</div>
-      <div class="toolbar">
-        <div><select id="fontSizeSel" title="Font size"></select><input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)"/></div>
-        <select id="fontFamilySel" title="Font family (selection)"></select>
-        <div id="colorTools" style="display:flex;gap:6px;align-items:center">
-          <button id="fontColorBtn" class="btn" title="Font color">A</button>
-          <input id="fontColor" type="color" style="width:0;height:0;border:0;padding:0;opacity:0"/>
-          <button id="hlBtn" class="btn" title="Highlighter">🖍️</button>
-          <input id="hlColor" type="color" value="#ffd200" style="width:0;height:0;border:0;padding:0;opacity:0"/>
-          <input id="hexBox" placeholder="#hex" style="width:80px;height:30px;border:1px solid var(--border);border-radius:8px;padding:0 6px"/>
+      <div class="toolbar" role="toolbar" aria-label="Notes formatting">
+        <div class="toolbar-group toolbar-group--font" role="group" aria-label="Font controls">
+          <div class="font-size-controls">
+            <label class="sr-only" for="fontSizeSel">Font size preset</label>
+            <select id="fontSizeSel" title="Font size" aria-label="Font size preset"></select>
+            <label class="sr-only" for="fontSizeBox">Font size (type)</label>
+            <input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)" aria-label="Font size value"/>
+          </div>
+          <label class="sr-only" for="fontFamilySel">Font family</label>
+          <select id="fontFamilySel" title="Font family (selection)" aria-label="Font family"></select>
         </div>
-        <button id="unhlBtn" class="btn" title="Clear inline styles">🧽</button>
-        <button id="boldBtn" class="btn" title="Bold (⌘/Ctrl+B)">B</button>
-        <button id="italicBtn" class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
-        <button id="undoBtn" class="btn" title="Undo">↶</button>
-        <button id="redoBtn" class="btn" title="Redo">↷</button>
+        <div id="colorTools" class="toolbar-group toolbar-group--color" role="group" aria-label="Color controls">
+          <button id="fontColorBtn" class="btn" type="button" title="Font color" aria-label="Font color" aria-controls="fontColor">A</button>
+          <input id="fontColor" type="color" class="toolbar-color-input" aria-label="Choose font color" tabindex="-1"/>
+          <button id="hlBtn" class="btn" type="button" title="Highlighter" aria-label="Highlighter" aria-controls="hlColor">🖍️</button>
+          <input id="hlColor" type="color" value="#ffd200" class="toolbar-color-input" aria-label="Choose highlight color" tabindex="-1"/>
+          <label class="sr-only" for="hexBox">Hex color value</label>
+          <input id="hexBox" type="text" placeholder="#hex" title="Hex color value" aria-label="Hex color value"/>
+        </div>
+        <div class="toolbar-group toolbar-group--formatting" role="group" aria-label="Formatting controls">
+          <button id="unhlBtn" class="btn" type="button" title="Clear inline styles" aria-label="Clear inline styles">🧽</button>
+          <button id="boldBtn" class="btn" type="button" title="Bold (⌘/Ctrl+B)" aria-label="Bold">B</button>
+          <button id="italicBtn" class="btn btn-italic" type="button" title="Italic (⌘/Ctrl+I)" aria-label="Italic">I</button>
+          <button id="undoBtn" class="btn" type="button" title="Undo" aria-label="Undo">↶</button>
+          <button id="redoBtn" class="btn" type="button" title="Redo" aria-label="Redo">↷</button>
+        </div>
       </div>
     </div>
     <div id="notes" class="body notes" contenteditable="true">
