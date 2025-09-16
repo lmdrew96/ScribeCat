@@ -28,6 +28,7 @@
   }
 
   *{box-sizing:border-box}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--ui);overflow:hidden}
 
@@ -146,7 +147,7 @@
           <button id="fontColorBtn" class="btn" title="Font color">A</button>
           <input id="fontColor" type="color" style="width:0;height:0;border:0;padding:0;opacity:0"/>
           <button id="hlBtn" class="btn" title="Highlighter">🖍️</button>
-          <input id="hlColor" type="color" value="#ffd200" style="width:0;height:0;border:0;padding:0;opacity:0"/>
+          <input id="hlColor" type="color" value="#ffd200" class="sr-only" aria-label="Highlighter color picker"/>
           <input id="hexBox" placeholder="#hex" style="width:80px;height:30px;border:1px solid var(--border);border-radius:8px;padding:0 6px"/>
         </div>
         <button id="unhlBtn" class="btn" title="Clear inline styles">🧽</button>
@@ -579,10 +580,41 @@
   byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
 
   const fontColorBtn=byId("fontColorBtn"), fontColor=byId("fontColor"), hlBtn=byId("hlBtn"), hlColor=byId("hlColor"), hexBox=byId("hexBox");
+  let hlStoredRange=null;
+  function rangeWithinNotes(range){
+    if(!range) return false;
+    const startIn=range.startContainer===notes||notes.contains(range.startContainer);
+    const endIn=range.endContainer===notes||notes.contains(range.endContainer);
+    return startIn&&endIn;
+  }
+  function storeHighlightSelection(){
+    hlStoredRange=null;
+    const sel=window.getSelection();
+    if(!sel||sel.rangeCount===0) return;
+    const rng=sel.getRangeAt(0);
+    if(!rangeWithinNotes(rng)) return;
+    hlStoredRange=rng.cloneRange();
+  }
+  hlBtn.addEventListener('mousedown', storeHighlightSelection);
+  hlBtn.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){ storeHighlightSelection(); } });
   fontColorBtn.onclick=()=>fontColor.click();
   hlBtn.onclick=()=>hlColor.click();
   fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } };
-  hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
+  hlColor.addEventListener('blur', ()=>{ hlStoredRange=null; });
+  hlColor.oninput=()=>{
+    const c=hlColor.value;
+    hexBox.value=c;
+    const sel=window.getSelection();
+    if(!sel) return;
+    if(document.activeElement!==notes){ try{ notes.focus({preventScroll:true}); }catch(_){ notes.focus(); } }
+    if(hlStoredRange){ sel.removeAllRanges(); sel.addRange(hlStoredRange); }
+    const collapsed = sel.rangeCount===0 || sel.isCollapsed;
+    let applied=false;
+    try{ applied=document.execCommand('hiliteColor',false,c); if(!applied){ applied=document.execCommand('backColor',false,c); } }
+    catch(_){ applied=false; }
+    if(!applied && !collapsed){ applied=applyStyleToSelection({backgroundColor:c}); }
+    if(sel.rangeCount>0){ hlStoredRange=sel.getRangeAt(0).cloneRange(); } else { hlStoredRange=null; }
+  };
   hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
 
   /* ======== SUMMARY (unchanged) ======== */
