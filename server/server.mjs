@@ -1,11 +1,56 @@
 import http from "node:http";
 import { URL } from "node:url";
 import path from "node:path";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, ".env") });
+
+function collectEnvCandidates() {
+  const dirs = [];
+  const configDir = process.env.SCRIBECAT_CONFIG_DIR?.trim();
+  if (configDir) {
+    dirs.push(path.resolve(configDir));
+  }
+  // Always check the bundled server directory so local dev keeps working.
+  dirs.push(__dirname);
+
+  const unique = new Set();
+  const ordered = [];
+
+  function addCandidate(candidatePath) {
+    if (!unique.has(candidatePath)) {
+      unique.add(candidatePath);
+      ordered.push(candidatePath);
+    }
+  }
+
+  for (const dir of dirs) {
+    addCandidate(path.join(dir, ".env"));
+  }
+
+  for (const dir of dirs) {
+    addCandidate(path.join(dir, ".env.template"));
+    addCandidate(path.join(dir, ".env.example"));
+  }
+
+  return ordered;
+}
+
+function loadEnv() {
+  for (const candidate of collectEnvCandidates()) {
+    if (fs.existsSync(candidate)) {
+      dotenv.config({ path: candidate });
+      return;
+    }
+  }
+
+  // Fall back to default dotenv search (current working directory).
+  dotenv.config();
+}
+
+loadEnv();
 
 // Allow newer env var names from AGENTS.md while keeping legacy ones
 function aliasEnv(target, candidates) {
