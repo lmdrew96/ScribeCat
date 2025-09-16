@@ -487,16 +487,109 @@
     document.execCommand(listType === "ul" ? "insertUnorderedList" : "insertOrderedList");
   }
 
+  const ARROW_RE = /-->/g;
+  const EM_DASH_RE = /(^|[\s])--(?=[\s.,;!?)]|$)/g;
+
+  function applySymbolReplacements(str) {
+    ARROW_RE.lastIndex = 0;
+    EM_DASH_RE.lastIndex = 0;
+    return str.replace(ARROW_RE, "→").replace(EM_DASH_RE, "$1—");
+  }
+
+  // Rebuild the selection from plain-text offsets after rewriting the block.
+  function restoreSelection(block, startOffset, endOffset) {
+    const sel = window.getSelection();
+    if (!sel) return;
+
+    const blockText = block.textContent || "";
+    const textLength = blockText.length;
+    const start = Math.max(0, Math.min(startOffset, textLength));
+    const end = Math.max(0, Math.min(endOffset, textLength));
+
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+    let current = walker.nextNode();
+    let traversed = 0;
+    let startNode = block;
+    let startPos = block.childNodes.length;
+    let endNode = block;
+    let endPos = block.childNodes.length;
+    let startSet = false;
+    let endSet = false;
+
+    while (current) {
+      const len = current.nodeValue.length;
+      const next = traversed + len;
+
+      if (!startSet && start <= next) {
+        startNode = current;
+        startPos = Math.max(0, Math.min(start - traversed, len));
+        startSet = true;
+      }
+
+      if (!endSet && end <= next) {
+        endNode = current;
+        endPos = Math.max(0, Math.min(end - traversed, len));
+        endSet = true;
+        if (startSet) break;
+      }
+
+      traversed = next;
+      current = walker.nextNode();
+    }
+
+    if (!startSet) {
+      startNode = block;
+      startPos = block.childNodes.length;
+    }
+    if (!endSet) {
+      if (startSet) {
+        endNode = startNode;
+        endPos = startPos;
+      } else {
+        endNode = block;
+        endPos = block.childNodes.length;
+      }
+    }
+
+    const range = document.createRange();
+    range.setStart(startNode, startPos);
+    range.setEnd(endNode, endPos);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
   // Replace symbols and detect list markers after each input
   function autoformatInput() {
     const block = getBlockEl();
     if (!block) return;
 
-    // 1) Symbol replacements everywhere in the block
-    // "-->" → arrow,  "--" → em dash (only when used like punctuation)
-    block.innerHTML = block.innerHTML
-      .replace(/-->/g, "→")
-      .replace(/(^|[\s])--(?=[\s.,;!?)]|$)/g, "$1—");
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!block.contains(range.startContainer)) return;
+
+    // 1) Symbol replacements ("-->" → arrow, "--" → em dash) while preserving the caret
+    const originalHTML = block.innerHTML;
+    const newHTML = applySymbolReplacements(originalHTML);
+
+    if (newHTML !== originalHTML) {
+      const beforeRange = range.cloneRange();
+      beforeRange.selectNodeContents(block);
+      beforeRange.setEnd(range.startContainer, range.startOffset);
+      const beforeText = beforeRange.toString();
+
+      const uptoEndRange = range.cloneRange();
+      uptoEndRange.selectNodeContents(block);
+      uptoEndRange.setEnd(range.endContainer, range.endOffset);
+      const uptoEndText = uptoEndRange.toString();
+
+      const newStartOffset = applySymbolReplacements(beforeText).length;
+      let newEndOffset = applySymbolReplacements(uptoEndText).length;
+      if (newEndOffset < newStartOffset) newEndOffset = newStartOffset;
+
+      block.innerHTML = newHTML;
+      restoreSelection(block, newStartOffset, newEndOffset);
+    }
 
     // 2) List triggers only at line start
     const text = block.textContent;                 // plain text of this block
