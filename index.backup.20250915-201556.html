@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ScribeCat v1.9.9 — Node API compatible</title>
+<style>
+  :root{--bg:#f6f7fb;--surface:#fff;--ink:#1a1c20;--sub:#6a7180;--border:#e3e7ef;--brand:#ffd200;--accent:#506fff;--ok:#2eb450;--warn:#f39c12;--bad:#e62e4d;--ui:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--ui);height:100vh;overflow:hidden}
+  .container{max-width:1120px;margin:0 auto}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);height:68px}
+  .topbar .inner{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+  .titlewrap{display:flex;align-items:center;gap:12px;min-width:0}
+  .title{font-size:36px;line-height:36px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{margin-left:8px;padding:4px 10px;border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--sub);opacity:.85}
+  .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--surface);display:inline-flex;gap:8px;align-items:center;color:var(--ink)}
+  .status{display:flex;gap:8px;align-items:center}
+  .pill{border-radius:999px;padding:4px 10px;font-size:12px;border:1px solid var(--border);background:var(--surface)}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .controls{padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+  .ctrl-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  select,input[type="text"]{height:36px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--ink)}
+  .vu{height:12px;background:#eaeaf3;border-radius:12px;overflow:hidden;min-width:160px;flex:1}
+  .vu>div{height:100%;width:0;background:#2ee6a6;transition:width .08s}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 68px - 120px)}
+  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;min-height:0}
+  .panel .head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
+  .panel .body{padding:12px 16px;overflow:auto;min-height:0}
+  .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
+  .notes{outline:none}
+  .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .toolbar select,.toolbar input[type="number"]{height:30px}
+  .drawer{position:fixed;right:12px;top:80px;bottom:12px;width:420px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
+  .drawer .group{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="inner container">
+    <div class="titlewrap">
+      <div style="font-size:24px">🐱</div>
+      <div class="title">ScribeCat</div>
+      <div class="badge">v1.9.9</div>
+    </div>
+    <div class="status">
+      <div id="stApi" class="pill warn">API: checking…</div>
+      <div id="stMic" class="pill warn">Mic: unknown</div>
+      <div id="stStream" class="pill warn">Stream: idle</div>
+      <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
+    </div>
+  </div>
+</div>
+
+<div class="controls container">
+  <div class="ctrl-row">
+    <select id="classSel" title="Class"></select>
+    <button id="manageBtn" class="btn">Manage</button>
+    <input id="titleBox" placeholder="Title (auto)" style="flex:1;min-width:220px"/>
+    <select id="micSel" title="Microphone"></select>
+    <div class="vu"><div id="vuBar"></div></div>
+  </div>
+  <div class="ctrl-row" style="justify-self:end">
+    <button id="startBtn"  class="btn">▶ Start</button>
+    <button id="pauseBtn"  class="btn" style="display:none">Pause</button>
+    <button id="resumeBtn" class="btn" style="display:none">Resume</button>
+    <button id="stopBtn"   class="btn" style="display:none">⏹ Stop</button>
+    <button id="summaryBtn" class="btn" style="display:none">Summarize → Notes</button>
+    <button id="saveBtn" class="btn">Save</button>
+    <button id="dlBtn" class="btn">Download</button>
+  </div>
+</div>
+
+<div class="grid container">
+  <div class="panel">
+    <div class="head">
+      <div>Live Transcript</div>
+      <label class="chip"><input id="sentenceChk" type="checkbox" checked/> sentence</label>
+      <label class="chip"><input id="tsChk" type="checkbox"/> timestamps</label>
+    </div>
+    <div id="live" class="body" style="color:var(--sub);font-size:14px;line-height:1.4"></div>
+    <div class="footer">
+      <label><input id="autoScrollChk" type="checkbox" checked/> Auto-scroll</label>
+      <span style="opacity:.7">(scroll up to pause; resumes near bottom)</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="head">
+      <div>Notes</div>
+      <div class="toolbar">
+        <div><select id="fontSizeSel" title="Font size"></select><input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)"/></div>
+        <select id="fontFamilySel" title="Font family (selection)">
+          <option>system-ui</option><option>Arial</option><option>Helvetica</option><option>Georgia</option>
+          <option>Times New Roman</option><option>Courier New</option><option>Verdana</option><option>Trebuchet MS</option>
+        </select>
+        <button id="hlBtn" class="btn" title="Highlight">🖍️</button>
+        <button id="unhlBtn" class="btn" title="Unhighlight / Clear inline styles">🧽</button>
+        <button id="boldBtn" class="btn" title="Bold (⌘/Ctrl+B)">B</button>
+        <button id="italicBtn" class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
+        <button id="undoBtn" class="btn" title="Undo">↶</button>
+        <button id="redoBtn" class="btn" title="Redo">↷</button>
+      </div>
+    </div>
+    <div id="notes" class="body notes" contenteditable="true">
+      <p>• If you can edit this, JS is running. Hit Start to test mic/stream.</p>
+    </div>
+  </div>
+</div>
+
+<div id="drawer" class="drawer">
+  <div class="group">
+    <h4>Behaviors</h4>
+    <label><input type="checkbox" id="b_sentence" checked> Sentence mode by default</label><br/>
+    <label><input type="checkbox" id="b_autoretry" checked> Auto-retry live transcription</label><br/>
+    <label><input type="checkbox" id="b_markers" checked> Cmd+M add time marker</label><br/>
+    <label><input type="checkbox" id="b_autoscroll" checked> Auto-scroll transcript</label><br/>
+    <label><input type="checkbox" id="b_timestamps"> Show timestamps in transcript</label>
+  </div>
+  <div class="group">
+    <h4>Danger zone</h4>
+    <button id="quitBtn" class="btn" style="background:#ffe3e3;border-color:#ffb3b3">Quit ScribeCat</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const API = "http://localhost:8787";
+  const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
+  const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
+  const classSel=byId("classSel"), titleBox=byId("titleBox");
+  const micSel=byId("micSel"), vu=byId("vuBar");
+  const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
+  const saveBtn=byId("saveBtn"), dlBtn=byId("dlBtn"), summaryBtn=byId("summaryBtn");
+  const live=byId("live"), notes=byId("notes");
+  const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
+  const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
+
+  function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
+  fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API: OK":"API: down")).catch(()=>tag(stApi,"bad","API: down"));
+
+  gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
+  manageBtn.onclick = ()=> drawer.style.display='block';
+
+  // Mic + devices
+  async function listMics(){
+    try{
+      await navigator.mediaDevices.getUserMedia({audio:true});
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const auds = devs.filter(d=>d.kind==="audioinput");
+      micSel.innerHTML = auds.map(d=>`<option value="${d.deviceId}">${d.label||"(default)"}</option>`).join("") || `<option value="">(default)</option>`;
+      tag(stMic,"ok","Mic: allowed");
+    }catch(e){ tag(stMic,"bad","Mic: blocked"); }
+  }
+  navigator.mediaDevices?.addEventListener?.('devicechange', ()=>listMics());
+  listMics();
+
+  // Transcript + stream
+  let running=false, paused=false, startTs=null, ws=null, sentBuf="", transcriptText="", userNearBottom=true;
+  let audioCtx, source, processor, mediaStream, reconnects=0;
+  function nearBottom(el,px=48){ return (el.scrollHeight - el.scrollTop - el.clientHeight) <= px; }
+  live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
+  function timestamp(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
+  function appendLine(text){
+    const withTs = (tsChk.checked)?`<span style="opacity:.5;margin-right:8px">${timestamp()}</span>`:"";
+    const div=document.createElement("div"); div.style.fontSize="14px"; div.innerHTML=withTs + text; live.appendChild(div);
+    if ((autoScroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+  }
+  function toPCM16Bytes(f32, sr){ const ratio=sr/16000,len=Math.floor(f32.length/ratio),out=new Int16Array(len); for(let o=0,i=0;o<len;o++,i+=ratio){ let s=f32[i|0]; s=Math.max(-1,Math.min(1,s)); out[o]=s<0?s*0x8000:s*0x7FFF; } return out.buffer; }
+  async function openWS(){
+    try{
+      const tr = await fetch(API+"/api/aai-token?expires_in_seconds=300");
+      if (!tr.ok) throw new Error("token");
+      const {token} = await tr.json();
+      const s = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`);
+      s.binaryType="arraybuffer";
+      s.onopen=()=>tag(stStream,"ok","Stream: connected");
+      s.onclose=()=>tag(stStream,"warn","Stream: closed");
+      s.onerror=()=>tag(stStream,"bad","Stream: error");
+      s.onmessage=(m)=>{ if(typeof m.data!=="string") return; try{
+        const j=JSON.parse(m.data);
+        const txt=j.formatted_transcript||j.transcript||(j.turn&&(j.turn.formatted_transcript||j.turn.transcript))||j.text;
+        if(txt){
+          if (sentenceChk.checked||byId("b_sentence").checked){
+            const done=/[.!?]\s*$/.test(txt.trim());
+            if(done){
+              const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0");
+              const prefix = (tsChk.checked||byId("b_timestamps").checked)?`[${mm}:${ss}] `:"";
+              transcriptText += prefix + txt.trim()+"\n"; sentBuf="";
+            } else { sentBuf = txt+" "; }
+            live.textContent = transcriptText + sentBuf;
+          } else { live.textContent = txt; }
+          if ((autoScroll.checked && byId("b_autoscroll").checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+        }
+      }catch(_){}}; 
+      return s;
+    }catch(e){
+      tag(stStream,"warn","Stream: demo mode"); return null;
+    }
+  }
+  async function start(){
+    if (running) return;
+    running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf="";
+    try{
+      const deviceId = micSel.value || undefined;
+      mediaStream = await navigator.mediaDevices.getUserMedia({audio:{deviceId,channelCount:1},video:false});
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      source = audioCtx.createMediaStreamSource(mediaStream);
+      processor = audioCtx.createScriptProcessor(4096,1,1);
+      ws = await openWS();
+      processor.onaudioprocess = (e)=>{
+        if (paused) return;
+        const ch=e.inputBuffer.getChannelData(0);
+        const sr=e.inputBuffer.sampleRate||audioCtx.sampleRate||44100;
+        if (ws && ws.readyState===1) ws.send(toPCM16Bytes(ch,sr));
+        let peak=0; for(let i=0;i<ch.length;i++) peak=Math.max(peak,Math.abs(ch[i])); vu.style.width=Math.min(100,(peak*200)|0)+"%";
+      };
+      source.connect(processor); processor.connect(audioCtx.destination);
+      appendLine("Session started");
+      if (!ws){ ["Demo mode active.","Mic working, token missing or blocked.","Notes + Save still work."].forEach(appendLine); }
+    }catch(e){ appendLine("Mic denied/unavailable. Type notes while we sort it."); tag(stMic,"bad","Mic: blocked"); running=false; }
+  }
+  async function stop(){
+    paused=false;
+    if (processor){ processor.disconnect(); processor=null; }
+    if (source){ source.disconnect(); source=null; }
+    if (audioCtx){ try{ await audioCtx.close(); }catch(_){} audioCtx=null; }
+    if (mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
+    if (ws){ try{ ws.close(); }catch(_){} ws=null; }
+    vu.style.width="0%";
+    appendLine("Session stopped."); summaryBtn.style.display=''; tag(stStream,"warn","Stream: idle");
+    running=false;
+  }
+  startBtn.onclick=()=>{ startBtn.style.display='none'; pauseBtn.style.display=''; stopBtn.style.display=''; resumeBtn.style.display='none'; summaryBtn.style.display='none'; start(); };
+  pauseBtn.onclick=()=>{ paused=true; pauseBtn.style.display='none'; resumeBtn.style.display=''; };
+  resumeBtn.onclick=()=>{ paused=false; pauseBtn.style.display=''; resumeBtn.style.display='none'; };
+  stopBtn.onclick=()=>{ stop(); pauseBtn.style.display='none'; resumeBtn.style.display='none'; stopBtn.style.display='none'; startBtn.style.display=''; };
+
+  // Notes toolbar
+  const sizeSel=byId("fontSizeSel"), sizeBox=byId("fontSizeBox"), famSel=byId("fontFamilySel");
+  for (let px=4; px<=60; px++){ const o=document.createElement('option'); o.value=px; o.textContent=px+'px'; if(px===16) o.selected=true; sizeSel.appendChild(o); }
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function applyStyleToSelection(style){
+    const sel=window.getSelection(); if(!sel||sel.rangeCount===0) return false;
+    const rng=sel.getRangeAt(0); if(rng.collapsed) return false;
+    try{ const span=document.createElement('span'); Object.assign(span.style, style); rng.surroundContents(span); return true; }catch(e){ return false; }
+  }
+  byId("hlBtn").onclick=()=>applyStyleToSelection({backgroundColor:'var(--brand)'}); byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
+  byId("boldBtn").onclick=()=>document.execCommand('bold'); byId("italicBtn").onclick=()=>document.execCommand('italic');
+  byId("undoBtn").onclick=()=>document.execCommand('undo'); byId("redoBtn").onclick=()=>document.execCommand('redo');
+  sizeSel.onchange=()=>{ const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
+  sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
+  famSel.onchange = ()=>{ const fam=famSel.value; if(!applyStyleToSelection({fontFamily:fam})){ notes.style.fontFamily=fam; } };
+
+  // Marker hotkey
+  document.addEventListener("keydown", e=>{
+    if (!byId("b_markers").checked) return;
+    if ((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="m"){
+      e.preventDefault();
+      const t=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((t/60)|0).padStart(2,"0"), ss=String(t%60).padStart(2,"0");
+      const line=`[⏱ ${mm}:${ss}] `; notes.focus(); document.execCommand("insertText", false, line);
+      live.textContent += `\n${line}\n`; if ((autoScroll.checked && byId("b_autoscroll").checked) && userNearBottom) live.scrollTop = live.scrollHeight;
+    }
+  });
+
+  // Summary → Node /api/summarize
+  function summarize(){
+    const body = { transcript_text: live.textContent || "" };
+    fetch(API+"/api/summarize",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.json()).then(j=>{
+        const md=(j.summary_md||"").trim();
+        const h2=document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
+        const div=document.createElement('div'); div.innerHTML = (md ? md.replace(/\n/g,"<br>") : "[no summary]");
+        notes.appendChild(h2); notes.appendChild(div);
+      }).catch(e=>alert("Summary failed: "+e.message));
+  }
+  summaryBtn.onclick=summarize;
+
+  // Save → Node /api/save (Airtable via server)
+  function payload(){
+    return {
+      title: titleBox.value || (classSel.value?`${classSel.value} — ${new Date().toISOString().slice(0,10)}`:'Lecture'),
+      class_name: classSel.value || "",
+      duration_seconds: startTs ? Math.round((Date.now()-startTs)/1000) : 0,
+      notes_html: notes.innerHTML,
+      transcript_text: live.textContent || ""
+    };
+  }
+  saveBtn.onclick=async()=>{
+    try{
+      const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload())});
+      const j=await r.json().catch(()=>null);
+      if (!r.ok) throw new Error(j?JSON.stringify(j):"save failed");
+      tag(stApi,"ok","API: OK"); alert("Saved via server ✅");
+    }catch(e){ tag(stApi,"warn","API: offline"); alert("Save failed. Use Download to keep a copy."); }
+  };
+  dlBtn.onclick=()=>{ const blob=new Blob([JSON.stringify(payload(),null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="ScribeCat-"+(new Date().toISOString().replace(/[:.]/g,'-'))+".json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); };
+
+  // Ask AI → Node /api/openai-chat
+  // Minimal inline panel
+  const askBtn=document.createElement('button'); askBtn.textContent="Ask AI"; askBtn.className="btn"; askBtn.style.position="fixed"; askBtn.style.left="10px"; askBtn.style.bottom="12px"; askBtn.style.zIndex="99"; document.body.appendChild(askBtn);
+  const panel=document.createElement('div'); panel.style.cssText="position:fixed;left:10px;bottom:58px;width:340px;max-height:60vh;overflow:auto;background:#fff;border:1px solid #d0d7de;border-radius:12px;padding:10px;display:none;box-shadow:0 6px 24px rgba(0,0,0,.15)"; document.body.appendChild(panel);
+  panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><strong>Ask ScribeCat</strong><button id="askClose" class="btn" style="background:transparent;border:0">✕</button></div><label style="font-size:12px;color:#6b6b7a"><input type="checkbox" id="askCtx" checked> include notes & transcript</label><textarea id="askInput" placeholder="Question…" style="width:100%;height:120px"></textarea><div style="display:flex;gap:8px;margin-top:6px"><button id="askSend" class="btn" style="background:var(--accent);color:#fff;border-color:transparent">Send</button><button id="askPaste" class="btn">Paste to Notes</button></div><pre id="askOut" style="white-space:pre-wrap"></pre>';
+  const askClose=panel.querySelector("#askClose"), askCtx=panel.querySelector("#askCtx"), askInput=panel.querySelector("#askInput"), askSend=panel.querySelector("#askSend"), askPaste=panel.querySelector("#askPaste"), askOut=panel.querySelector("#askOut");
+  askBtn.onclick=()=>{ panel.style.display='block'; };
+  askClose.onclick=()=>{ panel.style.display='none'; };
+  askSend.onclick=async()=>{
+    askOut.textContent="Thinking…";
+    try{
+      const body={ prompt:askInput.value, include_context:askCtx.checked, notes_html:notes.innerHTML, transcript_text:live.textContent||"" };
+      const r=await fetch(API+"/api/openai-chat",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+      const j=await r.json(); askOut.textContent=(j&&(j.reply))||"No answer.";
+      askSend.dataset.last=askOut.textContent;
+    }catch(e){ askOut.textContent="Error: "+e.message; }
+  };
+  askPaste.onclick=()=>{ const a=askSend?.dataset?.last||askOut.textContent||""; if(a) notes.insertAdjacentHTML("beforeend", `<div>${a.replace(/\n/g,"<br>")}</div>`); };
+
+  // Quit
+  byId('quitBtn').onclick=()=>{ fetch(API+'/api/quit',{method:"POST"}).catch(()=>{}); window.close(); setTimeout(()=>{ location.href='about:blank'; },250); };
+
+  // Class select (minimal)
+  function renderClassOptions(list){ classSel.innerHTML='<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("")+'<option value="__other__">Other…</option>'; }
+  (function bootClasses(){ const saved=JSON.parse(localStorage.getItem("lc_classes")||"[]"); renderClassOptions(saved); })();
+  classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
+})();
+</script>
+</body>
+</html>

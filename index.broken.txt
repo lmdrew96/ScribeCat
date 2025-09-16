@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px 'Helvetica Neue'; color: #585767; -webkit-text-stroke: #585767}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px 'Helvetica Neue'; color: #585767; -webkit-text-stroke: #585767; min-height: 13.0px}
+    span.s1 {font-kerning: none}
+  </style>
+</head>
+<body>
+<p class="p1"><span class="s1">ï¿¼ ScribeCat --:-- âš™ï¸ â» Quit Lecture Controls Class: Choose classâ€¦ Manage Mic: (default) Refresh Start Pause Resume Stop Save Status: idle Mic FPS: 0 WS: - Notes B I U â€¢ List 1. List H1 H2 â€œQuoteâ€ Live Transcript Settings âœ– Preset themes Choose a themeâ€¦ Lilac Butter Grape Soda Campus Sunset Mint Mojito Chill Slate Bumble Pop Apply Classes Import from URL Import .ics file Save classes Clear Theme &amp; Colors Background Text Card Border Button Button text Notes bg Transcript bg Typography Atkinson Hyperlegible Inter Space Grotesk IBM Plex Sans Source Sans 3 Noto Sans Outfit Instrument Sans Work Sans Manrope Karla Figtree Poppins Source Serif 4 Lora Merriweather PT Serif System UI Noto Serif Quicksand Base font size Line height Layout &amp; Spacing SplitStack Content width Page margin Row gap Corner radius Button radius VU height</span></p>
+<p class="p2"><span class="s1">&lt;!-- ScribeCat v1.8.5 UI polish &amp; fixes --&gt;</span></p>
+<p class="p2"><span class="s1">&lt;style id="scribecat_185_css"&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>:root{</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>--sc-maxw: 1200px;<span class="Apple-converted-space">              </span>/* page width cap */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>--sc-pad: 14px;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>--sc-gap: 10px;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>--sc-muted:#6b6b7a;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* constrain page width */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-page {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>max-width: var(--sc-maxw);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>margin: 0 auto;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>padding: 0 var(--sc-pad);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* version badge */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-version {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>position: fixed; right: 8px; bottom: 6px;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>font: 11px/1.2 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>color: var(--sc-muted); opacity:.8; pointer-events:none; z-index: 2000;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* top bar tweaks */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-topbar { position: sticky; top: 0; z-index: 1000; background: inherit; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-topbar .gear-btn, .sc-topbar .gear-btn:focus {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>background: transparent !important; border: none !important; box-shadow: none !important;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* settings drawer always above top bar + scroll reliably */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-drawer { z-index: 1500; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-drawer-content{</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>max-height: calc(100vh - 80px);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>overflow: auto !important;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>padding-bottom: 24px; /* extra cushion at bottom */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* tighter settings “cards” */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-card { border-radius: 10px; padding: 10px; margin-bottom: 10px; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-card h4 { margin: 0 0 6px; font-size: 13px; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* kill backgrounds on notes controls */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-toolbar button, .sc-toolbar .icon-btn {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>background: transparent !important; border: 0 !important; box-shadow: none !important;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* toolbar layout: single-line labels -&gt; icon buttons with tooltips */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-toolbar{</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>display: flex; flex-wrap: wrap; gap: 6px; align-items: center;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>padding: 6px 8px; border: 1px solid #ddd; border-radius: 10px; background: #fff;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-toolbar .icon-btn{</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>width: 30px; height: 30px; display: inline-grid; place-items: center;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>border-radius: 8px; cursor: pointer;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-toolbar .icon-btn:hover{ background: rgba(0,0,0,.06) !important; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-toolbar .icon-btn svg{ width:18px; height:18px }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* ensure transcript &amp; notes backgrounds themeable (no forced black) */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>#notesArea, #liveTranscript {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>background: var(--notes-bg, #fff) !important;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>color: var(--notes-fg, #1b1431) !important;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>/* status row next to VU */</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-status { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--sc-muted) }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>.sc-pill { padding:3px 7px; border-radius:999px; border:1px solid #ddd }</span></p>
+<p class="p2"><span class="s1">&lt;/style&gt;</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1">&lt;div id="sc_version_badge" class="sc-version"&gt;&lt;/div&gt;</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1">&lt;script id="scribecat_185_js"&gt;</span></p>
+<p class="p2"><span class="s1">(() =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const VERSION = "v1.8.5";</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 1) Page width cap</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>document.documentElement.classList.add('sc-page');</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 2) Version badge</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const vb = document.getElementById('sc_version_badge');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>if (vb) vb.textContent = `ScribeCat ${VERSION}`;</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 3) Make sure settings drawer scrolls and sits above top bar</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const markDrawer = () =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>const drawer = document.querySelector('#settingsDrawer, .settingsDrawer, [data-role="settings-drawer"]');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>if (drawer &amp;&amp; !drawer.classList.contains('sc-drawer')) {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>drawer.classList.add('sc-drawer');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>const inner = drawer.querySelector('.content, .drawer-content, .body') || drawer;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>inner.classList.add('sc-drawer-content');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>};</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>markDrawer();</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const mo = new MutationObserver(markDrawer);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>mo.observe(document.body, { childList:true, subtree:true });</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 4) Gear button: strip background</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const gear = document.querySelector('#settingsBtn, .gear-btn, button[aria-label="Settings"]');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>if (gear) gear.classList.add('gear-btn');</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 5) Quit button: wire to API and try to close tab</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const findQuit = () =&gt; document.querySelector('#quitBtn, #quit, button[data-role="quit"]');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const wireQuit = () =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>const q = findQuit();</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>if (!q || q.dataset.wired === "1") return;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>q.dataset.wired = "1";</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>q.addEventListener('click', async () =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>try {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>await fetch('http://localhost:8787/api/quit', { method:'POST' });</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>} catch(_) {}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>// best-effort close</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>try { window.open('', '_self'); window.close(); } catch(_) {}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>// fallback hint</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>alert('ScribeCat server is quitting. You can close this tab.');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>};</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>wireQuit();</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>setInterval(wireQuit, 800); // survive hot reloads / UI re-renders</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 6) Replace long text labels in notes toolbar with icons</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const icons = {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>bold:<span class="Apple-converted-space">  </span>`&lt;svg viewBox="0 0 24 24"&gt;&lt;path d="M13.5 15H9v4H6V5h7a4 4 0 010 8h.5a3.5 3.5 0 010 7H9v-2h4.5a1.5 1.5 0 000-3zM9 7v4h4a2 2 0 000-4H9z"/&gt;&lt;/svg&gt;`,</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>italic:`&lt;svg viewBox="0 0 24 24"&gt;&lt;path d="M10 4v2h2.58l-3.16 12H7v2h7v-2h-2.58l3.16-12H17V4z"/&gt;&lt;/svg&gt;`,</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>underline:`&lt;svg viewBox="0 0 24 24"&gt;&lt;path d="M6 4v7a6 6 0 0012 0V4h-2v7a4 4 0 11-8 0V4H6zM5 20v-2h14v2H5z"/&gt;&lt;/svg&gt;`,</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>ol:<span class="Apple-converted-space">    </span>`&lt;svg viewBox="0 0 24 24"&gt;&lt;path d="M8 6h12v2H8V6zm0 5h12v2H8v-2zm0 5h12v2H8v-2zM4 7h2V5H3v1h1v1zm-1 6h3v-1H4v-.5h1.5V10H3v1h1v1zm0 6h3v-1H4v-.5h2V16H3v1h1v1z"/&gt;&lt;/svg&gt;`,</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>ul:<span class="Apple-converted-space">    </span>`&lt;svg viewBox="0 0 24 24"&gt;&lt;path d="M9 6h11v2H9V6zm0 5h11v2H9v-2zm0 5h11v2H9v-2zM4 7.5A1.5 1.5 0 104 4.5a1.5 1.5 0 000 3zm0 6A1.5 1.5 0 104 10.5a1.5 1.5 0 000 3zm0 6a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/&gt;&lt;/svg&gt;`,</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>highlight:`&lt;svg viewBox="0 0 24 24"&gt;&lt;path d="M7 17l-2 2v1h14v-1l-2-2H7zm1.5-3.5l6.36-6.36a2 2 0 112.83 2.83L11.33 16H7v-2.83l1.5-1.67z"/&gt;&lt;/svg&gt;`</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>};</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const notesToolbar = document.querySelector('#notesToolbar, .notesToolbar');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>if (notesToolbar) {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>notesToolbar.classList.add('sc-toolbar');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>const makeBtn = (cmd, title) =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>const b = document.createElement('button');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>b.type='button'; b.className='icon-btn'; b.innerHTML = icons[cmd]; b.title = title;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>b.addEventListener('click', () =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>const n = document.getElementById('notesArea');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>if (!n) return;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>n.focus();</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>document.execCommand(</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>cmd==='ol' ? 'insertOrderedList' :</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>cmd==='ul' ? 'insertUnorderedList' :</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>cmd==='highlight' ? 'hiliteColor' :</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>cmd, false,</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">          </span>cmd==='highlight' ? '#fff59d' : null</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>return b;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>};</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>notesToolbar.innerHTML = '';</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>['bold','italic','underline','ul','ol','highlight'].forEach(k =&gt; notesToolbar.appendChild(makeBtn(k, k)));</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 7) Status row placement next to VU (shorter bar)</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const vu = document.querySelector('#vuBar, .vuBar');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const status = document.querySelector('#statusRow, .statusRow');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>if (vu &amp;&amp; status &amp;&amp; !status.classList.contains('sc-status')) {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>status.classList.add('sc-status');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>vu.style.maxWidth = '280px';</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>vu.style.height = '10px';</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>vu.parentElement?.insertBefore(status, vu.nextSibling);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 8) High-contrast theme presets override</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>window.ScribeCat = window.ScribeCat || {};</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>window.ScribeCat.applyPreset = function(name){</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>const presets = {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>"Lavender Butter": {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>bg:"#f3e8ff", fg:"#1b1431", accent:"#ffd34d", outline:"#2b0f50",</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>notesBg:"#ffffff", notesFg:"#1b1431"</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>},</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>"Midnight Neon": {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>bg:"#0f1226", fg:"#f2f6ff", accent:"#2ee6a6", outline:"#7c89ff",</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>notesBg:"#121530", notesFg:"#f2f6ff"</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>},</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>"Paper Black": {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>bg:"#ffffff", fg:"#0e0e10", accent:"#111111", outline:"#2c2c32",</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>notesBg:"#ffffff", notesFg:"#0e0e10"</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>},</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>"Sunrise": {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>bg:"#fff6e7", fg:"#20120a", accent:"#ff7a59", outline:"#2f1408",</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span>notesBg:"#ffffff", notesFg:"#20120a"</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>};</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>const p = presets[name] || presets["Lavender Butter"];</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>const root = document.documentElement.style;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>root.setProperty('--notes-bg', p.notesBg);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>root.setProperty('--notes-fg', p.notesFg);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>document.body.style.background = p.bg;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>document.body.style.color = p.fg;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>document.querySelectorAll('.card, .sc-card').forEach(el =&gt; el.style.borderColor = p.outline);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>document.querySelectorAll('button.primary').forEach(el =&gt; { el.style.background = p.accent; el.style.color = p.fg; });</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>// persist last theme</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>try { localStorage.setItem('sc_theme', JSON.stringify({ name, ...p })); } catch {}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>};</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// If you have an existing preset selector, wire its Apply button robustly:</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const applyBtns = Array.from(document.querySelectorAll('#applyPreset, button[data-role="apply-preset"]'));</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>applyBtns.forEach(btn =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>if (btn.dataset.wired === "1") return;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>btn.dataset.wired = "1";</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>btn.addEventListener('click', () =&gt; {</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>const sel = document.querySelector('#presetName, select[data-role="preset-name"]');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>const name = sel?.value || "Lavender Butter";</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">      </span>window.ScribeCat.applyPreset(name);</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>});</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 9) Make sure transcript is scrollable</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>const lt = document.getElementById('liveTranscript');</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>if (lt) { lt.style.maxHeight = '40vh'; lt.style.overflow = 'auto'; lt.style.padding = '8px'; lt.style.borderRadius='10px'; lt.style.border='1px solid #e0e0ea'; }</span></p>
+<p class="p3"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>// 10) Ensure page doesn’t overflow window width</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">  </span>document.body.style.overflowX = 'hidden';</span></p>
+<p class="p2"><span class="s1">})();</span></p>
+<p class="p2"><span class="s1">&lt;/script&gt;</span></p>
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ScribeCat</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- Nugget favicon set -->
+  <link rel="apple-touch-icon" sizes="180x180" href="nugget-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="nugget-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="nugget-16.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <style>
+    :root{
+      --bg:#f7f7fb; --fg:#1b1431; --accent:#ffd34d; --outline:#2b0f50;
+      --notes-bg:#fff; --notes-fg:#1b1431; --maxw:1200px;
+      --ui-font:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
+      --topbar-h:72px; --brand-img:36px; --title-size:22px; --ctrl-h:40px;
+      --btn-pad-v:10px; --btn-pad-h:12px; --badge-font:13px;
+
+      /* layout */
+      --split: 56%;                 /* notes width in split mode */
+      --gap: 12px;
+      --card-pad: 12px;
+      --density-scale: 1;           /* 1=comfortable, .9=cozy, 1.1=spacious */
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font:calc(15px*var(--density-scale))/1.45 var(--ui-font)}
+    .container{max-width:var(--maxw);margin:0 auto;padding:14px}
+    .top{position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 18px;border-bottom:1px solid #e6e6f0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    select,input,button{font:14px/1.2 inherit;height:calc(var(--ctrl-h)*var(--density-scale))}
+    button{padding:calc(var(--btn-pad-v)*var(--density-scale)) calc(var(--btn-pad-h)*var(--density-scale));border:1px solid #d0d7de;border-radius:10px;background:#fff;cursor:pointer}
+    button.primary{background:var(--accent);border-color:#e3b92a}
+    button.ghost{background:transparent;border:0}
+    #vu{height:14px;background:#eaeaf3;border-radius:12px;overflow:hidden;flex:1;min-width:160px}
+    #vu>div{height:100%;width:0;background:#2ee6a6;transition:width .08s}
+    .card{background:#fff;border:1px solid #e0e0ea;border-radius:12px;padding:var(--card-pad);margin-top:12px}
+    h2{margin:0 0 8px;font-size:calc(18px*var(--density-scale))}
+
+    /* panes */
+    .pane-root{display:flex;gap:var(--gap);align-items:stretch}
+    .pane{flex:1;min-height:220px;display:flex;flex-direction:column}
+    #splitter{width:10px;cursor:col-resize;background:linear-gradient(90deg,transparent 0 4px,#d9d9e8 4px 6px,transparent 6px 100%);border-radius:8px}
+    .stacked .pane-root{flex-direction:column}
+    .stacked #splitter{display:none}
+
+    #notes{flex:1;min-height:180px;background:var(--notes-bg);color:var(--notes-fg);border:1px solid #e0e0ea;border-radius:10px;padding:10px;overflow:auto}
+    #live{flex:1;min-height:180px;max-height:none;overflow:auto;background:var(--notes-bg);color:var(--notes-fg);border:1px solid #e0e0ea;border-radius:10px;padding:10px}
+
+    .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:#fff}
+    .toolbar button{width:30px;height:30px;border:0;background:transparent;border-radius:8px}
+    .toolbar button:hover{background:rgba(0,0,0,.06)}
+    .badges{display:flex;gap:8px;align-items:center;font-size:var(--badge-font);color:#6b6b7a}
+    .badge{padding:4px 8px;border-radius:999px;border:1px solid #ddd;background:#fff}
+
+    #drawer{position:fixed;right:12px;top:calc(var(--topbar-h) + 12px);bottom:12px;width:420px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
+    .drawer-card{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
+    .drawer-card h4{margin:0 0 8px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .version{position:fixed;right:8px;bottom:6px;font:11px/1.2 ui-sans-serif;opacity:.7}
+    .brand{display:flex;align-items:center;gap:8px;font-weight:700}
+    .brand strong{font-size:var(--title-size)}
+    .brand img{width:var(--brand-img);height:var(--brand-img);object-fit:cover;border-radius:50%;border:1px solid rgba(0,0,0,.15);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+    #gear{font-size:22px}
+    .hint{font-size:12px;color:#6b6b7a}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:#f2f2f7;border:1px solid #ddd;border-radius:6px;padding:0 6px}
+  </style>
+</head>
+<body>
+<div class="top">
+  <div class="row">
+    <div class="brand">
+      <img src="nugget-32.png" alt="ScribeCat">
+      <strong>ScribeCat</strong>
+    </div>
+    <div style="margin-left:auto" class="badges" id="rightBadges">
+      <span id="clock" class="badge">—</span>
+      <span id="status" class="badge">idle</span>
+      <label class="badge"><input type="checkbox" id="autoScroll" checked> auto-scroll</label>
+      <button id="gear" class="ghost" title="Settings">⚙️</button>
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <select id="class"></select>
+    <button id="manage" class="ghost">Manage</button>
+    <input id="title" placeholder="Title (auto)" style="flex:1;min-width:220px">
+    <select id="mic"></select>
+    <div id="vu"><div></div></div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button id="start"  class="primary">Start</button>
+    <button id="pause">Pause</button>
+    <button id="resume">Resume</button>
+    <button id="stop">Stop</button>
+    <button id="save">Save</button>
+  </div>
+</div>
+
+<div class="container" id="main">
+  <div class="pane-root" id="paneRoot">
+    <div class="pane" id="paneNotes">
+      <div class="card">
+        <h2>Notes</h2>
+        <div class="toolbar" id="ntb">
+          <button data-cmd="bold" title="Bold"><b>B</b></button>
+          <button data-cmd="italic" title="Italic"><i>I</i></button>
+          <button data-cmd="underline" title="Underline"><u>U</u></button>
+          <button data-cmd="insertUnorderedList" title="Bulleted list">•</button>
+          <button data-cmd="insertOrderedList" title="Numbered list">1.</button>
+          <button id="quote" title="Quote">“”</button>
+          <button id="h1" title="H1">H1</button>
+          <button id="h2" title="H2">H2</button>
+          <button id="highlight" title="Highlight">🖍️</button>
+        </div>
+        <div id="notes" contenteditable="true"></div>
+      </div>
+    </div>
+
+    <div id="splitter" title="Drag to resize"></div>
+
+    <div class="pane" id="paneLive">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0">Live Transcript</h2>
+          <label class="badges"><input type="checkbox" id="showSentences" checked> sentence mode</label>
+        </div>
+        <div id="live"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Drawer -->
+<div id="drawer">
+  <div class="drawer-card">
+    <h4>Preset themes</h4>
+    <div class="grid">
+      <select id="preset">
+        <option>Lavender Butter</option>
+        <option>Midnight Neon</option>
+        <option>Paper Black</option>
+        <option>Sunrise</option>
+      </select>
+      <button id="apply">Apply</button>
+    </div>
+  </div>
+
+  <div class="drawer-card">
+    <h4>Theme & Colors</h4>
+    <div class="grid">
+      <label>Background <input type="color" id="c_bg" value="#f7f7fb"></label>
+      <label>Text <input type="color" id="c_fg" value="#1b1431"></label>
+      <label>Accent <input type="color" id="c_accent" value="#ffd34d"></label>
+      <label>Outline <input type="color" id="c_outline" value="#2b0f50"></label>
+      <label>Notes bg <input type="color" id="c_nbg" value="#ffffff"></label>
+      <label>Notes text <input type="color" id="c_nfg" value="#1b1431"></label>
+    </div>
+  </div>
+
+  <div class="drawer-card">
+    <h4>Layout Options</h4>
+    <div class="grid3">
+      <label>Mode
+        <select id="layoutMode">
+          <option value="split">Split (side-by-side)</option>
+          <option value="stacked">Stacked (vertical)</option>
+        </select>
+      </label>
+      <label>Split ratio
+        <input id="splitRatio" type="range" min="30" max="70" value="56">
+      </label>
+      <label>Density
+        <select id="densitySel">
+          <option value="0.90">Cozy</option>
+          <option value="1.00" selected>Comfortable</option>
+          <option value="1.10">Spacious</option>
+        </select>
+      </label>
+    </div>
+    <div class="grid">
+      <label>Page width
+        <input id="maxw" type="range" min="900" max="1400" step="10" value="1200">
+      </label>
+      <button id="resetLayout">Reset layout</button>
+    </div>
+  </div>
+
+  <div class="drawer-card">
+    <h4>Classes</h4>
+    <textarea id="classesBox" placeholder="One class per line"></textarea>
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+      <button id="saveClasses">Save list</button>
+      <button id="importCanvasLocal">Import from Canvas (local)</button>
+      <label class="badge">.ics upload <input id="icsFile" type="file" accept=".ics"></label>
+      <div class="hint">Bookmarklet available below to scrape Canvas dashboard.</div>
+    </div>
+  </div>
+
+  <div class="drawer-card">
+    <h4>Behaviors</h4>
+    <label><input type="checkbox" id="b_sentence" checked> Sentence mode by default</label><br>
+    <label><input type="checkbox" id="b_autoretry" checked> Auto-retry live transcription if it closes</label><br>
+    <label><input type="checkbox" id="b_markers" checked> Cmd+M add time marker</label><br>
+    <label><input type="checkbox" id="b_polish"> Auto-polish transcript on Stop</label><br>
+    <label><input type="checkbox" id="b_autoscroll" checked> Auto-scroll transcript</label>
+  </div>
+
+  <div class="drawer-card">
+    <h4>Canvas scraper bookmarklet</h4>
+    <div class="hint">On your Canvas dashboard, click this bookmark to grab course names and open ScribeCat with them preloaded.</div>
+    <textarea id="bmlet" readonly style="width:100%;height:90px"></textarea>
+    <div class="hint">Create a new browser bookmark, name it “ScribeCat Canvas Import”, and paste the line above as the URL.</div>
+  </div>
+
+  <div class="drawer-card">
+    <h4>Danger zone</h4>
+    <button id="quit" style="background:#ffe3e3;border-color:#ffb3b3">Quit ScribeCat</button>
+  </div>
+</div>
+
+<div class="version">ScribeCat v1.9.0</div>
+
+<script>
+const API = "http://localhost:8787";
+const els = id => document.getElementById(id);
+const $class=els("class"), $title=els("title"), $mic=els("mic"), $vu=els("vu").firstElementChild;
+const $start=els("start"), $pause=els("pause"), $resume=els("resume"), $stop=els("stop"), $save=els("save");
+const $notes=els("notes"), $live=els("live"), $status=els("status"), $clock=els("clock");
+const $gear=els("gear"), $drawer=els("drawer"), $paneRoot=els("paneRoot"), $splitter=els("splitter");
+let mediaStream, audioCtx, processor, source, ws, running=false, paused=false, sentBuf="";
+let transcriptText = "", confidenceAvg = 0, confN=0, startTs=null, className="";
+let reconnects=0, stopping=false;
+
+// clock
+setInterval(()=>{ $clock.textContent = new Date().toLocaleString(); }, 1000);
+
+// classes
+(function bootClasses(){
+  const saved = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+  renderClassOptions(saved);
+  els("saveClasses").onclick = ()=>{
+    const list = els("classesBox").value.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+    localStorage.setItem("lc_classes", JSON.stringify(list));
+    renderClassOptions(list);
+    alert("Saved.");
+  };
+  els("importCanvasLocal").onclick = async ()=>{
+    try{
+      const r = await fetch(API+"/api/canvas-pull"); const j = await r.json();
+      const list = (j.courses||[]).map(c=>cleanCourseName(c.name)).filter(Boolean);
+      const prev = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+      const merged = [...new Set([ ...prev, ...list ])].sort();
+      localStorage.setItem("lc_classes", JSON.stringify(merged));
+      renderClassOptions(merged);
+      els("classesBox").value = merged.join("\n");
+      alert(`Imported ${list.length} classes.`);
+    }catch(e){ alert("Import failed: "+e.message); }
+  };
+  // hash import (from bookmarklet)
+  if (location.hash.startsWith("#classes=")) {
+    try{
+      const arr = JSON.parse(decodeURIComponent(location.hash.slice(9)));
+      const cleaned = arr.map(cleanCourseName).filter(Boolean);
+      const prev = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+      const merged = [...new Set([...prev, ...cleaned])].sort();
+      localStorage.setItem("lc_classes", JSON.stringify(merged));
+      renderClassOptions(merged);
+      els("classesBox").value = merged.join("\n");
+      history.replaceState(null,"",location.pathname+location.search); // clear hash
+      alert(`ScribeCat imported ${cleaned.length} classes from bookmarklet.`);
+    }catch{}
+  }
+})();
+function cleanCourseName(n){
+  if(!n) return "";
+  // Remove trailing terms like "25F-FOO101-5102025 Fall"
+  n = n.replace(/\b\d{2}F-[A-Z]+\d{3,}-\d{3}\d{4}\b.*$/,'').replace(/\b25F-[A-Z]+\d{3,}-\d{3}\b.*$/,'');
+  // Normalize "SUBJ 123 — CODE: Title" to "CODE: Title" if present
+  const m = n.match(/\b([A-Z]{2,}\d{2,}[A-Z]?)\s*:\s*(.+)$/);
+  if (m) return `${m[1]}: ${m[2]}`.trim();
+  // Otherwise compress multiple spaces and dashes
+  n = n.replace(/\s*—\s*/g,' — ').replace(/\s{2,}/g,' ').trim();
+  return n;
+}
+function renderClassOptions(list){
+  $class.innerHTML = '<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("");
+}
+$class.onchange = ()=>{
+  className = $class.value || "";
+  $title.value = className ? `${className} — ${new Date().toISOString().slice(0,10)}` : "";
+};
+
+// ICS upload → parse client-side
+els("icsFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0]; if(!f) return;
+  const txt = await f.text();
+  const names = [...txt.matchAll(/^SUMMARY:(.+)$/mg)].map(m=>cleanCourseName(m[1].trim()));
+  const prev = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+  const merged = [...new Set([...prev, ...names])].filter(Boolean).sort();
+  localStorage.setItem("lc_classes", JSON.stringify(merged));
+  renderClassOptions(merged); els("classesBox").value = merged.join("\n");
+  alert(`Imported ${names.length} entries from .ics`);
+});
+
+// bookmarklet text
+els("bmlet").value = "javascript:(()=>{try{const sel=(...qs)=>qs.flatMap(q=>[...document.querySelectorAll(q)]);const texts=sel('[data-automation=dashboardCard__link]','.ic-DashboardCard__header-title','a.ig-title','.context_list_context a').map(a=>a.textContent.trim()).filter(Boolean);const uniq=[...new Set(texts)];const cleaned=uniq.map(t=>t.replace(/\\b\\d{2}F-[A-Z]+\\d{3,}-\\d{3}\\d{4}\\b.*$/,'').replace(/\\b25F-[A-Z]+\\d{3,}-\\d{3}\\b.*$/,'').replace(/\\s*—\\s*/g,' — ').replace(/\\s{2,}/g,' ').trim()).filter(Boolean);const url='http://localhost:8000/#classes='+encodeURIComponent(JSON.stringify(cleaned));window.open(url,'_blank');alert('ScribeCat: opened with '+cleaned.length+' classes.')}catch(e){alert('ScribeCat bookmarklet error: '+e.message)}})();";
+
+// mics
+async function listMics(){
+  const devs = await navigator.mediaDevices.enumerateDevices();
+  const auds = devs.filter(d=>d.kind==="audioinput");
+  $mic.innerHTML = auds.map(d=>`<option value="${d.deviceId}">${d.label||"(default)"}</option>`).join("");
+}
+listMics().catch(()=>{});
+
+// toolbar
+document.getElementById("ntb").addEventListener("click", e=>{
+  if(!(e.target.closest("button"))) return;
+  const b = e.target.closest("button");
+  if (b.id==="quote") document.execCommand("formatBlock", false, "blockquote");
+  else if (b.id==="h1") document.execCommand("formatBlock", false, "h1");
+  else if (b.id==="h2") document.execCommand("formatBlock", false, "h2");
+  else if (b.id==="highlight") document.execCommand("hiliteColor", false, "#fff59d");
+  else document.execCommand(b.dataset.cmd, false, null);
+  $notes.focus();
+});
+
+// settings drawer
+$gear.onclick = ()=>{ $drawer.style.display = ($drawer.style.display==="none"||!$drawer.style.display)?"block":"none"; };
+els("manage").onclick = ()=>{ $drawer.style.display="block"; };
+
+// theme presets & custom colors
+const presets = {
+  "Lavender Butter": {bg:"#f3e8ff", fg:"#1b1431", accent:"#ffd34d", outline:"#2b0f50", notesBg:"#fff", notesFg:"#1b1431"},
+  "Midnight Neon": {bg:"#0f1226", fg:"#f2f6ff", accent:"#2ee6a6", outline:"#7c89ff", notesBg:"#121530", notesFg:"#f2f6ff"},
+  "Paper Black": {bg:"#ffffff", fg:"#0e0e10", accent:"#111111", outline:"#2c2c32", notesBg:"#ffffff", notesFg:"#0e0e10"},
+  "Sunrise": {bg:"#fff6e7", fg:"#20120a", accent:"#ff7a59", outline:"#2f1408", notesBg:"#ffffff", notesFg:"#20120a"}
+};
+function applyTheme(p){
+  document.body.style.background=p.bg; document.body.style.color=p.fg;
+  document.documentElement.style.setProperty("--notes-bg", p.notesBg);
+  document.documentElement.style.setProperty("--notes-fg", p.notesFg);
+}
+els("apply").onclick = ()=>{ const p = presets[els("preset").value]; if (p) applyTheme(p); };
+["c_bg","c_fg","c_accent","c_outline","c_nbg","c_nfg"].forEach(id=>{
+  els(id).addEventListener("input", ()=>{
+    const v = els(id).value;
+    if (id==="c_bg") document.body.style.background=v;
+    if (id==="c_fg") document.body.style.color=v;
+    if (id==="c_nbg") document.documentElement.style.setProperty("--notes-bg", v);
+    if (id==="c_nfg") document.documentElement.style.setProperty("--notes-fg", v);
+    if (id==="c_accent") document.querySelectorAll('button.primary').forEach(b=>b.style.background=v);
+    if (id==="c_outline") document.querySelectorAll('.card').forEach(c=>c.style.borderColor=v);
+  });
+});
+
+// fonts & width
+els("fontSel")?.addEventListener("change", ()=>{ document.documentElement.style.setProperty("--ui-font", els("fontSel").value); });
+els("maxw").oninput = ()=>{ document.documentElement.style.setProperty("--maxw", els("maxw").value+"px"); };
+
+// behaviors + auto-scroll sync
+els("b_sentence").onchange = ()=>{ els("showSentences").checked = els("b_sentence").checked; };
+els("b_autoscroll").onchange = ()=>{ els("autoScroll").checked = els("b_autoscroll").checked; };
+els("autoScroll").onchange = ()=>{ els("b_autoscroll").checked = els("autoScroll").checked; };
+
+document.addEventListener("keydown", e=>{
+  if (!els("b_markers").checked) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==="m"){
+    e.preventDefault();
+    const t = ((Date.now() - (startTs||Date.now()))/1000)|0;
+    const mm = String((t/60)|0).padStart(2,"0");
+    const ss = String(t%60).padStart(2,"0");
+    const line = `[⏱ ${mm}:${ss}]`;
+    $notes.focus(); document.execCommand("insertText", false, `\n${line}\n`);
+    $live.textContent += `\n${line}\n`; if (els("autoScroll").checked) $live.scrollTop = $live.scrollHeight;
+  }
+});
+
+// layout controls
+const $splitRatio = els("splitRatio"), $layoutMode = els("layoutMode"), $densitySel = els("densitySel");
+$splitRatio.oninput = ()=>{ document.documentElement.style.setProperty("--split", $splitRatio.value+"%"); sizeSplit(); };
+$layoutMode.onchange = ()=>{
+  const m = $layoutMode.value;
+  document.getElementById("main").classList.toggle("stacked", m==="stacked");
+  sizeSplit();
+};
+$densitySel.onchange = ()=>{ document.documentElement.style.setProperty("--density-scale", $densitySel.value); };
+els("resetLayout").onclick = ()=>{
+  document.documentElement.style.setProperty("--split", "56%");
+  document.documentElement.style.setProperty("--maxw", "1200px");
+  document.documentElement.style.setProperty("--density-scale", "1.00");
+  $splitRatio.value = 56; $layoutMode.value = "split"; $densitySel.value = "1.00";
+  document.getElementById("main").classList.remove("stacked");
+  sizeSplit();
+};
+function sizeSplit(){
+  const split = getComputedStyle(document.documentElement).getPropertyValue("--split").trim();
+  const pct = parseFloat(split);
+  document.getElementById("paneNotes").style.flexBasis = pct+"%";
+  document.getElementById("paneLive").style.flexBasis = (100-pct)+"%";
+}
+sizeSplit();
+
+// drag splitter
+(function(){
+  let drag=false;
+  $splitter.addEventListener("pointerdown", e=>{ drag=true; $splitter.setPointerCapture(e.pointerId); });
+  $splitter.addEventListener("pointerup",   e=>{ drag=false; $splitter.releasePointerCapture(e.pointerId); });
+  $splitter.addEventListener("pointermove", e=>{
+    if (!drag) return;
+    const root = document.querySelector(".container").getBoundingClientRect();
+    const x = Math.min(Math.max(e.clientX - root.left, 200), root.width-200);
+    const pct = Math.round((x / root.width) * 100);
+    document.documentElement.style.setProperty("--split", pct+"%");
+    $splitRatio.value = pct;
+    sizeSplit();
+  });
+})();
+
+// === v3 realtime: PCM16 binary frames + Turn parsing ===
+function toPCM16Bytes(f32, sr){
+  const ratio = sr / 16000;
+  const len = Math.floor(f32.length / ratio);
+  const out = new Int16Array(len);
+  for (let o=0, i=0;o<len;o++,i+=ratio){
+    let s = f32[i|0];
+    s = Math.max(-1, Math.min(1, s));
+    out[o] = s < 0 ? s*0x8000 : s*0x7FFF;
+  }
+  return out.buffer;
+}
+async function openWS(){
+  const tr = await fetch(`${API}/api/aai-token?expires_in_seconds=300`);
+  if (!tr.ok) { $status.textContent = "token err"; throw new Error("Token fetch failed"); }
+  const {token} = await tr.json();
+  const url = `wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`;
+  const s = new WebSocket(url);
+  s.binaryType = "arraybuffer";
+
+  s.onopen  = () => { $status.textContent = "live"; reconnects = 0; console.log("[WS] open"); };
+  s.onerror = (e) => { console.log("[WS] error", e); $status.textContent = "ws error"; };
+  s.onclose = async (e) => {
+    console.log("[WS] close", e.code, e.reason);
+    $status.textContent = `closed (${e.code||"?"})`;
+    const allowRetry = running && els("b_autoretry").checked && !stopping;
+    if (allowRetry && reconnects < 6) {
+      const delay = Math.min(1500, 300 + reconnects * 250);
+      reconnects++;
+      await new Promise(r=>setTimeout(r, delay));
+      try { ws = await openWS(); } catch {}
+    }
+  };
+  s.onmessage = (m) => {
+    if (typeof m.data !== "string") return;
+    try {
+      const j = JSON.parse(m.data);
+      // v3 "Turn" style or flat
+      const txt =
+        j.formatted_transcript ||
+        j.transcript ||
+        (j.turn && (j.turn.formatted_transcript || j.turn.transcript)) ||
+        j.text;
+
+      if (txt) {
+        if (els("showSentences").checked) {
+          const done = /[.!?]\s*$/.test(txt.trim());
+          if (done) { transcriptText += txt.trim() + "\n"; sentBuf = ""; }
+          else { sentBuf = txt + " "; }
+          $live.textContent = transcriptText + sentBuf;
+        } else {
+          $live.textContent = txt;
+        }
+        if (els("autoScroll").checked) $live.scrollTop = $live.scrollHeight;
+      }
+      if (typeof j.confidence === "number") { confidenceAvg += j.confidence; confN++; }
+    } catch {}
+  };
+  return s;
+}
+
+async function start(){
+  if (running) return;
+  stopping=false;
+  $status.textContent="starting…";
+  const deviceId = $mic.value || undefined;
+  mediaStream = await navigator.mediaDevices.getUserMedia({audio:{deviceId, channelCount:1}, video:false});
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  source = audioCtx.createMediaStreamSource(mediaStream);
+  processor = audioCtx.createScriptProcessor(4096,1,1);
+
+  try { ws = await openWS(); } catch (e) { alert("Live transcription WebSocket failed to open. Check Console."); return; }
+
+  processor.onaudioprocess = (e)=>{
+    if (!ws || ws.readyState !== 1 || paused) return;
+    const ch = e.inputBuffer.getChannelData(0);
+    const sr = e.inputBuffer.sampleRate || (audioCtx && audioCtx.sampleRate) || 44100;
+    ws.send(toPCM16Bytes(ch, sr));
+    // VU
+    let peak=0; for(let i=0;i<ch.length;i++) peak=Math.max(peak, Math.abs(ch[i]));
+    $vu.style.width = Math.min(100, (peak*200)|0) + "%";
+  };
+
+  source.connect(processor); processor.connect(audioCtx.destination);
+  running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf="";
+}
+async function stop(){
+  paused=false; stopping=true;
+  if (processor){ processor.disconnect(); processor=null; }
+  if (source){ source.disconnect(); source=null; }
+  if (audioCtx){ await audioCtx.close().catch(()=>{}); audioCtx=null; }
+  if (mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
+  if (ws){ try{ ws.close(); }catch{} ws=null; }
+  running=false; $status.textContent="stopped"; $vu.style.width="0%";
+
+  // optional auto-polish; ignore failures quietly
+  if (els("b_polish").checked){
+    try{
+      const r = await fetch(API+"/api/polish",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify({transcript_text: transcriptText})});
+      if (r.ok) {
+        const j = await r.json();
+        if (j.polished) { transcriptText = j.polished; $live.textContent = transcriptText; }
+      }
+    }catch{}
+  }
+}
+$start.onclick = start;
+$pause.onclick = ()=>{ paused=true; $status.textContent="paused"; };
+$resume.onclick = ()=>{ paused=false; $status.textContent="live"; };
+$stop.onclick = stop;
+
+// save → Airtable (+ Make if configured)
+$save.onclick = async ()=>{
+  const duration = startTs ? Math.round((Date.now()-startTs)/1000) : 0;
+  const payload = {
+    title: $title.value || (className?`${className} — ${new Date().toISOString().slice(0,10)}`:"Lecture"),
+    class_name: className || $class.value || "",
+    duration_seconds: duration,
+    confidence: confN ? confidenceAvg/confN : undefined,
+    notes_html: $notes.innerHTML,
+    transcript_text: transcriptText + (sentBuf||"")
+  };
+  $status.textContent="saving…";
+  try{
+    const r = await fetch(`${API}/api/save`, {method:"POST", headers:{'content-type':'application/json'}, body: JSON.stringify(payload)});
+    const j = await r.json().catch(()=>({}));
+    if (r.ok) $status.textContent="saved ✓"; else { $status.textContent="save failed"; alert(JSON.stringify(j||{})); }
+  }catch(e){ $status.textContent="save failed"; alert(e.message); }
+};
+
+// quit
+els("quit").onclick = async ()=>{
+  try{ await fetch(API+"/api/quit",{method:"POST"}); }catch(e){}
+  try{ window.open("","_self"); window.close(); }catch(e){}
+  alert("ScribeCat server quitting. You can close this tab.");
+};
+
+// initial UI state
+(function init(){
+  document.body.style.overflowX = 'hidden';
+  document.getElementById("showSentences").checked = true;
+  const saved = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+  if (saved.length) els("classesBox").value = saved.join("\n");
+  setInterval(()=>{ $clock.textContent = new Date().toLocaleString(); }, 1000);
+  // apply initial layout values
+  sizeSplit();
+})();
+</script>
+</body>
+</html>

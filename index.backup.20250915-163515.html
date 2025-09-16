@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ScribeCat v1.9.9 — Galaxy Caterpillar (no-build demo)</title>
+<style>
+  /* Title font (optional). If you have the TTF, put it next to this file as GalaxyCaterpillar.ttf. */
+  @font-face{
+    font-family:'Galaxy Caterpillar';
+    src:url('GalaxyCaterpillar.ttf') format('truetype');
+    font-display:swap;
+  }
+
+  :root{
+    --bg:#f5f6f8; --surface:#fff; --ink:#1a1c20; --sub:#5e626e; --border:#e2e5eb;
+    --brand:#ffd200; --accent:#506fff; --success:#2eb450; --danger:#e62e4d;
+    --ui: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui)}
+  .container{max-width:1120px;margin:0 auto}
+
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);height:68px}
+  .topbar .inner{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+  .titlewrap{display:flex;align-items:center;gap:12px;min-width:0}
+  .title{font-family:"Galaxy Caterpillar",var(--ui);font-size:44px;line-height:44px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{margin-left:8px;padding:4px 10px;border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--sub);opacity:.85}
+  .titlewrap .hl{position:relative;display:inline-block}
+  .titlewrap .hl:after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:10px;background:var(--brand);border-radius:6px}
+
+  .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;display:inline-flex;align-items:center;gap:8px;background:var(--surface)}
+  .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+
+  .controls{padding:10px 16px;display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 68px - 56px)}
+  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;min-height:0}
+  .panel .head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600}
+  .panel .body{padding:12px 16px;overflow:auto;min-height:0}
+  .footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
+
+  .notes{outline:none}
+  .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  select,input[type="number"]{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--ink)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:0 16px 40px}
+  .card .head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .card .body{padding:12px 16px;color:var(--sub)}
+  .pill{background:var(--accent);color:#fff;padding:8px 14px;border-radius:999px;text-decoration:none}
+  code{background:#f2f4f7;padding:2px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="inner container">
+      <div class="titlewrap">
+        <div style="font-size:24px">🐱</div>
+        <div class="hl"><div class="title">ScribeCat</div></div>
+        <div class="badge">v1.9.9</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="chip"><span class="dot" style="background:var(--danger)"></span><span>live</span></div>
+        <div id="statusChip" class="chip" style="color:var(--success)">refined ✓</div>
+        <div class="chip" title="Settings">⚙︎</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls container">
+    <button id="startBtn" class="btn">▶ Start</button>
+    <button id="pauseBtn" class="btn" style="display:none">Pause</button>
+    <button id="stopBtn"  class="btn" style="display:none">⏹ Stop</button>
+
+    <button id="newBtn"  class="btn" style="display:none">▶ New Session</button>
+    <button id="summBtn" class="btn" style="display:none">Summarize → Notes</button>
+
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <label style="font-size:14px;opacity:.8">Theme</label>
+      <select id="themeSelect">
+        <option value="clean">Clean</option>
+        <option value="dark">Dark</option>
+        <option value="paper">Paper</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Two panes -->
+  <div class="grid container">
+    <!-- Transcript -->
+    <div class="panel">
+      <div class="head">Live Transcript</div>
+      <div id="transcript" class="body" style="color:var(--sub);font-size:14px;line-height:1.4"></div>
+      <div class="footer">
+        <label><input id="autoScrollChk" type="checkbox" checked /> Auto-scroll</label>
+        <span style="opacity:.7">(scroll up to pause; re-enables near bottom)</span>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="panel">
+      <div class="head" style="display:flex;align-items:center;gap:10px">
+        <div>Notes</div>
+        <div class="toolbar">
+          <div>
+            <select id="fontSizeSel" title="Font size"></select>
+            <input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)" />
+          </div>
+          <select id="fontFamilySel" title="Font family (selection)">
+            <option>system-ui</option><option>Arial</option><option>Helvetica</option><option>Georgia</option>
+            <option>Times New Roman</option><option>Courier New</option><option>Verdana</option><option>Trebuchet MS</option>
+          </select>
+          <button id="hlBtn"    class="btn" title="Highlight (default #ffd200)">🖍️</button>
+          <button id="unhlBtn"  class="btn" title="Unhighlight / Clear inline styles">🧽</button>
+          <button id="boldBtn"  class="btn" title="Bold (⌘/Ctrl+B)">B</button>
+          <button id="italicBtn"class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
+        </div>
+      </div>
+      <div id="notes" class="body notes" contenteditable="true">
+        <p>• Lecture goals: bullets + glossary + actions.</p>
+        <p>• Highlighter default <span style="background:var(--brand)">#ffd200</span>; Unhighlight clears styles.</p>
+        <p>• Tab/Shift-Tab = indent/outdent. Smart list triggers.</p>
+        <p>• Summary shows after Stop; appended under H2.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classes & Bookmarklet -->
+  <div class="card container">
+    <div class="head">
+      <div>Classes & Bookmarklet</div>
+      <a class="pill" href="javascript:(function(){try{const data=[...document.querySelectorAll('[data-course-title]')].map(x=>x.textContent.trim());window.postMessage({type:'ScribeCatClasses',data},'*');alert('Sent classes to ScribeCat');}catch(e){alert('Could not send classes: '+e.message);}})()" title="Drag to bookmarks bar">Add to ScribeCat</a>
+    </div>
+    <div class="body">
+      <ol style="padding-left:20px">
+        <li>Drag the button above to your bookmarks bar.</li>
+        <li>Open your Canvas dashboard.</li>
+        <li>Click the bookmark to send classes into ScribeCat.</li>
+      </ol>
+      <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+        <label class="btn" style="cursor:pointer">
+          <input id="icsInput" type="file" accept=".ics" style="display:none" />
+          Import .ics (smart)
+        </label>
+        <div style="opacity:.8">We’ll dedupe, strip noise like <code>25F-…</code>, keep coursey titles.</div>
+      </div>
+      <div id="classesWrap" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+<script>
+  // ===== theme presets (accessible contrast) =====
+  const THEMES = {
+    clean:  {bg:'#f5f6f8', surface:'#fff',    ink:'#1a1c20', sub:'#5e626e', border:'#e2e5eb', brand:'#ffd200', accent:'#506fff'},
+    dark:   {bg:'#0f1115', surface:'#141720', ink:'#f1f5f9', sub:'#93a4b3', border:'#1e2530', brand:'#ffd200', accent:'#8aa9ff'},
+    paper:  {bg:'#fbfbf7', surface:'#fff',    ink:'#111',    sub:'#666',    border:'#ecebe6', brand:'#ffd200', accent:'#2f6fff'}
+  };
+  function applyTheme(t){
+    const r = document.documentElement.style;
+    for (const k of ['bg','surface','ink','sub','border','brand','accent']){
+      r.setProperty('--'+k, t[k]);
+    }
+  }
+  applyTheme(THEMES.clean);
+
+  // ===== helpers =====
+  const $ = s => document.querySelector(s);
+  const transcriptEl = $('#transcript');
+  const notesEl = $('#notes');
+  const statusChip = $('#statusChip');
+  const autoScrollChk = $('#autoScrollChk');
+  const themeSelect = $('#themeSelect');
+
+  const startBtn = $('#startBtn'), pauseBtn=$('#pauseBtn'), stopBtn=$('#stopBtn'),
+        newBtn=$('#newBtn'), summBtn=$('#summBtn');
+
+  let isRecording=false, isPaused=false, hasStopped=false;
+  let autoScrollEnabled=true, userNearBottom=true, polishStatus='refined';
+
+  const nearBottom = (el, px=48) => (el.scrollHeight - el.scrollTop - el.clientHeight) <= px;
+  transcriptEl.addEventListener('scroll', () => { userNearBottom = nearBottom(transcriptEl); }, {passive:true});
+  autoScrollChk.addEventListener('change', e => autoScrollEnabled = !!e.target.checked);
+
+  function setStatusChip(){
+    statusChip.textContent = (polishStatus==='polishing') ? 'polishing…' : 'refined ✓';
+    statusChip.style.color = (polishStatus==='polishing') ? 'var(--sub)' : 'var(--success)';
+  }
+  setStatusChip();
+
+  function timestampNow(){
+    const t = new Date();
+    const hh = String(t.getHours()).padStart(2,'0');
+    const mm = String(t.getMinutes()).padStart(2,'0');
+    const ss = String(t.getSeconds()).padStart(2,'0');
+    return `${hh}:${mm}:${ss}`;
+  }
+
+  function appendLine(text){
+    polishStatus='polishing'; setStatusChip();
+    const d = document.createElement('div');
+    d.style.fontSize='14px';
+    d.innerHTML = `<span style="opacity:.5;margin-right:8px">${timestampNow()}</span>` + text;
+    transcriptEl.appendChild(d);
+    if (autoScrollEnabled && userNearBottom){ transcriptEl.scrollTop = transcriptEl.scrollHeight; }
+    setTimeout(()=>{ polishStatus='refined'; setStatusChip(); }, 800);
+  }
+
+  function startDemoLines(){
+    appendLine('Welcome to COSC 101 — intro housekeeping and syllabus jazz');
+    appendLine('Plurals in Spanish: -s vs -es, borrowed words, edge cases');
+    appendLine('Markers set: topic change → Phonetics vs Phonology');
+  }
+
+  // Controls
+  startBtn.onclick = () => {
+    isRecording=true; isPaused=false; hasStopped=false;
+    startBtn.style.display='none';
+    pauseBtn.style.display=''; stopBtn.style.display='';
+    newBtn.style.display='none'; summBtn.style.display='none';
+    transcriptEl.innerHTML='';
+    startDemoLines();
+  };
+  pauseBtn.onclick = () => {
+    isPaused=!isPaused;
+    pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+  };
+  stopBtn.onclick = () => {
+    isRecording=false; hasStopped=true;
+    pauseBtn.style.display='none'; stopBtn.style.display='none';
+    newBtn.style.display='';   summBtn.style.display='';
+  };
+  newBtn.onclick = () => {
+    startBtn.style.display=''; newBtn.style.display='none'; summBtn.style.display='none';
+    transcriptEl.innerHTML=''; notesEl.focus();
+  };
+
+  // Notes toolbar
+  const sizeSel = $('#fontSizeSel'), sizeBox = $('#fontSizeBox'), famSel = $('#fontFamilySel');
+  for (let px=4; px<=60; px++){ const o=document.createElement('option'); o.value=px; o.textContent=px+'px'; if(px===16) o.selected=true; sizeSel.appendChild(o); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function applyStyleToSelection(style){
+    const sel=window.getSelection(); if(!sel||sel.rangeCount===0) return;
+    const rng=sel.getRangeAt(0); if(rng.collapsed) return;
+    try{
+      const span=document.createElement('span');
+      Object.assign(span.style, style);
+      rng.surroundContents(span);
+    }catch(e){
+      // fallback: wrap commonAncestor
+      document.execCommand('foreColor', false, '#000'); // harmless nudge for selection
+      // no-op if browser blocks; it's fine.
+    }
+  }
+  sizeSel.onchange = () => { const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; applyStyleToSelection({fontSize: px+'px'}); };
+  sizeBox.onchange = () => { const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; applyStyleToSelection({fontSize: px+'px'}); };
+  famSel.onchange  = () => applyStyleToSelection({fontFamily: famSel.value});
+  $('#hlBtn').onclick   = () => applyStyleToSelection({backgroundColor:'var(--brand)'});
+  $('#unhlBtn').onclick = () => document.execCommand('removeFormat');
+  $('#boldBtn').onclick = () => document.execCommand('bold');
+  $('#italicBtn').onclick = () => document.execCommand('italic');
+
+  // Smart typing: Tab indent/outdent + em dash + arrow + list triggers
+  notesEl.addEventListener('keydown', e=>{
+    if(e.key==='Tab'){
+      e.preventDefault();
+      const block = window.getSelection()?.anchorNode?.parentElement;
+      if(block){
+        const cur=parseInt(block.style.marginLeft||'0',10);
+        const delta = e.shiftKey? -24: 24;
+        block.style.marginLeft = clamp(cur+delta,0,240)+'px';
+      }
+    }
+  });
+  function emDashSmart(s){ return s.replace(/(^|\\s)--(\\s|$)/g,'$1—$2').replace(/-->\\s/g,'→ '); }
+  notesEl.addEventListener('input', ()=>{
+    const sel=window.getSelection(); if(!sel||sel.rangeCount===0) return;
+    const block = sel.getRangeAt(0).startContainer.parentElement;
+    if(block){
+      block.innerHTML = emDashSmart(block.innerHTML);
+      const text = block.textContent || '';
+      if (/^-\\s$/.test(text)) block.innerHTML = '• ';
+      const m = /^(\\d+)\\.\\s$/.exec(text); if (m) block.innerHTML = m[1]+'. ';
+    }
+  });
+
+  // Summary (after Stop)
+  function summarize(){
+    const fullNotes = notesEl.innerText || '';
+    const transcriptText = transcriptEl.innerText || '';
+    const bullets = transcriptText.split(/[.;!?]/).map(s=>s.trim()).filter(Boolean).slice(0,8);
+    const glossary = Array.from(new Set((fullNotes.match(/\\b([A-Z][a-z]{2,}|[A-Z]{2,})\\b/g)||[]))).slice(0,10);
+    const actions = (fullNotes.match(/\\b(TODO|Action|Follow up|Assign|Next)\\b[^\\n]*/gi)||[]).slice(0,6);
+
+    const h2 = document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
+    const ul = document.createElement('ul'); bullets.forEach(b=>{ const li=document.createElement('li'); li.textContent=b; ul.appendChild(li); });
+    const h3g=document.createElement('h3'); h3g.textContent='Glossary'; h3g.style.margin='12px 0 6px'; h3g.style.fontSize='18px';
+    const gl = document.createElement('ul'); glossary.forEach(g=>{ const li=document.createElement('li'); li.textContent=g; gl.appendChild(li); });
+    const h3a=document.createElement('h3'); h3a.textContent='Action items'; h3a.style.margin='12px 0 6px'; h3a.style.fontSize='18px';
+    const al = document.createElement('ul'); actions.forEach(a=>{ const li=document.createElement('li'); li.textContent=a; al.appendChild(li); });
+
+    notesEl.appendChild(h2); notesEl.appendChild(ul);
+    notesEl.appendChild(h3g); notesEl.appendChild(gl);
+    notesEl.appendChild(h3a); notesEl.appendChild(al);
+  }
+  $('#summBtn').onclick = summarize;
+
+  // .ics smart import
+  function parseICS(text){
+    const out=[]; const lines=text.split(/\\r?\\n/);
+    for(const line of lines){
+      if(line.startsWith('SUMMARY:')){
+        let t=line.slice(8).trim();
+        t=t.replace(/^[\\w-]{2,}\\d{2,}[\\w-]*\\s*[-:]*\\s*/i,''); // strip codes like 25F-...
+        t=t.replace(/[\\[\\](){}]/g,'').replace(/\\s{2,}/g,' ').trim();
+        if(!out.includes(t)) out.push(t);
+      }
+    }
+    return out;
+  }
+  $('#icsInput').addEventListener('change', async e=>{
+    const f=e.target.files && e.target.files[0]; if(!f) return;
+    const titles = parseICS(await f.text());
+    const wrap = $('#classesWrap'); wrap.innerHTML='';
+    if(titles.length){
+      const grid = document.createElement('div');
+      grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(auto-fill,minmax(260px,1fr))'; grid.style.gap='8px';
+      titles.forEach(t=>{ const card=document.createElement('div'); card.textContent=t;
+        card.style.padding='8px 12px'; card.style.border='1px solid var(--border)'; card.style.borderRadius='12px';
+        card.style.background='var(--surface)'; card.style.color='var(--ink)';
+        grid.appendChild(card);
+      });
+      wrap.appendChild(grid);
+    } else {
+      wrap.textContent='No class titles found in that .ics';
+    }
+  });
+
+  // Theme switcher
+  themeSelect.onchange = () => applyTheme(THEMES[themeSelect.value]);
+
+  // Just to show the UI is alive, add a couple of transcript lines if user never presses Start
+  setTimeout(()=>{ if(!isRecording && transcriptEl.children.length===0){ appendLine('Hint: press Start to begin a live session.'); } }, 600);
+</script>
+</body>
+</html>
