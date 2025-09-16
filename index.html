@@ -72,6 +72,12 @@
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
   .drawer .group{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
   .sub{color:#6a7180;font-size:12px}
+  .drawer .group label.config-field{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;font-size:13px;color:var(--ink)}
+  .drawer .group label.config-field input{height:34px;padding:6px 8px;border:1px solid #dbe1ff;border-radius:8px;background:#f8faff;color:var(--ink)}
+  .config-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+  #configStatus{flex:1;min-height:18px;color:var(--sub)}
+  #configStatus.ok{color:var(--ok)}
+  #configStatus.err{color:var(--bad)}
 
   /* Version at bottom */
   .ver{position:fixed;left:12px;bottom:8px;font-size:12px;color:#77819a;opacity:.85}
@@ -185,6 +191,36 @@
     <button id="applyTheme" class="btn">Apply</button>
   </div>
 
+  <div class="group" id="configGroup" style="display:none">
+    <h4>Integrations</h4>
+    <div class="sub">Desktop-only storage for AssemblyAI, Airtable, and Make credentials (kept in a local .env file).</div>
+    <div id="configUnavailable" class="sub" style="display:none">Launch the ScribeCat desktop app to edit credentials.</div>
+    <div id="configForm" style="display:none">
+      <label class="config-field" for="cfgAssembly">AssemblyAI API Key
+        <input id="cfgAssembly" type="password" autocomplete="off" placeholder="sk..."/>
+      </label>
+      <label class="config-field" for="cfgAirtableKey">Airtable API Key
+        <input id="cfgAirtableKey" type="password" autocomplete="off" placeholder="pat..."/>
+      </label>
+      <label class="config-field" for="cfgAirtableBase">Airtable Base ID
+        <input id="cfgAirtableBase" type="text" autocomplete="off" placeholder="app..."/>
+      </label>
+      <label class="config-field" for="cfgAirtableTable">Airtable Table Name
+        <input id="cfgAirtableTable" type="text" autocomplete="off" placeholder="Recordings"/>
+      </label>
+      <label class="config-field" for="cfgMakeWebhook">Make Webhook URL
+        <input id="cfgMakeWebhook" type="text" autocomplete="off" placeholder="https://hook..."/>
+      </label>
+      <label class="config-field" for="cfgOpenAI">OpenAI API Key (optional)
+        <input id="cfgOpenAI" type="password" autocomplete="off" placeholder="sk-..."/>
+      </label>
+      <div class="config-actions">
+        <button id="configSave" class="btn">Save keys</button>
+        <span id="configStatus" class="sub"></span>
+      </div>
+    </div>
+  </div>
+
   <div class="group">
     <h4>Canvas bookmarklet</h4>
     <div class="sub" style="margin-bottom:8px">
@@ -222,6 +258,116 @@
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
+  const configGroup=byId("configGroup"), configForm=byId("configForm"), configUnavailable=byId("configUnavailable");
+  const configSaveBtn=byId("configSave"), configStatus=byId("configStatus");
+  const configInputs={
+    ASSEMBLYAI_API_KEY: byId("cfgAssembly"),
+    AIRTABLE_API_KEY: byId("cfgAirtableKey"),
+    AIRTABLE_BASE_ID: byId("cfgAirtableBase"),
+    AIRTABLE_TABLE_NAME: byId("cfgAirtableTable"),
+    MAKE_WEBHOOK_URL: byId("cfgMakeWebhook"),
+    OPENAI_API_KEY: byId("cfgOpenAI")
+  };
+  const CONFIG_KEYS=Object.keys(configInputs).filter(k=>configInputs[k]);
+  const invokeTauri = window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null;
+  let currentEnvText="";
+
+  function setConfigStatus(text, state){
+    if (!configStatus) return;
+    configStatus.textContent = text || "";
+    configStatus.classList.remove("ok","err");
+    if (state) configStatus.classList.add(state);
+  }
+
+  function parseEnvValues(text){
+    const values={};
+    CONFIG_KEYS.forEach(key=>{ values[key]=""; });
+    if (!text) return values;
+    text.split(/\r?\n/).forEach(line=>{
+      const idx=line.indexOf("=");
+      if (idx===-1) return;
+      const key=line.slice(0, idx).trim();
+      if (!CONFIG_KEYS.includes(key)) return;
+      values[key]=line.slice(idx+1).trim();
+    });
+    return values;
+  }
+
+  function rewriteEnv(baseText, values){
+    const seen=new Set();
+    const lines=String(baseText||"").split(/\r?\n/);
+    const result=[];
+    for (const line of lines){
+      const idx=line.indexOf("=");
+      if (idx===-1){
+        if (line!=="" || result.length) result.push(line);
+        continue;
+      }
+      const key=line.slice(0, idx).trim();
+      if (!CONFIG_KEYS.includes(key)){
+        result.push(line);
+        continue;
+      }
+      seen.add(key);
+      result.push(`${key}=${values[key]??""}`);
+    }
+    CONFIG_KEYS.forEach(key=>{
+      if (!seen.has(key)) result.push(`${key}=${values[key]??""}`);
+    });
+    while (result.length && result[result.length-1]==="") result.pop();
+    return result.join("\n");
+  }
+
+  async function loadConfig(showMessage=true){
+    if (!invokeTauri) return;
+    if (showMessage) setConfigStatus("Loading…");
+    try{
+      const text = await invokeTauri("read_config");
+      currentEnvText = String(text??"");
+      const values = parseEnvValues(currentEnvText);
+      CONFIG_KEYS.forEach(key=>{
+        const input=configInputs[key];
+        if (input) input.value = values[key]||"";
+      });
+      if (showMessage) setConfigStatus("Keys stored locally. Save to refresh the backend.");
+    }catch(err){
+      setConfigStatus(`Unable to load config: ${err?.message||err}`,"err");
+    }
+  }
+
+  if (configGroup){
+    configGroup.style.display='block';
+    if (invokeTauri && configForm){
+      configForm.style.display='block';
+      if (configUnavailable) configUnavailable.style.display='none';
+      loadConfig();
+    } else if (configUnavailable){
+      configUnavailable.style.display='block';
+    }
+  }
+
+  configSaveBtn?.addEventListener('click', async ()=>{
+    if (!invokeTauri) return;
+    configSaveBtn.disabled=true;
+    setConfigStatus("Saving…");
+    const values={};
+    CONFIG_KEYS.forEach(key=>{
+      const input=configInputs[key];
+      values[key] = (input?.value||"").trim();
+    });
+    const updated = rewriteEnv(currentEnvText, values);
+    try{
+      await invokeTauri("write_config", { contents: updated });
+      currentEnvText = updated.endsWith("\n") ? updated : `${updated}\n`;
+      setConfigStatus("Saved. Backend restarted with new keys.","ok");
+      await loadConfig(false);
+    }catch(err){
+      setConfigStatus(`Save failed: ${err?.message||err}`,"err");
+    }finally{
+      configSaveBtn.disabled=false;
+    }
+  });
+
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));

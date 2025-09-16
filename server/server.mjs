@@ -2,10 +2,69 @@ import http from "node:http";
 import { URL } from "node:url";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 import dotenv from "dotenv";
 
+const FALLBACK_ENV = `ASSEMBLYAI_API_KEY=\nAIRTABLE_API_KEY=\nAIRTABLE_BASE_ID=\nAIRTABLE_TABLE_NAME=Recordings\nMAKE_WEBHOOK_URL=\nOPENAI_API_KEY=\n`;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, ".env") });
+const templateEnvPath = path.join(__dirname, ".env.template");
+const configDir = process.env.SCRIBECAT_CONFIG_DIR;
+
+function ensureTemplateFile() {
+  if (fs.existsSync(templateEnvPath)) return;
+  try {
+    fs.writeFileSync(templateEnvPath, FALLBACK_ENV, { encoding: "utf8" });
+  } catch (err) {
+    console.error(`[scribecat] Unable to seed template .env: ${err.message}`);
+  }
+}
+
+function ensureEnvFile(targetPath) {
+  try {
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  } catch (err) {
+    console.error(`[scribecat] Unable to prepare config directory: ${err.message}`);
+  }
+
+  if (fs.existsSync(targetPath)) return;
+
+  let seed = FALLBACK_ENV;
+  try {
+    if (fs.existsSync(templateEnvPath)) {
+      seed = fs.readFileSync(templateEnvPath, "utf8");
+    }
+  } catch (err) {
+    console.error(`[scribecat] Failed to read .env template: ${err.message}`);
+  }
+
+  try {
+    fs.writeFileSync(targetPath, seed, { encoding: "utf8" });
+    try {
+      fs.chmodSync(targetPath, 0o600);
+    } catch (_) {
+      /* ignore on platforms without chmod */
+    }
+  } catch (err) {
+    console.error(`[scribecat] Failed to create ${targetPath}: ${err.message}`);
+  }
+}
+
+ensureTemplateFile();
+
+let envPath = templateEnvPath;
+if (configDir) {
+  try {
+    fs.mkdirSync(configDir, { recursive: true });
+    envPath = path.join(configDir, ".env");
+  } catch (err) {
+    console.error(`[scribecat] Config directory error: ${err.message}`);
+    envPath = templateEnvPath;
+  }
+}
+
+ensureEnvFile(envPath);
+dotenv.config({ path: envPath });
 
 // Allow newer env var names from AGENTS.md while keeping legacy ones
 function aliasEnv(target, candidates) {
