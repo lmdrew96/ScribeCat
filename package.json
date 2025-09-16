@@ -6,12 +6,17 @@
   "description": "Local API server and static web app for ScribeCat",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "node server.mjs"
+    "dev": "node server.mjs",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "dotenv": "^17.2.2"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.13"
   }
 }
