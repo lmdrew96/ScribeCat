@@ -5,10 +5,11 @@
   "type": "module",
   "description": "Local API server and static web app for ScribeCat",
   "scripts": {
+    "tauri": "tauri",
     "start": "node server.mjs",
     "dev": "node server.mjs",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:dev": "npm run tauri -- dev",
+    "tauri:build": "npm run tauri -- build"
   },
   "engines": {
     "node": ">=20"
@@ -17,6 +18,7 @@
     "dotenv": "^17.2.2"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.8.4"
+    "@tauri-apps/cli": "^2.8.4",
+    "@tauri-apps/cli-linux-x64-gnu": "^2.8.4"
   }
 }
