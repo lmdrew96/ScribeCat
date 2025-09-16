@@ -2,6 +2,10 @@ import http from "node:http";
 import { URL } from "node:url";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
+import { mkdir, rename, stat, unlink } from "node:fs/promises";
+import { Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import dotenv from "dotenv";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,6 +29,10 @@ aliasEnv("AIRTABLE_TABLE", ["AIRTABLE_TABLE_NAME"]);
 
 const PORT = 8787;
 let lastCanvasCourses = []; // [{id,name}]
+
+const UPLOAD_DIR = path.join(__dirname, "uploads");
+const MAX_UPLOAD_BYTES = 60 * 1024 * 1024; // 60 MB hard cap for uploads
+const ALLOWED_AUDIO_EXTS = new Set([".mp3", ".wav", ".m4a", ".ogg", ".webm"]);
 
 const headers = {
   "access-control-allow-origin": "*",
@@ -221,6 +229,82 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
       });
       const j = await r.json(); if (!r.ok) return json(res, r.status, j);
       return json(res, 200, { reply: j.choices?.[0]?.message?.content || "" });
+    }
+
+    if (p.startsWith("/uploads/") && req.method === "GET"){ // Serve saved audio
+      let rel;
+      try{ rel = decodeURIComponent(p.slice("/uploads/".length)); }
+      catch{ return json(res, 400, { error:"Invalid path" }); }
+      const safe = path.basename(rel);
+      if (!safe) return json(res, 404, { error:"Not found" });
+      const filePath = path.join(UPLOAD_DIR, safe);
+      if (!filePath.startsWith(UPLOAD_DIR)) return json(res, 400, { error:"Invalid path" });
+      let info;
+      try{ info = await stat(filePath); }
+      catch(e){ return json(res, e?.code === "ENOENT" ? 404 : 500, { error: e?.code === "ENOENT" ? "Not found" : "Failed to read file" }); }
+      if (!info.isFile()) return json(res, 404, { error:"Not found" });
+      const ext = path.extname(safe).toLowerCase();
+      const types = { ".mp3":"audio/mpeg", ".wav":"audio/wav", ".m4a":"audio/mp4", ".ogg":"audio/ogg", ".webm":"audio/webm" };
+      res.writeHead(200, { ...headers, "content-type": types[ext] || "application/octet-stream" });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    }
+
+    if (p === "/api/upload-audio" && req.method === "POST"){
+      const rawName = u.searchParams.get("filename") || "";
+      let safeName = path.basename(rawName).replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 160);
+      safeName = safeName.replace(/^_+/, "");
+      if (safeName === "." || safeName === "..") safeName = "";
+      if (!safeName) return json(res, 400, { error:"Missing filename" });
+      const ext = path.extname(safeName).toLowerCase();
+      if (!ALLOWED_AUDIO_EXTS.has(ext)) return json(res, 415, { error:"Unsupported audio type. Use MP3, WAV, M4A, OGG, or WEBM." });
+
+      const contentType = String(req.headers["content-type"] || "").toLowerCase();
+      if (contentType && !contentType.startsWith("audio/") && contentType !== "application/octet-stream"){
+        return json(res, 415, { error:"Unsupported content-type. Send audio/* or application/octet-stream." });
+      }
+      const declaredLengthHeader = req.headers["content-length"];
+      if (declaredLengthHeader){
+        const declaredLength = Number(declaredLengthHeader);
+        if (Number.isFinite(declaredLength) && declaredLength > MAX_UPLOAD_BYTES){
+          return json(res, 413, { error:`File too large (max ${Math.round(MAX_UPLOAD_BYTES/1024/1024)} MB)` });
+        }
+      }
+
+      await mkdir(UPLOAD_DIR, { recursive: true });
+      const finalPath = path.join(UPLOAD_DIR, safeName);
+      if (!finalPath.startsWith(UPLOAD_DIR)) return json(res, 400, { error:"Invalid filename" });
+      const tmpPath = `${finalPath}.upload-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      let total = 0;
+      const limiter = new Transform({
+        transform(chunk, enc, cb){
+          total += chunk.length;
+          if (total > MAX_UPLOAD_BYTES){
+            const err = new Error("File too large");
+            err.code = "LIMIT";
+            cb(err);
+          }else{
+            cb(null, chunk);
+          }
+        }
+      });
+
+      try{
+        await pipeline(req, limiter, fs.createWriteStream(tmpPath));
+      }catch(e){
+        await unlink(tmpPath).catch(()=>{});
+        if (e?.code === "LIMIT") return json(res, 413, { error:`File too large (max ${Math.round(MAX_UPLOAD_BYTES/1024/1024)} MB)` });
+        return json(res, 500, { error:"Failed to save upload", detail: e?.message || String(e) });
+      }
+
+      try{ await rename(tmpPath, finalPath); }
+      catch(e){ await unlink(tmpPath).catch(()=>{}); return json(res, 500, { error:"Failed to finalize upload", detail: e?.message || String(e) }); }
+
+      const host = req.headers.host || `localhost:${PORT}`;
+      // Provide an absolute URL so the frontend/Airtable can reference the saved audio directly.
+      const fileUrl = new URL(`/uploads/${encodeURIComponent(safeName)}`, `http://${host}`).toString();
+      return json(res, 200, { url: fileUrl });
     }
 
     // ===== Save to Airtable =====
