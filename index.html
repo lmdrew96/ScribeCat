@@ -18,9 +18,12 @@
 
   :root{
     /* Base neutral theme (all others override these vars) */
-    --bg:#f6f7fb; --surface:#ffffff; --ink:#101319; --sub:#6a7180; --border:#e3e7ef;
-    --brand:#ffd200; --accent:#506fff; --accent-2:#ff5c8a;
-    --btn:#ffffff; --btn-text:#111; --chip:#fff;
+    --bg:#e9edf3; --surface:#f5f7fb; --surface-raised:#ffffff; --surface-muted:#eef1f7;
+    --ink:#111827; --sub:#5c6375; --border:#d2d8e6;
+    --brand:#ffd200; --accent:#ffd200; --accent-2:#4c6fff;
+    --btn:#ffffff; --btn-text:#1f2937; --chip:#fdfdfd;
+    --shadow-elevated:0 18px 40px -28px rgba(15,23,42,.35);
+    --focus-ring:0 0 0 2px rgba(255,210,0,.35);
 
     --ok:#2eb450; --warn:#aa7a15; --bad:#e62e4d;
     --ui:Inter, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
@@ -43,21 +46,97 @@
   .status{display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:44%}
   .pill{border-radius:999px;padding:2px 8px;font-size:11px;border:1px solid var(--border);background:var(--chip);opacity:.72}
   .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-  .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--chip);display:inline-flex;gap:8px;align-items:center;color:var(--ink)}
+  .chip{padding:6px 12px;border:1px solid var(--border);border-radius:999px;font-size:13px;background:var(--surface-raised);display:inline-flex;gap:8px;align-items:center;color:var(--ink);transition:background .2s ease,border-color .2s ease}
   .chip.danger{background:var(--bad);border-color:var(--bad);color:#fff}
 
+  /* Layout spine */
+  .workspace{display:flex;justify-content:center;gap:32px;align-items:flex-start;padding:24px 32px 32px;max-height:calc(100vh - 64px);overflow:auto;overflow-x:hidden}
+  .workspace-main{flex:0 1 1180px;max-width:1180px;width:100%;display:flex;flex-direction:column;gap:32px}
+  .workspace-main>*{width:100%}
+  .rail{display:flex;flex-direction:column;gap:12px;background:var(--surface-muted);border:1px solid rgba(17,24,39,.08);border-radius:18px;padding:16px 18px;box-shadow:0 16px 32px -24px rgba(15,23,42,.4);position:sticky;top:112px;min-width:148px}
+  .rail-label{font-size:12px;font-weight:600;color:var(--sub);letter-spacing:.08em;text-transform:uppercase}
+  .rail .chip{width:100%;justify-content:center}
+  .rail .chip:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+  .rail .chip.danger{background:#f4c3c3;border-color:#e59a9a;color:#5a1818}
+
+  @media (max-width:1280px){
+    .workspace{gap:24px;padding:20px 20px 28px}
+  }
+  @media (max-width:1080px){
+    .workspace{flex-direction:column;align-items:center}
+    .workspace-main{max-width:100%}
+    .rail{position:static;width:100%;flex-direction:row;justify-content:flex-end;gap:8px}
+    .rail-label{display:none}
+  }
+
   /* Controls */
-  .controls{padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
-  .ctrl-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .btn{padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--btn);color:var(--btn-text);cursor:pointer}
+  .controls{margin:0}
+  .control-shelf{background:var(--surface-raised);border:1px solid rgba(17,24,39,.08);border-radius:22px;padding:20px 24px 22px;display:flex;flex-direction:column;gap:22px;box-shadow:var(--shadow-elevated);position:relative}
+  .control-shelf::before{content:"Session controls";position:absolute;top:-18px;left:32px;font-size:12px;font-weight:600;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;background:var(--surface-raised);padding:2px 12px;border-radius:999px;border:1px solid rgba(17,24,39,.08)}
+  .control-meta{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end}
+  .meta-group{flex:1 1 260px;min-width:220px;display:flex;flex-direction:column;gap:8px}
+  .meta-inline{display:flex;align-items:center;gap:12px}
+  .control-label{font-size:12px;font-weight:600;color:var(--sub);letter-spacing:.08em;text-transform:uppercase}
+  .control-meta select,.control-meta input[type="text"]{height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-muted);color:var(--ink);transition:border-color .18s ease,background .18s ease}
+  .control-meta input[type="text"]{flex:1 1 auto}
+  .meta-inline select{flex:1 1 160px}
+  .meta-inline .vu{flex:0 0 172px}
+  .vu{height:12px;background:var(--surface-muted);border-radius:999px;overflow:hidden}
+  .vu>div{height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#14b8a6);transition:width .08s ease}
+  .control-transport{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;flex-wrap:wrap}
+  .transport-group{display:flex;flex-wrap:wrap;gap:12px}
+  .transport-legend{display:flex;flex-direction:column;gap:12px;padding-left:18px;border-left:1px solid rgba(17,24,39,.08);min-width:220px}
+  .legend-title{font-size:12px;font-weight:600;color:var(--sub);letter-spacing:.1em;text-transform:uppercase}
+  .legend-group{display:flex;flex-direction:column;gap:6px}
+  .legend-pill{font-size:12px;font-weight:600;color:var(--ink)}
+  .state-demo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .state-demo button{pointer-events:none}
+  @media (max-width:960px){
+    .control-transport{flex-direction:column;align-items:flex-start}
+    .transport-legend{border-left:0;padding-left:0;border-top:1px solid rgba(17,24,39,.08);padding-top:16px;width:100%}
+  }
+
+  .btn{padding:0 18px;height:44px;border-radius:14px;border:1px solid var(--border);background:var(--btn);color:var(--btn-text);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease}
+  .btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
   .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);border-color:#c7a600;color:#1e1a00}
+  .btn-primary:hover,.btn-primary.is-hover{background:#ffe152;border-color:#d2b200}
+  .btn-primary:active,.btn-primary.is-active{background:#f5c400;border-color:#b38f00;color:#1a1600}
+  .btn-secondary{background:var(--surface-muted);color:var(--ink);border-color:var(--border)}
+  .btn-secondary:hover,.btn-secondary.is-hover{background:var(--surface);border-color:#bcc4d8}
+  .btn-secondary:active,.btn-secondary.is-active{background:#dce3f0;border-color:#aab4cc}
+  .btn-danger{background:#f8d8d8;border-color:#e9a3a3;color:#6e1f1f}
+  .btn-danger:hover,.btn-danger.is-hover{background:#f4c3c3;border-color:#dd7f7f}
+  .btn-danger:active,.btn-danger.is-active{background:#eba4a4;border-color:#c45d5d;color:#501010}
+
   select,input[type="text"]{height:36px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--ink)}
-  .vu{height:12px;background:#eaeaf3;border-radius:12px;overflow:hidden;min-width:160px;flex:1}
-  .vu>div{height:100%;width:0;background:#2ee6a6;transition:width .08s}
 
   /* Grid: side-by-side vs stacked (toggle in Settings) */
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 64px - 120px)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 0 24px;height:calc(100vh - 64px - 360px);min-height:280px}
   body.stacked .grid{grid-template-columns:1fr}
+
+  .spec-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:0 0 24px}
+  .spec-card{background:var(--surface);border:1px dashed rgba(17,24,39,.2);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .spec-card h3{margin:0;font-size:14px;font-weight:600;color:var(--ink)}
+  .spec-spacing,.spec-type,.spec-colors{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .spec-spacing li,.spec-type li,.spec-colors li{display:flex;align-items:center;font-size:13px;color:var(--ink)}
+  .spacing-chip{display:inline-block;height:8px;border-radius:999px;background:var(--accent)}
+  .spacing-chip[data-size="04"]{width:16px}
+  .spacing-chip[data-size="08"]{width:24px}
+  .spacing-chip[data-size="12"]{width:36px}
+  .spacing-chip[data-size="20"]{width:52px}
+  .spacing-chip[data-size="32"]{width:68px}
+  .spec-label{margin-left:12px;color:var(--sub)}
+  .type-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:var(--surface-muted);font-size:13px;color:var(--ink)}
+  .title-type{font-family:"Galaxy Caterpillar", var(--ui);font-size:16px}
+  .label-type{text-transform:uppercase;letter-spacing:.12em}
+  .body-type{font-size:14px}
+  .mono-type{font-variant-numeric:tabular-nums}
+  .spec-colors li{gap:12px}
+  .color-swatch{width:36px;height:24px;border-radius:8px;border:1px solid rgba(17,24,39,.12);background:var(--swatch,var(--surface-muted))}
+  .spec-card code{background:none;font-family:var(--ui);font-size:13px;color:var(--ink)}
+  @media (max-width:1080px){.spec-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:720px){.spec-legend{grid-template-columns:1fr}}
 
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;min-height:0}
   .panel .head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
@@ -67,6 +146,7 @@
   .notes{outline:none}
   .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .toolbar select,.toolbar input[type="number"]{height:30px}
+  .toolbar .btn{height:32px;padding:0 10px;border-radius:8px;font-size:13px;font-weight:500}
 
   /* Settings drawer */
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
@@ -98,36 +178,70 @@
       <div id="stApi" class="pill warn">API</div>
       <div id="stMic" class="pill warn">Mic</div>
       <div id="stStream" class="pill warn">Stream</div>
-      <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
-      <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
     </div>
   </div>
 </div>
 
-<div class="controls container">
-  <div class="ctrl-row">
-    <select id="classSel" title="Class"></select>
-    <button id="manageBtn" class="btn">Manage</button>
-    <input id="titleBox" placeholder="Title (auto)" style="flex:1;min-width:220px"/>
-    <select id="micSel" title="Microphone"></select>
-    <div class="vu"><div id="vuBar"></div></div>
-  </div>
-  <div class="ctrl-row" style="justify-self:end">
-    <button id="startBtn"  class="btn">▶ Start</button>
-    <button id="pauseBtn"  class="btn" style="display:none">Pause</button>
-    <button id="resumeBtn" class="btn" style="display:none">Resume</button>
-    <button id="stopBtn"   class="btn" style="display:none">⏹ Stop</button>
-    <button id="summaryBtn" class="btn" style="display:none">Summarize → Notes</button>
-    <button id="saveBtn" class="btn" style="background:var(--accent);color:#fff;border-color:transparent">Save</button>
-  </div>
-</div>
+<div class="workspace">
+  <div class="workspace-main">
+    <div class="controls">
+      <div class="control-shelf">
+        <div class="control-meta">
+          <div class="meta-group">
+            <label class="control-label" for="classSel">Class</label>
+            <div class="meta-inline">
+              <select id="classSel" title="Class"></select>
+              <button id="manageBtn" class="btn btn-secondary">Manage</button>
+            </div>
+          </div>
+          <div class="meta-group">
+            <label class="control-label" for="titleBox">Session title</label>
+            <input id="titleBox" placeholder="Title (auto)"/>
+          </div>
+          <div class="meta-group">
+            <label class="control-label" for="micSel">Microphone</label>
+            <div class="meta-inline">
+              <select id="micSel" title="Microphone"></select>
+              <div class="vu"><div id="vuBar"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="control-transport">
+          <div class="transport-group">
+            <button id="startBtn" class="btn btn-primary">▶ Start</button>
+            <button id="pauseBtn" class="btn btn-secondary" style="display:none">Pause</button>
+            <button id="resumeBtn" class="btn btn-primary" style="display:none">Resume</button>
+            <button id="stopBtn" class="btn btn-danger" style="display:none">⏹ Stop</button>
+            <button id="summaryBtn" class="btn btn-secondary" style="display:none">Summarize → Notes</button>
+            <button id="saveBtn" class="btn btn-primary">Save</button>
+          </div>
+          <div class="transport-legend" aria-hidden="true">
+            <span class="legend-title">State swatches</span>
+            <div class="legend-group">
+              <span class="legend-pill">Primary</span>
+              <div class="state-demo">
+                <button class="btn btn-primary is-hover" type="button" tabindex="-1">Hover</button>
+                <button class="btn btn-primary is-active" type="button" tabindex="-1">Active</button>
+              </div>
+            </div>
+            <div class="legend-group">
+              <span class="legend-pill">Secondary</span>
+              <div class="state-demo">
+                <button class="btn btn-secondary is-hover" type="button" tabindex="-1">Hover</button>
+                <button class="btn btn-secondary is-active" type="button" tabindex="-1">Active</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div class="grid container">
-  <div class="panel">
-    <div class="head">
-      <div>Live Transcript</div>
-      <label class="chip"><input id="sentenceChk" type="checkbox" checked/> sentence</label>
-      <label class="chip"><input id="tsChk" type="checkbox" checked/> timestamps</label>
+    <div class="grid">
+      <div class="panel">
+        <div class="head">
+          <div>Live Transcript</div>
+          <label class="chip"><input id="sentenceChk" type="checkbox" checked/> sentence</label>
+          <label class="chip"><input id="tsChk" type="checkbox" checked/> timestamps</label>
     </div>
     <div id="live" class="body" style="color:var(--ink);font-size:14px;line-height:1.45"></div>
     <div class="footer">
@@ -159,7 +273,46 @@
     <div id="notes" class="body notes" contenteditable="true">
       <p>• Welcome back. Shortcuts on: Cmd/Ctrl-Shift-8 bullets, Cmd/Ctrl-Shift-7 numbers, Cmd-Shift-- em dash —, Cmd-Shift-. arrow →, Cmd+M timestamp marker.</p>
     </div>
+    </div>
+
+    <div class="spec-legend" aria-label="Design tokens for handoff">
+      <div class="spec-card">
+        <h3>Spacing tokens</h3>
+        <ul class="spec-spacing">
+          <li><span class="spacing-chip" data-size="04"></span><span class="spec-label">04 · 4px micro gutters</span></li>
+          <li><span class="spacing-chip" data-size="08"></span><span class="spec-label">08 · 8px chip + icon padding</span></li>
+          <li><span class="spacing-chip" data-size="12"></span><span class="spec-label">12 · 12px inline gaps</span></li>
+          <li><span class="spacing-chip" data-size="20"></span><span class="spec-label">20 · 20px shelf padding</span></li>
+          <li><span class="spacing-chip" data-size="32"></span><span class="spec-label">32 · 32px vertical rhythm</span></li>
+        </ul>
+      </div>
+      <div class="spec-card">
+        <h3>Typography</h3>
+        <ul class="spec-type">
+          <li><span class="type-chip title-type">Title · Galaxy Caterpillar · 44px / 1.0</span></li>
+          <li><span class="type-chip label-type">Labels · Inter · 12px / 1.2 · Uppercase</span></li>
+          <li><span class="type-chip body-type">Body · Inter · 15px / 1.45</span></li>
+          <li><span class="type-chip mono-type">Code · Inter · 13px / 1.35</span></li>
+        </ul>
+      </div>
+      <div class="spec-card">
+        <h3>Color tokens</h3>
+        <ul class="spec-colors">
+          <li><span class="color-swatch" style="--swatch:var(--bg)"></span><code>--bg · #e9edf3 · Cool Mist</code></li>
+          <li><span class="color-swatch" style="--swatch:var(--surface-raised)"></span><code>--surface-raised · #ffffff · Shelf</code></li>
+          <li><span class="color-swatch" style="--swatch:var(--surface-muted)"></span><code>--surface-muted · #eef1f7 · Rail</code></li>
+          <li><span class="color-swatch" style="--swatch:var(--accent)"></span><code>--accent · #ffd200 · Brand yellow</code></li>
+          <li><span class="color-swatch" style="--swatch:#4c6fff"></span><code>--accent-2 · #4c6fff · Cool contrast</code></li>
+        </ul>
+      </div>
+    </div>
   </div>
+
+  <aside class="rail" aria-label="Session utilities">
+    <span class="rail-label">Utility</span>
+    <button id="gearBtn" class="chip" title="Settings">⚙︎ Settings</button>
+    <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
+  </aside>
 </div>
 
 <div id="drawer" class="drawer">
@@ -231,7 +384,7 @@
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
   const THEMES = {
-  "Clean":      {bg:'#f6f7fb',surface:'#fff',ink:'#101319',sub:'#6a7180',border:'#e3e7ef',brand:'#ffd200',accent:'#506fff',accent2:'#ff5c8a',btn:'#fff',btnText:'#111'},
+  "Clean":      {bg:'#e9edf3',surface:'#f5f7fb',ink:'#111827',sub:'#5c6375',border:'#d2d8e6',brand:'#ffd200',accent:'#ffd200',accent2:'#4c6fff',btn:'#ffffff',btnText:'#1f2937'},
   "Dark Ink":   {bg:'#0f1115',surface:'#161a22',ink:'#f1f5f9',sub:'#93a4b3',border:'#232b3a',brand:'#ffd200',accent:'#8aa9ff',accent2:'#ff95b2',btn:'#1f2532',btnText:'#fff'},
   "Slate Pop":  {bg:'#f2f5f7',surface:'#ffffff',ink:'#1c212b',sub:'#5f6e80',border:'#d7e0e9',brand:'#ffd200',accent:'#ff5c8a',accent2:'#2e6aff',btn:'#fff',btnText:'#111'},
   "Ocean":      {bg:'#e9f1f7',surface:'#ffffff',ink:'#0b2239',sub:'#4d6174',border:'#d2e0eb',brand:'#ffd200',accent:'#2e6aff',accent2:'#0ea5e9',btn:'#fff',btnText:'#0b2239'},
@@ -258,9 +411,10 @@
     ["--bg","--surface","--ink","--sub","--border","--brand","--accent","--accent-2","--btn","--btn-text"]
       .forEach(()=>{});
     r.setProperty('--bg',t.bg); r.setProperty('--surface',t.surface); r.setProperty('--ink',t.ink);
+    r.setProperty('--surface-raised',t.surface); r.setProperty('--surface-muted',t.bg);
     r.setProperty('--sub',t.sub); r.setProperty('--border',t.border); r.setProperty('--brand',t.brand);
     r.setProperty('--accent',t.accent); r.setProperty('--accent-2',t.accent2);
-    r.setProperty('--btn',t.btn); r.setProperty('--btn-text',t.btnText);
+    r.setProperty('--btn',t.btn); r.setProperty('--btn-text',t.btnText); r.setProperty('--chip',t.surface);
     warn.style.display = needsWarn ? 'block' : 'none';
   }
   applyThemeVars(THEMES["Clean"]);
