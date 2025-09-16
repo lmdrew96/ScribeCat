@@ -169,6 +169,17 @@
   </div>
 
   <div class="group">
+    <h4>Classes</h4>
+    <textarea id="classesBox" placeholder="One class per line" style="width:100%;height:110px"></textarea>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center">
+      <button id="saveClasses" class="btn">Save list</button>
+      <button id="importCanvasLocal" class="btn">Import from Canvas (local)</button>
+      <label class="badge" style="display:inline-flex;align-items:center;gap:6px">.ics upload <input id="icsFile" type="file" accept=".ics"/></label>
+      <div class="sub" style="flex-basis:100%;margin-top:4px">Bookmarklet available below.</div>
+    </div>
+  </div>
+
+  <div class="group">
     <h4>Behaviors</h4>
     <label><input type="checkbox" id="b_sentence" checked> Sentence mode by default</label><br/>
     <label><input type="checkbox" id="b_autoretry" checked> Auto-retry live transcription</label><br/>
@@ -222,6 +233,7 @@
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
+  const classesBox=byId("classesBox"), saveClassesBtn=byId("saveClasses"), importCanvasLocalBtn=byId("importCanvasLocal"), icsFileInput=byId("icsFile");
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
@@ -634,11 +646,110 @@
   saveBtn.onclick=saveAll;
 
   /* ======== Boot: classes + status ======== */
-  function renderClassOptions(list){ classSel.innerHTML='<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("")+'<option value="__other__">Other…</option>'; }
-  (function bootClasses(){ const saved=JSON.parse(localStorage.getItem("lc_classes")||"[]"); renderClassOptions(saved);
-    if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); alert('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
+  function cleanCourseName(n){
+    if (!n) return "";
+    let name = String(n);
+    name = name.replace(/\b\d{2}F-[A-Z]+\d{3,}-\d{3}\d{4}\b.*$/,'').replace(/\b25F-[A-Z]+\d{3,}-\d{3}\b.*$/,'');
+    const match = name.match(/\b([A-Z]{2,}\d{2,}[A-Z]?)\s*:\s*(.+)$/);
+    if (match) return `${match[1]}: ${match[2]}`.trim();
+    name = name.replace(/\s*—\s*/g,' — ').replace(/\s{2,}/g,' ').trim();
+    return name;
+  }
+  function renderClassOptions(list){
+    const prev = classSel.value;
+    classSel.innerHTML = '<option value="">Choose class…</option>'
+      + list.map(n=>`<option>${n}</option>`).join("")
+      + '<option value="__other__">Other…</option>';
+    if (prev && list.includes(prev)) {
+      classSel.value = prev;
+    } else if (prev === "__other__") {
+      classSel.value = "__other__";
+    } else {
+      classSel.value = "";
+    }
+  }
+  (function bootClasses(){
+    const saved = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+    renderClassOptions(saved);
+    if (classesBox && saved.length) classesBox.value = saved.join("\n");
+
+    if (saveClassesBtn && classesBox){
+      saveClassesBtn.onclick = ()=>{
+        const list = classesBox.value.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+        localStorage.setItem("lc_classes", JSON.stringify(list));
+        renderClassOptions(list);
+        classesBox.value = list.join("\n");
+        alert("Saved.");
+      };
+    }
+
+    if (importCanvasLocalBtn){
+      importCanvasLocalBtn.onclick = async ()=>{
+        try{
+          const r = await fetch(API+"/api/canvas-pull");
+          const j = await r.json();
+          const list = (j.courses||[]).map(c=>cleanCourseName(c.name)).filter(Boolean);
+          const prev = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+          const merged = [...new Set([...prev, ...list])].sort();
+          localStorage.setItem("lc_classes", JSON.stringify(merged));
+          renderClassOptions(merged);
+          if (classesBox) classesBox.value = merged.join("\n");
+          alert(`Imported ${list.length} classes.`);
+        }catch(e){
+          alert("Import failed: "+(e?.message||e));
+        }
+      };
+    }
+
+    if (icsFileInput){
+      icsFileInput.addEventListener('change', async e=>{
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try{
+          const txt = await file.text();
+          const names = [...txt.matchAll(/^SUMMARY:(.+)$/mg)]
+            .map(m=>cleanCourseName(m[1].trim()))
+            .filter(Boolean);
+          const prev = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+          const merged = [...new Set([...prev, ...names])].sort();
+          localStorage.setItem("lc_classes", JSON.stringify(merged));
+          renderClassOptions(merged);
+          if (classesBox) classesBox.value = merged.join("\n");
+          alert(`Imported ${names.length} entries from .ics`);
+        }catch(err){
+          alert("ICS import failed: "+(err?.message||err));
+        }finally{
+          e.target.value = "";
+        }
+      });
+    }
+
+    if (location.hash.startsWith("#classes=")) {
+      try{
+        const arr = JSON.parse(decodeURIComponent(location.hash.slice(9)));
+        const cleaned = arr.map(cleanCourseName).filter(Boolean);
+        const prev = JSON.parse(localStorage.getItem("lc_classes")||"[]");
+        const merged = [...new Set([...prev, ...cleaned])].sort();
+        localStorage.setItem("lc_classes", JSON.stringify(merged));
+        renderClassOptions(merged);
+        if (classesBox) classesBox.value = merged.join("\n");
+        history.replaceState(null,"",location.pathname+location.search);
+        alert(`Imported ${cleaned.length} classes from Canvas.`);
+      }catch{}
+    }
   })();
-  classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
+  classSel.onchange=()=>{
+    if (classSel.value==="__other__"){
+      const n=prompt("Enter class name:")||"";
+      if(n.trim()){
+        classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`);
+        classSel.value=n.trim();
+      } else {
+        classSel.value="";
+      }
+    }
+    titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : "";
+  };
 
   function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
