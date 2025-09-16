@@ -223,6 +223,42 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
+  let savedNotesRange=null;
+  const pointerDownEvent = ('PointerEvent' in window) ? 'pointerdown' : 'mousedown';
+  function isInNotes(node){ return !!node && (node===notes || notes.contains(node)); }
+  function storeNotesSelection(){
+    const sel=window.getSelection();
+    if(!sel||sel.rangeCount===0){ savedNotesRange=null; return false; }
+    const range=sel.getRangeAt(0);
+    if(!isInNotes(range.commonAncestorContainer)){ savedNotesRange=null; return false; }
+    savedNotesRange = range.cloneRange();
+    return true;
+  }
+  function restoreNotesSelection(){
+    if(!savedNotesRange) return false;
+    const sel=window.getSelection();
+    if(!sel) return false;
+    sel.removeAllRanges();
+    sel.addRange(savedNotesRange);
+    return true;
+  }
+  function focusNotesAndRestore(){
+    notes.focus({preventScroll:true});
+    restoreNotesSelection();
+  }
+  function runNotesCommand(fn){
+    focusNotesAndRestore();
+    fn();
+    storeNotesSelection();
+  }
+  document.querySelectorAll('.toolbar button').forEach(btn=>{
+    const handleDown=(e)=>{ storeNotesSelection(); e.preventDefault(); };
+    btn.addEventListener(pointerDownEvent, handleDown);
+  });
+  notes.addEventListener('keyup', storeNotesSelection);
+  notes.addEventListener('mouseup', ()=>setTimeout(storeNotesSelection,0));
+  notes.addEventListener('blur', storeNotesSelection);
+
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
@@ -572,18 +608,19 @@
   sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
   famSel.onchange = ()=>{ const fam=famSel.value; if(!applyStyleToSelection({fontFamily:fam})){ notes.style.fontFamily=fam; } };
 
-  byId("boldBtn").onclick=()=>document.execCommand('bold');
-  byId("italicBtn").onclick=()=>document.execCommand('italic');
-  byId("undoBtn").onclick=()=>document.execCommand('undo');
-  byId("redoBtn").onclick=()=>document.execCommand('redo');
-  byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
+  byId("boldBtn").onclick=()=>runNotesCommand(()=>document.execCommand('bold'));
+  byId("italicBtn").onclick=()=>runNotesCommand(()=>document.execCommand('italic'));
+  byId("undoBtn").onclick=()=>runNotesCommand(()=>document.execCommand('undo'));
+  byId("redoBtn").onclick=()=>runNotesCommand(()=>document.execCommand('redo'));
+  byId("unhlBtn").onclick=()=>runNotesCommand(()=>document.execCommand('removeFormat'));
 
   const fontColorBtn=byId("fontColorBtn"), fontColor=byId("fontColor"), hlBtn=byId("hlBtn"), hlColor=byId("hlColor"), hexBox=byId("hexBox");
-  fontColorBtn.onclick=()=>fontColor.click();
-  hlBtn.onclick=()=>hlColor.click();
-  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } };
-  hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
-  hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
+  hexBox.addEventListener(pointerDownEvent, storeNotesSelection);
+  fontColorBtn.onclick=()=>runNotesCommand(()=>fontColor.click());
+  hlBtn.onclick=()=>runNotesCommand(()=>hlColor.click());
+  fontColor.oninput=()=>{ focusNotesAndRestore(); const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } storeNotesSelection(); };
+  hlColor.oninput=()=>{ focusNotesAndRestore(); const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); storeNotesSelection(); };
+  hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ focusNotesAndRestore(); applyStyleToSelection({backgroundColor:c}); storeNotesSelection(); } };
 
   /* ======== SUMMARY (unchanged) ======== */
   function summarize(){
