@@ -5,17 +5,16 @@
   "version": "1.0.0",
 
   "build": {
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
-  },
-
-  "security": {
-    "csp": null
+    "beforeDevCommand": "node .scripts/prepare-tauri-dist.mjs",
+    "beforeBuildCommand": "node .scripts/prepare-tauri-dist.mjs",
+    "devUrl": "tauri://localhost",
+    "frontendDist": "../.tauri-dist"
   },
 
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "ScribeCat",
