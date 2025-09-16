@@ -3,35 +3,35 @@
   "identifier": "com.scribecat.app",
   "productName": "ScribeCat",
   "version": "1.0.0",
-
   "build": {
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
+    "beforeDevCommand": "node .scripts/prepare-tauri-assets.mjs",
+    "beforeBuildCommand": "node .scripts/prepare-tauri-assets.mjs",
+    "devUrl": "tauri://localhost/index.html",
+    "frontendDist": "target/ui-dist"
   },
-
-  "security": {
-    "csp": null
-  },
-
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "ScribeCat",
         "width": 1280,
         "height": 840,
-        "resizable": true
+        "resizable": true,
+        "url": "tauri://localhost/index.html"
       }
     ]
   },
-
   "bundle": {
     "active": true,
     "targets": "all",
     "icon": [
       "icons/scribecat-512.png",
       "icons/icon32.png"
+    ],
+    "resources": [
+      "target/runtime"
     ]
   }
 }
