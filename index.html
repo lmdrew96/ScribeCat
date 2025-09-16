@@ -65,8 +65,42 @@
   .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
 
   .notes{outline:none}
-  .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  .toolbar select,.toolbar input[type="number"]{height:30px}
+  .notes-head{flex-direction:column;align-items:stretch;gap:8px;padding:10px 16px}
+  .note-ribbon-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .note-title{font-weight:700;font-size:16px}
+  .note-focus{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;color:var(--sub);background:var(--chip);border:1px solid var(--border);transition:color .2s ease,border-color .2s ease,background-color .2s ease}
+  .note-focus::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--border)}
+  .note-focus.is-active{color:var(--accent);border-color:var(--accent);background:rgba(80,111,255,0.08)}
+  .note-focus.is-active::before{background:var(--accent)}
+  .note-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:400}
+  .toolbar-group{display:flex;align-items:center;gap:8px}
+  .toolbar-divider{width:1px;height:28px;background:var(--border)}
+  .note-chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:4px 10px;position:relative;min-height:32px;box-shadow:0 0 0 0 transparent;transition:box-shadow .2s ease,border-color .2s ease}
+  .note-chip__icon{font-size:14px;line-height:1}
+  .note-chip__label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub)}
+  .note-chip:focus-within{box-shadow:0 0 0 2px var(--accent)}
+  .note-chip--select{gap:8px}
+  .note-chip--select select,.note-chip--select input[type="number"]{height:24px;border:0;background:none;font-size:13px;color:var(--ink);padding:0 4px;min-width:0;border-radius:6px}
+  .note-chip--select input[type="number"]{width:52px;text-align:right}
+  .note-chip--select select:focus-visible,.note-chip--select input[type="number"]:focus-visible{outline:2px solid var(--accent);outline-offset:0}
+  .note-chip--popover{position:relative}
+  .note-chip--popover .note-chip__action{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;border-radius:6px}
+  .note-chip--popover .note-chip__action:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .note-chip__swatch{width:16px;height:16px;border-radius:50%;border:1px solid var(--border);flex:0 0 16px}
+  .note-chip__swatch.is-transparent{background-image:linear-gradient(45deg,#c4c8d4 25%,transparent 25%,transparent 75%,#c4c8d4 75%),linear-gradient(45deg,#c4c8d4 25%,transparent 25%,transparent 75%,#c4c8d4 75%);background-position:0 0,6px 6px;background-size:12px 12px}
+  .note-chip--input input{height:24px;border:0;background:none;font-size:13px;color:var(--ink);padding:0 6px;border-radius:6px;width:78px}
+  .note-chip--input input::placeholder{color:var(--sub)}
+  .note-chip--input input:focus-visible{outline:2px solid var(--accent);outline-offset:0}
+  .note-popover{position:absolute;top:calc(100% + 8px);left:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;box-shadow:0 12px 24px rgba(16,19,25,0.18);display:grid;grid-template-columns:repeat(6,32px);gap:10px;z-index:15}
+  .note-popover[hidden]{display:none}
+  .color-swatch{width:32px;height:32px;border-radius:8px;border:2px solid transparent;padding:0;background:transparent;cursor:pointer;position:relative}
+  .color-swatch:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .color-swatch.is-active{border-color:var(--accent)}
+  .color-swatch.is-transparent{background-image:linear-gradient(45deg,#c4c8d4 25%,transparent 25%,transparent 75%,#c4c8d4 75%),linear-gradient(45deg,#c4c8d4 25%,transparent 25%,transparent 75%,#c4c8d4 75%);background-position:0 0,8px 8px;background-size:16px 16px}
+  .note-tool-btn{min-width:0;display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--chip);color:var(--ink);cursor:pointer;line-height:1.2}
+  .note-tool-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .note-tool-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .notes-head select,.notes-head input[type="number"],.notes-head input[type="text"]{height:24px;border:0;background:none}
 
   /* Settings drawer */
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
@@ -137,24 +171,65 @@
   </div>
 
   <div class="panel">
-    <div class="head">
-      <div>Notes</div>
-      <div class="toolbar">
-        <div><select id="fontSizeSel" title="Font size"></select><input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)"/></div>
-        <select id="fontFamilySel" title="Font family (selection)"></select>
-        <div id="colorTools" style="display:flex;gap:6px;align-items:center">
-          <button id="fontColorBtn" class="btn" title="Font color">A</button>
-          <input id="fontColor" type="color" style="width:0;height:0;border:0;padding:0;opacity:0"/>
-          <button id="hlBtn" class="btn" title="Highlighter">🖍️</button>
-          <input id="hlColor" type="color" value="#ffd200" style="width:0;height:0;border:0;padding:0;opacity:0"/>
-          <input id="hexBox" placeholder="#hex" style="width:80px;height:30px;border:1px solid var(--border);border-radius:8px;padding:0 6px"/>
-        </div>
-        <button id="unhlBtn" class="btn" title="Clear inline styles">🧽</button>
-        <button id="boldBtn" class="btn" title="Bold (⌘/Ctrl+B)">B</button>
-        <button id="italicBtn" class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
-        <button id="undoBtn" class="btn" title="Undo">↶</button>
-        <button id="redoBtn" class="btn" title="Redo">↷</button>
+    <div class="head notes-head">
+      <div class="note-ribbon-top">
+        <span class="note-title">Notes</span>
+        <span id="notesFocusState" class="note-focus" role="status" aria-live="polite">Focus to edit</span>
       </div>
+      <div class="note-toolbar" role="group" aria-label="Notes formatting controls">
+        <div class="toolbar-group" role="group" aria-label="Text style">
+          <div class="note-chip note-chip--select" role="group" aria-label="Font size">
+            <span class="note-chip__icon" aria-hidden="true">Aa</span>
+            <span class="note-chip__label">Size</span>
+            <select id="fontSizeSel" title="Font size" aria-label="Font size"></select>
+            <input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)" aria-label="Font size value"/>
+          </div>
+          <div class="note-chip note-chip--select" role="group" aria-label="Font family">
+            <span class="note-chip__icon" aria-hidden="true">Ff</span>
+            <span class="note-chip__label">Font</span>
+            <select id="fontFamilySel" title="Font family (selection)" aria-label="Font family"></select>
+          </div>
+          <button id="boldBtn" class="note-tool-btn" title="Bold (⌘/Ctrl+B)" type="button">B</button>
+          <button id="italicBtn" class="note-tool-btn" title="Italic (⌘/Ctrl+I)" type="button" style="font-style:italic">I</button>
+        </div>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <div class="toolbar-group" role="group" aria-label="Color tools">
+          <div class="note-chip note-chip--popover">
+            <button id="fontColorBtn" class="note-chip__action" type="button" title="Font color" aria-haspopup="true" aria-expanded="false" aria-controls="fontColorPopover">
+              <span class="note-chip__icon" aria-hidden="true">A</span>
+              <span class="note-chip__label">Color</span>
+              <span id="fontColorSwatch" class="note-chip__swatch" style="background:#101319"></span>
+            </button>
+            <div id="fontColorPopover" class="note-popover" role="menu" aria-label="Text color choices" hidden></div>
+          </div>
+          <div class="note-chip note-chip--popover">
+            <button id="hlBtn" class="note-chip__action" type="button" title="Highlighter" aria-haspopup="true" aria-expanded="false" aria-controls="hlPopover">
+              <span class="note-chip__icon" aria-hidden="true">🖍️</span>
+              <span class="note-chip__label">Highlight</span>
+              <span id="hlColorSwatch" class="note-chip__swatch" style="background:#ffd200"></span>
+            </button>
+            <div id="hlPopover" class="note-popover" role="menu" aria-label="Highlight color choices" hidden></div>
+          </div>
+          <div class="note-chip note-chip--input">
+            <span class="note-chip__icon" aria-hidden="true">#</span>
+            <span class="note-chip__label">Hex</span>
+            <input id="hexBox" type="text" placeholder="#hex" title="Custom highlight hex" aria-label="Custom highlight hex"/>
+          </div>
+        </div>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <div class="toolbar-group" role="group" aria-label="History and clear">
+          <button id="unhlBtn" class="note-tool-btn" title="Clear inline styles" type="button">🧽</button>
+          <button id="undoBtn" class="note-tool-btn" title="Undo" type="button">↶</button>
+          <button id="redoBtn" class="note-tool-btn" title="Redo" type="button">↷</button>
+        </div>
+      </div>
+      <!-- Notes ribbon spec:
+           • .note-ribbon-top keeps .note-title (16px bold) and #notesFocusState pill aligned; the pill flips to .is-active on focus for the editor.
+           • .note-toolbar is a 12px-gap flex row with .toolbar-divider separators so groups stay readable as the card shrinks.
+           • Iconography: Aa for size, Ff for font family, A + swatch for text color, 🖍️ for highlight, # for custom hex, emojis for clear/undo/redo.
+           • Chips (.note-chip*) are 32px-high capsules with uppercase .note-chip__label and 16px swatches (#fontColorSwatch/#hlColorSwatch) for quick scanning.
+           • Keyboard focus: :focus-visible on select/input/buttons draws a 2px var(--accent) ring; .note-chip:focus-within adds the outer halo for grouped controls.
+      -->
     </div>
     <div id="notes" class="body notes" contenteditable="true">
       <p>• Welcome back. Shortcuts on: Cmd/Ctrl-Shift-8 bullets, Cmd/Ctrl-Shift-7 numbers, Cmd-Shift-- em dash —, Cmd-Shift-. arrow →, Cmd+M timestamp marker.</p>
@@ -216,12 +291,28 @@
   const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
   const saveBtn=byId("saveBtn"), summaryBtn=byId("summaryBtn");
   const live=byId("live"), notes=byId("notes");
+  const notesFocusState=byId("notesFocusState");
   const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
+
+  function syncNotesFocus(){
+    if(!notesFocusState || !notes) return;
+    const sel=window.getSelection();
+    const anchor=(sel && sel.rangeCount>0) ? sel.anchorNode : null;
+    const active=document.activeElement===notes || (anchor instanceof Node && notes.contains(anchor));
+    notesFocusState.textContent = active ? "Editing" : "Focus to edit";
+    notesFocusState.classList.toggle("is-active", active);
+  }
+  if(notes){
+    notes.addEventListener("focus", syncNotesFocus);
+    notes.addEventListener("blur", syncNotesFocus);
+  }
+  document.addEventListener("selectionchange", syncNotesFocus);
+  syncNotesFocus();
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
@@ -578,12 +669,149 @@
   byId("redoBtn").onclick=()=>document.execCommand('redo');
   byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
 
-  const fontColorBtn=byId("fontColorBtn"), fontColor=byId("fontColor"), hlBtn=byId("hlBtn"), hlColor=byId("hlColor"), hexBox=byId("hexBox");
-  fontColorBtn.onclick=()=>fontColor.click();
-  hlBtn.onclick=()=>hlColor.click();
-  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } };
-  hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
-  hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
+  const fontColorBtn=byId("fontColorBtn"), fontColorPopover=byId("fontColorPopover"), fontColorSwatch=byId("fontColorSwatch");
+  const hlBtn=byId("hlBtn"), hlPopover=byId("hlPopover"), hlColorSwatch=byId("hlColorSwatch");
+  const hexBox=byId("hexBox");
+
+  const TEXT_COLORS=[
+    {label:"Ink",value:"#101319"},
+    {label:"Accent",value:"#506fff"},
+    {label:"Accent 2",value:"#ff5c8a"},
+    {label:"Emerald",value:"#2eb450"},
+    {label:"Citrus",value:"#d97706"},
+    {label:"Teal",value:"#2ee6a6"},
+    {label:"Plum",value:"#7b3eff"},
+    {label:"Sky",value:"#0ea5e9"},
+    {label:"Slate",value:"#6a7180"},
+    {label:"Charcoal",value:"#2a2f3a"},
+    {label:"Rose",value:"#e62e4d"},
+    {label:"Soft Gray",value:"#a4abba"}
+  ];
+  const HIGHLIGHT_COLORS=[
+    {label:"Sun",value:"#ffd200"},
+    {label:"Lemon",value:"#fff4a3"},
+    {label:"Mint",value:"#bbf7d0"},
+    {label:"Sky",value:"#bde0ff"},
+    {label:"Blush",value:"#ffd7ef"},
+    {label:"Lavender",value:"#dcd1ff"},
+    {label:"Peach",value:"#ffd7a8"},
+    {label:"Seafoam",value:"#b8f2e6"},
+    {label:"Slate",value:"#e3e7ef"},
+    {label:"Ice",value:"#f0f5ff"},
+    {label:"Sand",value:"#f7e7d3"},
+    {label:"Lilac",value:"#f0e1ff"}
+  ];
+
+  let openPopover=null;
+  function closePopover(){
+    if(!openPopover) return;
+    const {button,popover}=openPopover;
+    popover.hidden=true;
+    button.setAttribute("aria-expanded","false");
+    openPopover=null;
+  }
+  function togglePopover(button,popover){
+    if(!button||!popover) return;
+    if(openPopover && openPopover.popover===popover){
+      closePopover();
+      return;
+    }
+    closePopover();
+    popover.hidden=false;
+    button.setAttribute("aria-expanded","true");
+    openPopover={button,popover};
+    const first=popover.querySelector(".color-swatch");
+    if(first) first.focus();
+  }
+  document.addEventListener("click",(e)=>{
+    if(!openPopover) return;
+    const {button,popover}=openPopover;
+    if(popover.contains(e.target) || button.contains(e.target)) return;
+    closePopover();
+  });
+  document.addEventListener("keydown",(e)=>{
+    if(e.key==="Escape" && openPopover){
+      const {button}=openPopover;
+      closePopover();
+      button.focus();
+    }
+  });
+
+  function markSwatch(container,color){
+    if(!container) return;
+    const normalized=String(color||"").toLowerCase();
+    container.querySelectorAll(".color-swatch").forEach(btn=>{
+      btn.classList.toggle("is-active", btn.dataset.color===normalized);
+    });
+  }
+  function renderSwatches(container,palette,onPick){
+    if(!container) return;
+    container.innerHTML="";
+    palette.forEach(({label,value})=>{
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="color-swatch";
+      const normalized=value.toLowerCase();
+      btn.dataset.color=normalized;
+      if(normalized==="transparent"){ btn.classList.add("is-transparent"); }
+      else { btn.style.background=normalized; }
+      btn.setAttribute("aria-label", `${label} ${value.toUpperCase()}`);
+      btn.title=`${label} (${value.toUpperCase()})`;
+      btn.addEventListener("click",()=>{
+        onPick(value);
+        closePopover();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function applyTextColor(color){
+    const value=String(color||"");
+    const normalized=value.toLowerCase();
+    if(hexBox) hexBox.value=value;
+    if(value){
+      if(!applyStyleToSelection({color:value})){ notes.style.color=value; }
+    }
+    if(fontColorSwatch){
+      fontColorSwatch.style.background = normalized==="transparent" ? "transparent" : value;
+      fontColorSwatch.classList.toggle("is-transparent", normalized==="transparent");
+    }
+    markSwatch(fontColorPopover,value);
+  }
+  function applyHighlight(color){
+    const value=String(color||"");
+    const normalized=value.toLowerCase();
+    if(hexBox) hexBox.value=value;
+    if(value){
+      applyStyleToSelection({backgroundColor:value});
+    }
+    if(hlColorSwatch){
+      hlColorSwatch.style.background = normalized==="transparent" ? "transparent" : value;
+      hlColorSwatch.classList.toggle("is-transparent", normalized==="transparent");
+    }
+    markSwatch(hlPopover,value);
+  }
+
+  renderSwatches(fontColorPopover,TEXT_COLORS,applyTextColor);
+  renderSwatches(hlPopover,HIGHLIGHT_COLORS,applyHighlight);
+  markSwatch(fontColorPopover,"#101319");
+  markSwatch(hlPopover,"#ffd200");
+
+  if(fontColorBtn && fontColorPopover){
+    fontColorBtn.addEventListener("click",()=>togglePopover(fontColorBtn,fontColorPopover));
+  }
+  if(hlBtn && hlPopover){
+    hlBtn.addEventListener("click",()=>togglePopover(hlBtn,hlPopover));
+  }
+
+  if(hexBox){
+    hexBox.addEventListener("change",()=>{
+      const c=hexBox.value.trim();
+      if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){
+        applyHighlight(c);
+      }
+    });
+  }
 
   /* ======== SUMMARY (unchanged) ======== */
   function summarize(){
