@@ -1,38 +1,37 @@
 {
-  "$schema": "https://schema.tauri.app/config/1",
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "com.scribecat.app",
+  "productName": "ScribeCat",
+  "version": "1.0.0",
+
   "build": {
-    "beforeBuildCommand": "",
     "beforeDevCommand": "",
-    "devPath": "index.html",
-    "distDir": "."
+    "beforeBuildCommand": "",
+    "devUrl": "index.html",
+    "frontendDist": "."
   },
-  "package": {
-    "productName": "ScribeCat",
-    "version": "1.0.0"
+
+  "security": {
+    "csp": null
   },
-  "tauri": {
-    "allowlist": {
-      "all": false
-    },
-    "bundle": {
-      "active": true,
-      "identifier": "com.scribecat.app",
-      "icon": [
-        "icons/scribecat-512.png",
-        "icons/icon32.png"
-      ]
-    },
-    "security": {
-      "csp": null
-    },
+
+  "app": {
     "windows": [
       {
-        "label": "main",
         "title": "ScribeCat",
         "width": 1280,
         "height": 840,
         "resizable": true
       }
+    ]
+  },
+
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/scribecat-512.png",
+      "icons/icon32.png"
     ]
   }
 }
