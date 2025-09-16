@@ -1,0 +1,16 @@
+{
+  "name": "ScribeCat",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": []
+    }
+  },
+  "forwardPorts": [8787]
+}
+
