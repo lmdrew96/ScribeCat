@@ -1,0 +1,16 @@
+node_modules/
+.trash/
+.env*
+*.pem
+.DS_Store
+dist/
+build/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+*.tsbuildinfo
+src-tauri/target/
+src-tauri/gen/
+web/dist/
