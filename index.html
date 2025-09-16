@@ -152,6 +152,10 @@
         <button id="unhlBtn" class="btn" title="Clear inline styles">🧽</button>
         <button id="boldBtn" class="btn" title="Bold (⌘/Ctrl+B)">B</button>
         <button id="italicBtn" class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
+        <button id="underlineBtn" class="btn" data-cmd="underline" title="Underline (⌘/Ctrl+U)" aria-label="Underline" style="text-decoration:underline">U</button>
+        <button id="quote" class="btn" title="Quote" aria-label="Quote block">“”</button>
+        <button id="h1" class="btn" title="Heading 1" aria-label="Heading level 1">H1</button>
+        <button id="h2" class="btn" title="Heading 2" aria-label="Heading level 2">H2</button>
         <button id="undoBtn" class="btn" title="Undo">↶</button>
         <button id="redoBtn" class="btn" title="Redo">↷</button>
       </div>
@@ -574,6 +578,10 @@
 
   byId("boldBtn").onclick=()=>document.execCommand('bold');
   byId("italicBtn").onclick=()=>document.execCommand('italic');
+  byId("underlineBtn").onclick=()=>{ document.execCommand('underline'); notes.focus(); };
+  byId("quote").onclick=()=>{ document.execCommand('formatBlock', false, 'blockquote'); notes.focus(); };
+  byId("h1").onclick=()=>{ document.execCommand('formatBlock', false, 'h1'); notes.focus(); };
+  byId("h2").onclick=()=>{ document.execCommand('formatBlock', false, 'h2'); notes.focus(); };
   byId("undoBtn").onclick=()=>document.execCommand('undo');
   byId("redoBtn").onclick=()=>document.execCommand('redo');
   byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
