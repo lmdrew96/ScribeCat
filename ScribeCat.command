@@ -3,5 +3,6 @@ cd "$(dirname "$0")"
 node server.mjs &
 SERVER_PID=$!
 sleep 1
-open "http://127.0.0.1:8787/"
+UI_ENTRY="$PWD/web/index.html"
+open "$UI_ENTRY"
 wait $SERVER_PID
