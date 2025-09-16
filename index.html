@@ -83,8 +83,30 @@
 #live .line:hover .ts{opacity:.65}
 
 /* Bottom footer bar */
-.footbar{position:fixed;right:12px;bottom:8px;display:flex;gap:8px;align-items:center;z-index:25}
-.footbtn{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--chip);cursor:pointer;font-size:14px}
+.footbar{position:fixed;right:12px;bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:25}
+.footbtn{padding:6px 10px;border:1px solid var(--border);border-radius:10px;background:var(--chip);cursor:pointer;font-size:14px;display:flex;align-items:center;gap:4px}
+.footbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.footbtn[disabled]{opacity:.6;cursor:not-allowed}
+.footbtn.active{background:var(--accent);color:#fff;border-color:transparent}
+#summaryBtn{background:var(--accent);color:#fff;border-color:transparent}
+#summaryBtn[disabled]{opacity:.7;cursor:wait}
+
+/* Ask AI panel */
+#askPanel{position:fixed;right:12px;bottom:64px;width:320px;max-height:60vh;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 16px 36px rgba(16,19,25,.18);padding:12px;display:flex;flex-direction:column;gap:10px;z-index:30}
+#askPanel[aria-hidden="true"]{display:none}
+#askPanel textarea{width:100%;min-height:96px;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:10px;font:14px/1.45 var(--ui);color:var(--ink);background:var(--surface)}
+#askPanel textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#askPanel .ask-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#askPanel .ask-hint{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px}
+#askPanel .ask-actions{display:flex;flex-wrap:wrap;gap:8px}
+#askPanel pre{margin:0;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--bg);font:13px/1.45 var(--ui);color:var(--ink);max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+#askPanel pre:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#askOut[data-status="loading"]{color:var(--sub)}
+#askOut[data-status="error"]{border-color:var(--bad);color:var(--bad)}
+#askClose{padding:4px 8px;font-size:13px;background:var(--chip)}
+#askPaste[disabled]{cursor:not-allowed;opacity:.65}
+.ask-ai-answer{margin:12px 0;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 2px 6px rgba(16,19,25,.06)}
+.summary-block{margin:0 0 16px}
 </style>
 </head>
 <body>
@@ -117,7 +139,6 @@
     <button id="pauseBtn"  class="btn" style="display:none">Pause</button>
     <button id="resumeBtn" class="btn" style="display:none">Resume</button>
     <button id="stopBtn"   class="btn" style="display:none">⏹ Stop</button>
-    <button id="summaryBtn" class="btn" style="display:none">Summarize → Notes</button>
     <button id="saveBtn" class="btn" style="background:var(--accent);color:#fff;border-color:transparent">Save</button>
   </div>
 </div>
@@ -203,6 +224,24 @@
 <div class="ver">ScribeCat v1.9.9</div>
 <div class="footbar">
   <button id="layoutBtn" class="footbtn" title="Toggle layout (stacked / side-by-side)">🧩</button>
+  <button id="summaryBtn" class="footbtn" title="Summarize transcript and append to Notes">Summary → Notes</button>
+  <button id="askBtn" class="footbtn" aria-expanded="false" title="Open Ask ScribeCat AI panel">Ask AI</button>
+</div>
+<div id="askPanel" role="dialog" aria-modal="false" aria-labelledby="askPanelTitle" aria-hidden="true">
+  <div class="ask-header">
+    <strong id="askPanelTitle">Ask ScribeCat</strong>
+    <button id="askClose" type="button" class="btn" title="Close Ask AI panel">✕</button>
+  </div>
+  <label class="ask-hint">
+    <input type="checkbox" id="askCtx" checked/>
+    include notes &amp; transcript as context
+  </label>
+  <textarea id="askInput" placeholder="Question…"></textarea>
+  <div class="ask-actions">
+    <button id="askSend" type="button" class="btn">Send</button>
+    <button id="askPaste" type="button" class="btn" disabled>Paste to Notes</button>
+  </div>
+  <pre id="askOut" aria-live="polite" data-status="idle">Results will appear here.</pre>
 </div>
 <div id="contrastWarn" class="theme-warning">Adjusted for contrast</div>
 
@@ -222,6 +261,7 @@
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
+  const askBtn=byId("askBtn"), askPanel=byId("askPanel"), askClose=byId("askClose"), askCtx=byId("askCtx"), askInput=byId("askInput"), askSend=byId("askSend"), askPaste=byId("askPaste"), askOut=byId("askOut");
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
@@ -585,15 +625,178 @@
   hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
   hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
 
-  /* ======== SUMMARY (unchanged) ======== */
-  function summarize(){
-    const transcript = Array.from(live.querySelectorAll('.line')).map(n=>n.textContent).join("\n");
-    const bullets = transcript.split(/[.;!?]/).map(s=>s.trim()).filter(Boolean).slice(0,8);
-    const h2=document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
-    const ul=document.createElement('ul'); bullets.forEach(b=>{ const li=document.createElement('li'); li.textContent=b; ul.appendChild(li); });
-    notes.appendChild(h2); notes.appendChild(ul);
+  /* ======== SUMMARY & ASK AI ======== */
+  const summaryBtnLabel = summaryBtn ? summaryBtn.textContent : '';
+  const askSendLabel = askSend ? askSend.textContent : '';
+  let askAnswer = '';
+  if (askPaste) askPaste.disabled = true;
+
+  function buildTranscriptPayload(){
+    const combined = (transcriptText||"") + (sentBuf||"");
+    if (combined.trim()) return combined;
+    return Array.from(live.querySelectorAll('.line')).map(n=>n.textContent).join("\n");
   }
-  summaryBtn.onclick=summarize;
+
+  function safeHTMLFromText(text){
+    const wrap=document.createElement('div');
+    wrap.textContent = text || '';
+    return wrap.innerHTML.replace(/\n/g,'<br>');
+  }
+
+  function appendSummaryToNotes(answerText){
+    if (!notes) return;
+    const heading=document.createElement('h2');
+    heading.textContent='Summary';
+    heading.style.margin='16px 0 6px';
+    heading.style.fontSize='20px';
+    const body=document.createElement('div');
+    body.className='summary-block';
+    body.innerHTML=safeHTMLFromText(answerText);
+    notes.appendChild(heading);
+    notes.appendChild(body);
+  }
+
+  function appendAskAnswerToNotes(answerText){
+    if (!notes) return;
+    const wrap=document.createElement('div');
+    wrap.className='ask-ai-answer';
+    wrap.innerHTML=safeHTMLFromText(answerText);
+    notes.appendChild(wrap);
+  }
+
+  async function callAskAPI(body){
+    const resp = await fetch(`${API}/api/ask`,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    const raw = await resp.text();
+    let data = null;
+    if (raw){
+      try{ data = JSON.parse(raw); }
+      catch(_){ data = {answer: raw}; }
+    }
+    if (!resp.ok){
+      const msg = (data && (data.error||data.message||data.detail||data.text||data.answer)) || raw || `Request failed (${resp.status})`;
+      throw new Error(msg);
+    }
+    return data || {answer:''};
+  }
+
+  async function summarize(){
+    if (!summaryBtn) return;
+    const transcriptPayload = buildTranscriptPayload();
+    if (!transcriptPayload.trim()){
+      alert('No transcript to summarize yet.');
+      return;
+    }
+    const label = summaryBtnLabel || summaryBtn.textContent;
+    summaryBtn.disabled = true;
+    summaryBtn.textContent = 'Summarizing…';
+    summaryBtn.setAttribute('aria-busy','true');
+    try{
+      const data = await callAskAPI({
+        prompt: "Create a concise smart summary of this lecture. Include key topics, bullet points, action items, and a short glossary if terms appear.",
+        notes_html: notes.innerHTML,
+        transcript_text: transcriptPayload
+      });
+      const answer = (data && (data.answer||data.text||'')) || '';
+      if (!answer.trim()) throw new Error('No summary returned.');
+      appendSummaryToNotes(answer);
+    }catch(err){
+      alert(`Summary failed: ${err.message||err}`);
+    }finally{
+      summaryBtn.disabled = false;
+      summaryBtn.textContent = label;
+      summaryBtn.removeAttribute('aria-busy');
+    }
+  }
+  if (summaryBtn) summaryBtn.onclick = summarize;
+
+  function setAskOut(status, message){
+    if (!askOut) return;
+    askOut.textContent = message;
+    askOut.setAttribute('data-status', status);
+  }
+
+  function isAskPanelOpen(){
+    return askPanel && askPanel.getAttribute('aria-hidden') === 'false';
+  }
+
+  function setAskPanel(open){
+    if (!askPanel) return;
+    askPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (askBtn){
+      askBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      askBtn.classList.toggle('active', !!open);
+    }
+    if (open && askInput){
+      setTimeout(()=>{ askInput.focus({preventScroll:true}); },0);
+    }
+  }
+
+  if (askBtn){
+    askBtn.addEventListener('click', ()=>{ setAskPanel(!isAskPanelOpen()); });
+  }
+  if (askClose){
+    askClose.addEventListener('click', ()=>setAskPanel(false));
+  }
+  document.addEventListener('keydown',(e)=>{
+    if (e.key==='Escape' && isAskPanelOpen()){
+      setAskPanel(false);
+      if (askBtn) askBtn.focus();
+    }
+  });
+
+  async function handleAskSend(){
+    if (!askSend) return;
+    const prompt = (askInput?.value||'').trim();
+    if (!prompt){
+      setAskOut('error','Please enter a question first.');
+      askInput?.focus();
+      return;
+    }
+    const label = askSendLabel || askSend.textContent;
+    askSend.disabled = true;
+    askSend.textContent = 'Sending…';
+    setAskOut('loading','Thinking…');
+    if (askPaste) askPaste.disabled = true;
+    try{
+      const includeContext = !!(askCtx && askCtx.checked);
+      const data = await callAskAPI({
+        prompt,
+        include_context: includeContext,
+        notes_html: includeContext ? notes.innerHTML : '',
+        transcript_text: includeContext ? buildTranscriptPayload() : ''
+      });
+      const result = (data && (data.answer||data.text||'')) || '';
+      if (!result.trim()){
+        askAnswer='';
+        setAskOut('error','No answer returned.');
+      }else{
+        askAnswer=result;
+        setAskOut('success', result);
+      }
+    }catch(err){
+      askAnswer='';
+      setAskOut('error',`Error: ${err.message||err}`);
+    }finally{
+      askSend.disabled = false;
+      askSend.textContent = label;
+      if (askPaste) askPaste.disabled = !askAnswer.trim();
+    }
+  }
+
+  if (askSend){
+    askSend.addEventListener('click', handleAskSend);
+  }
+  if (askInput){
+    askInput.addEventListener('keydown',(e)=>{
+      if ((e.metaKey||e.ctrlKey) && e.key==='Enter'){
+        e.preventDefault();
+        handleAskSend();
+      }
+    });
+  }
+  if (askPaste){
+    askPaste.addEventListener('click', ()=>{ if (askAnswer.trim()) appendAskAnswerToNotes(askAnswer); });
+  }
 
   /* ======== SAVE: download WAV + upload to server + Airtable/Make ======== */
   function payload(audio_url){
