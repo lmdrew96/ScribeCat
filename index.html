@@ -294,6 +294,9 @@
     if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
     return div;
   }
+  function appendLineHTML(html){
+    return makeLine(html, false);
+  }
   function setCurrentLineText(html){
     if (!currentLineEl){ currentLineEl = makeLine(html, true); return; }
     currentLineEl.innerHTML = makeTimestampSpan() + html;
