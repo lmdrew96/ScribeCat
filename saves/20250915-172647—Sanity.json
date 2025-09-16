@@ -1,0 +1,7 @@
+{
+  "title": "Sanity",
+  "class_name": "Test",
+  "duration_seconds": 1,
+  "notes_html": "<p>hello</p>",
+  "transcript_text": "hi"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "lecture-capture",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "api": "node server/server.mjs",
+    "web": "http-server web -p 8000 --cors -s",
+    "open": "node -e \"require('child_process').exec((process.platform==='darwin'?'open':'xdg-open') + ' http://localhost:8000')\"",
+    "awake": "caffeinate -di",
+    "class": "concurrently --kill-others-on-fail \"npm:api\" \"npm:web\" \"npm:open\" \"npm:awake\""
+  },
+  "dependencies": {
+    "concurrently": "^9.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "http-server": "^14.1.1",
+    "node-fetch": "3"
+  }
+}
