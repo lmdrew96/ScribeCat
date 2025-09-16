@@ -31,7 +31,7 @@ fn spawn_server() -> std::io::Result<Child> {
         .open(log_path)?;
     let log_file_err = log_file.try_clone()?;
 
-    let mut child = Command::new("node")
+    let child = Command::new("node")
         .arg("server.mjs")
         .current_dir(&cwd)
         .stdin(Stdio::null())
@@ -64,7 +64,7 @@ fn terminate_server(child_opt: &mut Option<Child>) {
 fn main() {
     let server_state = ServerProc(Mutex::new(None));
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .manage(server_state)
         .setup(|app| {
             let state = app.state::<ServerProc>();
@@ -75,19 +75,22 @@ fn main() {
             }
             Ok(())
         })
-        .on_window_event(|event| {
-            if let WindowEvent::CloseRequested { .. } = event.event() {
-                let state = event.window().state::<ServerProc>();
+        .on_window_event(|window, event| {
+            if matches!(event, WindowEvent::CloseRequested { .. }) {
+                let state = window.state::<ServerProc>();
                 let mut guard = state.0.lock().unwrap();
                 terminate_server(&mut *guard);
             }
         })
-        .run(|app_handle, event| match event {
-            RunEvent::ExitRequested { .. } => {
-                let state = app_handle.state::<ServerProc>();
-                let mut guard = state.0.lock().unwrap();
-                terminate_server(&mut *guard);
-            }
-            _ => {}
-        });
+        .build(tauri::generate_context!())
+        .expect("error while building ScribeCat");
+
+    app.run(|app_handle: &tauri::AppHandle<tauri::Wry>, event| match event {
+        RunEvent::ExitRequested { .. } => {
+            let state = app_handle.state::<ServerProc>();
+            let mut guard = state.0.lock().unwrap();
+            terminate_server(&mut *guard);
+        }
+        _ => {}
+    });
 }

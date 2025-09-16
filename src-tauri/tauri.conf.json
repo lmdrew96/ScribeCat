@@ -7,12 +7,8 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
-  },
-
-  "security": {
-    "csp": null
+    "devUrl": "tauri://localhost",
+    "frontendDist": "../desktop-dist"
   },
 
   "app": {
@@ -28,10 +24,10 @@
 
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["deb", "rpm"],
     "icon": [
-      "icons/scribecat-512.png",
-      "icons/icon32.png"
+      "../icons/scribecat-512.png",
+      "../icons/icon32.png"
     ]
   }
 }
