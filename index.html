@@ -19,7 +19,7 @@
   :root{
     /* Base neutral theme (all others override these vars) */
     --bg:#f6f7fb; --surface:#ffffff; --ink:#101319; --sub:#6a7180; --border:#e3e7ef;
-    --brand:#ffd200; --accent:#506fff; --accent-2:#ff5c8a;
+    --brand:#ffd200; --accent:#506fff; --accent-2:#ff5c8a; --accent-rgb:80,111,255;
     --btn:#ffffff; --btn-text:#111; --chip:#fff;
 
     --ok:#2eb450; --warn:#aa7a15; --bad:#e62e4d;
@@ -34,20 +34,30 @@
   .container{max-width:1180px;margin:0 auto}
 
   /* Top bar */
-  .topbar{background:var(--surface);border-bottom:1px solid var(--border)}
-  .topbar .inner{min-height:64px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:12px}
+  .topbar{
+    background:linear-gradient(90deg,rgba(var(--accent-rgb),.22),rgba(var(--accent-rgb),.08) 52%,rgba(255,255,255,.6));
+    border-bottom:1px solid rgba(var(--accent-rgb),.18);
+    box-shadow:0 18px 36px rgba(16,19,25,.08);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+  }
+  .topbar .inner{min-height:64px;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;gap:16px}
   .titlewrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
   .nugget{width:48px;height:48px;object-fit:contain;flex:0 0 48px}
   .title{font-family:"Galaxy Caterpillar", var(--ui);font-size:clamp(24px,5vw,44px);line-height:1;flex:1;white-space:nowrap;overflow:hidden}
   .badge{padding:4px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--sub);opacity:.85}
-  .status{display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:44%}
-  .pill{border-radius:999px;padding:2px 8px;font-size:11px;border:1px solid var(--border);background:var(--chip);opacity:.72}
-  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-  .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--chip);display:inline-flex;gap:8px;align-items:center;color:var(--ink)}
-  .chip.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+  .status{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:min(100%,540px);min-width:fit-content}
+  .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 14px;font-size:13px;border:1px solid rgba(16,19,25,.08);background:linear-gradient(90deg,rgba(255,255,255,.72),rgba(255,255,255,.42));color:var(--ink);box-shadow:0 12px 28px rgba(16,19,25,.1);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+  .ok{color:var(--ok);border-color:rgba(46,180,80,.28);background:linear-gradient(90deg,rgba(46,180,80,.24),rgba(46,180,80,.1) 60%,rgba(255,255,255,.45))}
+  .warn{color:var(--warn);border-color:rgba(170,122,21,.28);background:linear-gradient(90deg,rgba(170,122,21,.2),rgba(170,122,21,.08) 60%,rgba(255,255,255,.45))}
+  .bad{color:#fff;border-color:rgba(230,46,77,.3);background:linear-gradient(90deg,rgba(230,46,77,.95),rgba(230,46,77,.78))}
+  .chip{padding:8px 16px;border:1px solid rgba(16,19,25,.08);border-radius:999px;font-size:14px;background:linear-gradient(90deg,rgba(255,255,255,.78),rgba(255,255,255,.46));display:inline-flex;gap:10px;align-items:center;color:var(--ink);box-shadow:0 14px 30px rgba(16,19,25,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-weight:600}
+  .chip.danger{background:linear-gradient(90deg,rgba(230,46,77,.95),rgba(230,46,77,.8));border-color:rgba(230,46,77,.72);color:#fff;box-shadow:0 16px 32px rgba(230,46,77,.28)}
+  .chip-icon{display:inline-flex;align-items:center;justify-content:center;font-size:1.1em}
+  .chip-label{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
 
   /* Controls */
-  .controls{padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+  .controls{padding:18px 24px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:16px;background:linear-gradient(90deg,rgba(var(--accent-rgb),.18),rgba(var(--accent-rgb),.06) 55%,rgba(255,255,255,.55));border:1px solid rgba(var(--accent-rgb),.2);border-radius:24px;box-shadow:0 22px 45px rgba(16,19,25,.12);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
   .ctrl-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .btn{padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--btn);color:var(--btn-text);cursor:pointer}
   .btn:active{transform:translateY(1px)}
@@ -56,10 +66,12 @@
   .vu>div{height:100%;width:0;background:#2ee6a6;transition:width .08s}
 
   /* Grid: side-by-side vs stacked (toggle in Settings) */
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 64px - 120px)}
+  .grid{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:32px;height:calc(100vh - 64px - 160px);min-height:320px;margin-top:24px;background:rgba(255,255,255,.7);border:1px solid rgba(16,19,25,.06);border-radius:32px;box-shadow:0 30px 60px rgba(16,19,25,.14);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);overflow:hidden}
   body.stacked .grid{grid-template-columns:1fr}
+  .grid::before{content:"";position:absolute;top:32px;bottom:32px;left:32px;width:min(520px,46%);background:radial-gradient(circle at top left,rgba(var(--accent-rgb),.25),rgba(var(--accent-rgb),0) 70%);pointer-events:none;z-index:0}
+  .grid>*{position:relative;z-index:1}
 
-  .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;min-height:0}
+  .panel{position:relative;background:rgba(255,255,255,.82);border:1px solid rgba(16,19,25,.08);border-radius:24px;display:flex;flex-direction:column;min-height:0;box-shadow:0 24px 48px rgba(16,19,25,.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}
   .panel .head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
   .panel .body{padding:12px 16px;overflow:auto;min-height:0;overscroll-behavior:contain}
   .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
@@ -74,7 +86,7 @@
   .sub{color:#6a7180;font-size:12px}
 
   /* Version at bottom */
-  .ver{position:fixed;left:12px;bottom:8px;font-size:12px;color:#77819a;opacity:.85}
+  .ver{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;color:var(--ink);background:linear-gradient(90deg,rgba(255,255,255,.82),rgba(255,255,255,.52));border:1px solid rgba(16,19,25,.08);box-shadow:0 16px 32px rgba(16,19,25,.14);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-weight:600;letter-spacing:.02em;white-space:nowrap}
 
   /* Contrast helpers */
   .theme-warning{position:fixed;right:12px;bottom:8px;font-size:12px;color:#fff;background:#e62e4d;padding:6px 10px;border-radius:10px;display:none}
@@ -95,11 +107,27 @@
       <div class="title">ScribeCat</div>
     </div>
     <div class="status">
-      <div id="stApi" class="pill warn">API</div>
-      <div id="stMic" class="pill warn">Mic</div>
-      <div id="stStream" class="pill warn">Stream</div>
-      <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
-      <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
+      <div class="ver">ScribeCat v1.9.9</div>
+      <div id="stApi" class="pill warn">
+        <span class="chip-icon" aria-hidden="true">🛰️</span>
+        <span class="chip-label" data-chip-label>API</span>
+      </div>
+      <div id="stMic" class="pill warn">
+        <span class="chip-icon" aria-hidden="true">🎙️</span>
+        <span class="chip-label" data-chip-label>Mic</span>
+      </div>
+      <div id="stStream" class="pill warn">
+        <span class="chip-icon" aria-hidden="true">🌐</span>
+        <span class="chip-label" data-chip-label>Stream</span>
+      </div>
+      <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat" type="button">
+        <span class="chip-icon" aria-hidden="true">⏻</span>
+        <span class="chip-label">Quit</span>
+      </button>
+      <button id="gearBtn" class="chip" title="Settings" type="button">
+        <span class="chip-icon" aria-hidden="true">⚙</span>
+        <span class="chip-label">Settings</span>
+      </button>
     </div>
   </div>
 </div>
@@ -200,7 +228,6 @@
   </div>
 </div>
 
-<div class="ver">ScribeCat v1.9.9</div>
 <div class="footbar">
   <button id="layoutBtn" class="footbtn" title="Toggle layout (stacked / side-by-side)">🧩</button>
 </div>
@@ -223,7 +250,16 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
-  function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
+  function tag(el, state, text){
+    el.classList.remove("ok","warn","bad");
+    el.classList.add(state);
+    const label = el.querySelector('[data-chip-label]');
+    if (label){
+      label.textContent = text;
+    } else {
+      el.textContent = text;
+    }
+  }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
   manageBtn.onclick = ()=> drawer.style.display='block';
@@ -243,8 +279,20 @@
   "Neon Night": {bg:'#0b0e18',surface:'#101425',ink:'#eaf1ff',sub:'#9fb0c9',border:'#1a2140',brand:'#ffd200',accent:'#4be9b9',accent2:'#a78bfa',btn:'#16203a',btnText:'#eaf1ff'},
   "Rose Slate": {bg:'#f9f4f6',surface:'#ffffff',ink:'#28151b',sub:'#6d545f',border:'#ecdbe1',brand:'#ffd200',accent:'#ff5c8a',accent2:'#7c3aed',btn:'#fff',btnText:'#28151b'},
   "High Noon":  {bg:'#fff8e6',surface:'#ffffff',ink:'#2b1a00',sub:'#7a5a2b',border:'#f1e4c7',brand:'#ffd200',accent:'#d97706',accent2:'#2563eb',btn:'#fff',btnText:'#2b1a00'}
-};
+  };
   themeSel.innerHTML = Object.keys(THEMES).map(n=>`<option>${n}</option>`).join("");
+  function hexToRgbStr(hex){
+    if(!hex) return "";
+    const clean = hex.replace('#','');
+    if(clean.length===3){
+      const exp = clean.split('').map(ch=>parseInt(ch+ch,16));
+      return exp.join(',');
+    }
+    if(clean.length!==6) return "";
+    const num = parseInt(clean,16);
+    const r = (num>>16)&255, g = (num>>8)&255, b = num&255;
+    return `${r},${g},${b}`;
+  }
   function applyThemeVars(t){
     const r=document.documentElement.style;
     const warn=$("#contrastWarn");
@@ -260,6 +308,8 @@
     r.setProperty('--bg',t.bg); r.setProperty('--surface',t.surface); r.setProperty('--ink',t.ink);
     r.setProperty('--sub',t.sub); r.setProperty('--border',t.border); r.setProperty('--brand',t.brand);
     r.setProperty('--accent',t.accent); r.setProperty('--accent-2',t.accent2);
+    const accentRGB = hexToRgbStr(t.accent);
+    if (accentRGB) r.setProperty('--accent-rgb', accentRGB);
     r.setProperty('--btn',t.btn); r.setProperty('--btn-text',t.btnText);
     warn.style.display = needsWarn ? 'block' : 'none';
   }
@@ -277,9 +327,9 @@
   function clock(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
   function mmss(){ const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0"); return `${mm}:${ss}`; }window.mmss = mmss;
   function makeTimestampSpan(){
-  const tsOn = (tsChk.checked || b_timestamps.checked);
-  return tsOn ? `<span class="ts">[${mmss()}]</span> ` : '';
-}
+    const tsOn = (tsChk.checked || b_timestamps.checked);
+    return tsOn ? `<span class="ts">[${mmss()}]</span> ` : '';
+  }
   function makeLine(html, isLive){
     const id = `t-${mmss().replace(':','')}-${(++lineCounter)}`;
     const div = document.createElement('div');
