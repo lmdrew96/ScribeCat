@@ -7,21 +7,20 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
-  },
-
-  "security": {
-    "csp": null
+    "frontendDist": "../web"
   },
 
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "ScribeCat",
         "width": 1280,
         "height": 840,
-        "resizable": true
+        "resizable": true,
+        "url": "index.html"
       }
     ]
   },
