@@ -219,7 +219,7 @@
   const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
-  const stackedToggle=byId("stackedToggle");
+  const stackedToggle=byId("stackedToggle"), layoutBtn=byId("layoutBtn");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
@@ -227,7 +227,19 @@
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
   manageBtn.onclick = ()=> drawer.style.display='block';
-  stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
+
+  const LAYOUT_KEY="lc_layout";
+  function setStackedLayout(stacked){
+    document.body.classList.toggle('stacked', stacked);
+    stackedToggle.checked=stacked;
+    if(layoutBtn) layoutBtn.setAttribute('aria-pressed', stacked?'true':'false');
+    try{ localStorage.setItem(LAYOUT_KEY, stacked?'stacked':'side'); }catch{}
+  }
+  const savedLayout=(()=>{ try{ return localStorage.getItem(LAYOUT_KEY); }catch{return null;} })();
+  setStackedLayout(savedLayout==='stacked');
+
+  stackedToggle.onchange = ()=> setStackedLayout(stackedToggle.checked);
+  if(layoutBtn) layoutBtn.onclick = ()=> setStackedLayout(!stackedToggle.checked);
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
   const THEMES = {
