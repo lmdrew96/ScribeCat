@@ -5,10 +5,12 @@
   "type": "module",
   "description": "Local API server and static web app for ScribeCat",
   "scripts": {
-    "start": "node server.mjs",
-    "dev": "node server.mjs",
+    "start": "tauri dev",
+    "dev": "tauri dev",
+    "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "api": "node server.mjs"
   },
   "engines": {
     "node": ">=20"

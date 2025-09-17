@@ -7,15 +7,11 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
+    "devUrl": null,
+    "frontendDist": "../web"
   },
-
-  "security": {
-    "csp": null
-  },
-
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "ScribeCat",
@@ -32,6 +28,10 @@
     "icon": [
       "icons/scribecat-512.png",
       "icons/icon32.png"
+    ],
+    "resources": [
+      "../server",
+      "../server.mjs"
     ]
   }
 }

@@ -91,7 +91,7 @@
 <div class="topbar">
   <div class="inner container">
     <div class="titlewrap">
-      <img class="nugget" src="./nugget.png" alt="Nugget"/>
+      <img class="nugget" src="./img/nugget.png" alt="Nugget"/>
       <div class="title">ScribeCat</div>
     </div>
     <div class="status">
@@ -640,8 +640,16 @@
   })();
   classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
 
-  function quitScribeCat(){
+  async function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
+    if (window.__TAURI__?.core?.invoke) {
+      try {
+        await window.__TAURI__.core.invoke('quit_app');
+        return;
+      } catch (err) {
+        console.error('quit_app failed', err);
+      }
+    }
     fetch(API+'/api/quit',{method:'POST'}).catch(()=>{});
     setTimeout(()=>{ window.close(); },200);
     setTimeout(()=>{ window.location.href='about:blank'; },600);
