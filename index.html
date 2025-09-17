@@ -271,6 +271,8 @@
   let audioCtx, source, processor, mediaStream;
   let userNearBottom=true, sentBuf="", transcriptText="";
   let wavChunks=[], wavSampleRate=44100, audioBlob=null, lineCounter=0, lastLineId=null, currentLineEl=null;
+  const POLISH_INTERVAL_MS = 5000;
+  let polishTimer=null, polishing=false, lastPolishSnapshot="";
 
   function nearBottom(el,px=48){ return (el.scrollHeight - el.scrollTop - el.clientHeight) <= px; }
   live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
@@ -313,6 +315,69 @@
     makeLine(finalText, false);
   }
   function updateTailHTML(html){ setCurrentLineText(html); }
+  function appendLineHTML(html){ makeLine(String(html||''), false); }
+
+  function finalizedLineElements(){
+    return Array.from(live.querySelectorAll('.line')).filter(el=>!el.classList.contains('liveLine'));
+  }
+  function textWithoutTimestamp(el){
+    const clone=el.cloneNode(true);
+    clone.querySelectorAll('.ts').forEach(ts=>ts.remove());
+    return clone.textContent.trim();
+  }
+  function setLineTextPreserveTimestamp(el, text){
+    const clean=(text||"").trim();
+    const ts=el.querySelector('.ts');
+    if (ts){
+      while (ts.nextSibling) el.removeChild(ts.nextSibling);
+      if (clean) ts.insertAdjacentText('afterend',' '+clean);
+    } else {
+      el.textContent=clean;
+    }
+  }
+  function refreshTranscriptTextFromDOM(){
+    const lines=finalizedLineElements();
+    transcriptText = lines.map(line=>line.textContent.trim()).join("\n");
+    if (transcriptText) transcriptText += "\n";
+  }
+  function stopPolishInterval(){ if (polishTimer){ clearInterval(polishTimer); polishTimer=null; } }
+  async function runAutoPolish(){
+    if (!running || !b_autopolish.checked || polishing) return;
+    const lines=finalizedLineElements();
+    if (!lines.length) return;
+    const plainLines=lines.map(textWithoutTimestamp);
+    const transcript=plainLines.join("\n").trim();
+    if (!transcript || transcript===lastPolishSnapshot) return;
+    polishing=true;
+    try{
+      const res=await fetch(API+"/api/polish",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify({transcript_text:transcript})});
+      if (!res.ok){ tag(stApi,"warn","API"); return; }
+      const data=await res.json().catch(()=>null);
+      if (!data || typeof data.polished!=="string"){ tag(stApi,"warn","API"); return; }
+      if (!running || !b_autopolish.checked) return;
+      const polishedLines=String(data.polished).split(/\r?\n/);
+      while (polishedLines.length && polishedLines[polishedLines.length-1].trim()==="") polishedLines.pop();
+      const limit=Math.min(polishedLines.length, lines.length);
+      for (let i=0;i<limit;i++){
+        const desired=polishedLines[i].trim();
+        if (desired!==plainLines[i]) setLineTextPreserveTimestamp(lines[i], desired);
+      }
+      refreshTranscriptTextFromDOM();
+      lastPolishSnapshot = finalizedLineElements().map(textWithoutTimestamp).join("\n").trim();
+      tag(stApi,"ok","API");
+    }catch(_){
+      tag(stApi,"warn","API");
+    }finally{
+      polishing=false;
+    }
+  }
+  function ensurePolishInterval(){
+    if (running && b_autopolish.checked){
+      if (!polishTimer) polishTimer=setInterval(runAutoPolish, POLISH_INTERVAL_MS);
+    } else {
+      stopPolishInterval();
+    }
+  }
 
   document.addEventListener('click',(e)=>{
     const a=e.target.closest('a[href^="#t-"]');
@@ -378,7 +443,7 @@
 
   async function start(){
     if (running) return;
-    running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf=""; audioBlob=null; wavChunks=[]; lineCounter=0; lastLineId=null;
+    running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf=""; audioBlob=null; wavChunks=[]; lineCounter=0; lastLineId=null; lastPolishSnapshot="";
     try{
       const deviceId = micSel.value || undefined;
       mediaStream = await navigator.mediaDevices.getUserMedia({audio:{deviceId,channelCount:1},video:false});
@@ -403,10 +468,12 @@
       };
       source.connect(processor); processor.connect(audioCtx.destination);
       finalizeCurrentLine("Session started");
+      ensurePolishInterval();
     }catch(e){
       appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
       tag(stMic,"bad","Mic");
       running=false;
+      stopPolishInterval();
     }
   }
   function wavEncode(pcm16, sampleRate){
@@ -418,6 +485,8 @@
   }
   async function stop(){
     paused=false;
+    stopPolishInterval();
+    lastPolishSnapshot="";
     if (processor){ processor.disconnect(); processor=null; }
     if (source){ source.disconnect(); source=null; }
     if (audioCtx){ try{ await audioCtx.close(); }catch(_){} audioCtx=null; }
@@ -632,6 +701,16 @@
     }
   }
   saveBtn.onclick=saveAll;
+
+  b_autopolish.addEventListener('change', ()=>{
+    if (b_autopolish.checked){
+      lastPolishSnapshot="";
+      ensurePolishInterval();
+      runAutoPolish();
+    } else {
+      stopPolishInterval();
+    }
+  });
 
   /* ======== Boot: classes + status ======== */
   function renderClassOptions(list){ classSel.innerHTML='<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("")+'<option value="__other__">Other…</option>'; }
