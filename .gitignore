@@ -7,3 +7,14 @@ secrets/**
 
 /target
 /backups/
+/target/
+/src-tauri/target/
+/dist/
+/node_modules/
+/web/assets/
+/web/fonts/
+/src-tauri/icons/
+.env
+server/.env
+.DS_Store
+logs/
