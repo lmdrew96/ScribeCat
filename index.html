@@ -21,6 +21,7 @@
     --bg:#f6f7fb; --surface:#ffffff; --ink:#101319; --sub:#6a7180; --border:#e3e7ef;
     --brand:#ffd200; --accent:#506fff; --accent-2:#ff5c8a;
     --btn:#ffffff; --btn-text:#111; --chip:#fff;
+    --grid-left: 1fr;
 
     --ok:#2eb450; --warn:#aa7a15; --bad:#e62e4d;
     --ui:Inter, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
@@ -56,8 +57,15 @@
   .vu>div{height:100%;width:0;background:#2ee6a6;transition:width .08s}
 
   /* Grid: side-by-side vs stacked (toggle in Settings) */
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 64px - 120px)}
+  .grid{display:grid;grid-template-columns:var(--grid-left) 1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 64px - 120px);position:relative}
+  .grid>.live-panel{grid-column:1;min-width:0}
+  .grid>.notes-panel{grid-column:2;min-width:0}
+  .divider{grid-column:1 / span 2;grid-row:1;align-self:stretch;justify-self:end;width:16px;margin:0 -8px;cursor:col-resize;position:relative;touch-action:none;z-index:5;border-radius:8px;outline:none}
+  .divider::before{content:"";position:absolute;top:12px;bottom:12px;left:50%;transform:translateX(-50%);width:3px;border-radius:3px;background:var(--border);transition:background .15s}
+  .divider:focus-visible::before,.divider:hover::before,.divider.active::before{background:var(--accent)}
   body.stacked .grid{grid-template-columns:1fr}
+  body.stacked .grid>.live-panel,body.stacked .grid>.notes-panel{grid-column:1}
+  body.stacked .divider{display:none}
 
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;min-height:0}
   .panel .head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
@@ -123,7 +131,7 @@
 </div>
 
 <div class="grid container">
-  <div class="panel">
+  <div class="panel live-panel">
     <div class="head">
       <div>Live Transcript</div>
       <label class="chip"><input id="sentenceChk" type="checkbox" checked/> sentence</label>
@@ -136,7 +144,9 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div id="divider" class="divider" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize panels"></div>
+
+  <div class="panel notes-panel">
     <div class="head">
       <div>Notes</div>
       <div class="toolbar">
@@ -216,6 +226,99 @@
   const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
   const saveBtn=byId("saveBtn"), summaryBtn=byId("summaryBtn");
   const live=byId("live"), notes=byId("notes");
+  const grid=document.querySelector('.grid'), divider=byId('divider');
+  const GRID_RATIO_KEY='grid-left-ratio';
+  const DEFAULT_RATIO=0.5;
+  const MIN_LEFT_PX=280;
+  const MIN_RIGHT_PX=280;
+  let gridLeftRatio=DEFAULT_RATIO;
+  try{ const stored=parseFloat(localStorage.getItem(GRID_RATIO_KEY)); if(Number.isFinite(stored)) gridLeftRatio=stored; }catch(_){ gridLeftRatio=DEFAULT_RATIO; }
+  function clampLeftWidth(width,total){
+    if(!total) return width;
+    const min=Math.min(MIN_LEFT_PX,total);
+    const maxCandidate=total-MIN_RIGHT_PX;
+    if(maxCandidate<=min){
+      const mid=Math.max(0,Math.min(total,total/2));
+      return mid;
+    }
+    const max=Math.min(total,Math.max(min,maxCandidate));
+    return Math.min(Math.max(width,min),max);
+  }
+
+  function applyLeftWidth(width,total){
+    if(!grid) return;
+    const rectWidth = total ?? grid.getBoundingClientRect().width;
+    if(!rectWidth) return;
+    const clamped=clampLeftWidth(width,rectWidth);
+    const ratio=rectWidth?clamped/rectWidth:DEFAULT_RATIO;
+    document.documentElement.style.setProperty('--grid-left', `${clamped}px`);
+    gridLeftRatio=ratio;
+    try{ localStorage.setItem(GRID_RATIO_KEY, ratio.toFixed(4)); }catch(_){ }
+  }
+
+  function applyRatio(ratio){
+    if(!grid) return;
+    const rect=grid.getBoundingClientRect();
+    if(!rect.width) return;
+    applyLeftWidth(ratio*rect.width, rect.width);
+  }
+
+  function refreshDividerState(){
+    if(!divider) return;
+    const stacked=document.body.classList.contains('stacked');
+    divider.setAttribute('aria-hidden', stacked?'true':'false');
+    divider.setAttribute('aria-disabled', stacked?'true':'false');
+    divider.tabIndex = stacked ? -1 : 0;
+  }
+
+  if(grid && divider){
+    let dragging=false;
+    divider.addEventListener('pointerdown',(e)=>{
+      if(document.body.classList.contains('stacked')) return;
+      dragging=true;
+      divider.classList.add('active');
+      try{ divider.setPointerCapture(e.pointerId); }catch(_){ }
+      e.preventDefault();
+    });
+    divider.addEventListener('pointermove',(e)=>{
+      if(!dragging) return;
+      const rect=grid.getBoundingClientRect();
+      applyLeftWidth(e.clientX - rect.left, rect.width);
+    });
+    function endDrag(e){
+      if(!dragging) return;
+      dragging=false;
+      divider.classList.remove('active');
+      try{ if(e.pointerId!==undefined) divider.releasePointerCapture(e.pointerId); }catch(_){ }
+    }
+    divider.addEventListener('pointerup',endDrag);
+    divider.addEventListener('pointercancel',endDrag);
+    divider.addEventListener('lostpointercapture',()=>{
+      dragging=false;
+      divider.classList.remove('active');
+    });
+    divider.addEventListener('keydown',(e)=>{
+      if(document.body.classList.contains('stacked')) return;
+      if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+        e.preventDefault();
+        const rect=grid.getBoundingClientRect();
+        if(!rect.width) return;
+        const delta=e.key==='ArrowLeft'?-24:24;
+        applyLeftWidth((gridLeftRatio*rect.width)+delta, rect.width);
+      }else if(e.key==='Home'||e.key==='End'){
+        e.preventDefault();
+        const rect=grid.getBoundingClientRect();
+        if(!rect.width) return;
+        if(e.key==='Home'){ applyLeftWidth(0, rect.width); }
+        else { applyLeftWidth(rect.width, rect.width); }
+      }
+    });
+  }
+
+  window.addEventListener('resize',()=>applyRatio(gridLeftRatio));
+  requestAnimationFrame(()=>applyRatio(gridLeftRatio));
+  refreshDividerState();
+
   const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
@@ -227,7 +330,12 @@
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
   manageBtn.onclick = ()=> drawer.style.display='block';
-  stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
+  stackedToggle.onchange = ()=>{
+    const stacked=stackedToggle.checked;
+    document.body.classList.toggle('stacked', stacked);
+    refreshDividerState();
+    if(!stacked) applyRatio(gridLeftRatio);
+  };
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
   const THEMES = {
