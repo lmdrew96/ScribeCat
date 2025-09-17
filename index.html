@@ -223,6 +223,93 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
+  /* ======== NOTES AUTOSAVE ======== */
+  const DRAFT_KEY = 'lc_notes_draft';
+  const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+  let draftTimer = null;
+
+  function safeGet(key){ try{ return localStorage.getItem(key); }catch(_){ return null; } }
+  function safeSet(key,value){ try{ localStorage.setItem(key,value); }catch(_){ } }
+  function safeRemove(key){ try{ localStorage.removeItem(key); }catch(_){ } }
+  function normalizeHTML(html){ return (html||"").replace(/<[^>]*>/g," ").replace(/&nbsp;/gi," ").replace(/\s+/g," ").trim(); }
+  function sessionSignature(cls,title){ return `${(cls||"").trim()}|||${(title||"").trim()}`; }
+  function currentSignature(){ return sessionSignature(classSel.value, titleBox.value); }
+  function loadDraft(){
+    const raw = safeGet(DRAFT_KEY);
+    if (!raw) return null;
+    try{
+      const data = JSON.parse(raw);
+      if (data && typeof data.html === 'string') return data;
+    }catch(_){ }
+    safeRemove(DRAFT_KEY);
+    return null;
+  }
+  function hasMeaningfulContent(html){ return normalizeHTML(html).length>0; }
+  function persistDraft(){
+    if (!notes) return;
+    const html = notes.innerHTML;
+    if (!hasMeaningfulContent(html)){
+      safeRemove(DRAFT_KEY);
+      return;
+    }
+    const draft = {
+      version: 1,
+      savedAt: Date.now(),
+      html,
+      className: classSel.value || "",
+      title: titleBox.value || "",
+      sessionSignature: currentSignature()
+    };
+    safeSet(DRAFT_KEY, JSON.stringify(draft));
+  }
+  function queueDraftSave(){
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(persistDraft, 350);
+  }
+  function clearDraft(){ safeRemove(DRAFT_KEY); }
+  function maybeRestoreDraft(){
+    const draft = loadDraft();
+    if (!draft) return;
+    const now = Date.now();
+    const savedAtMs = typeof draft.savedAt === 'number' ? draft.savedAt : Date.parse(draft.savedAt);
+    if (savedAtMs && (now - savedAtMs) > DRAFT_MAX_AGE_MS){
+      if (confirm(`An autosaved notes draft from ${new Date(savedAtMs).toLocaleString()} is over 7 days old. Discard it? Press Cancel to keep it for later.`)){
+        clearDraft();
+      }
+      return;
+    }
+    const sameClass = (draft.className||"") === (classSel.value||"");
+    const sameTitle = (draft.title||"") === (titleBox.value||"");
+    const sameHtml = normalizeHTML(draft.html) === normalizeHTML(notes.innerHTML);
+    if (sameClass && sameTitle && sameHtml) return;
+    const context = [draft.className, draft.title].filter(Boolean).join(' — ') || 'an untitled session';
+    const savedLabel = savedAtMs ? new Date(savedAtMs).toLocaleString() : 'a previous session';
+    const promptMsg = `Restore autosaved notes from ${context} saved ${savedLabel}?\n\nPress OK to restore, or Cancel to keep your current notes.`;
+    if (confirm(promptMsg)){
+      notes.innerHTML = draft.html;
+      if (draft.className && classSel){
+        const opts = Array.from(classSel.options||[]);
+        if (!opts.some(o=> (o.value||o.textContent) === draft.className)){
+          classSel.insertAdjacentHTML('afterbegin', `<option>${draft.className}</option>`);
+        }
+        classSel.value = draft.className;
+        classSel.dispatchEvent(new Event('change'));
+      }
+      if (draft.title){
+        titleBox.value = draft.title;
+      }
+      notes.focus();
+      persistDraft();
+    } else if (confirm('Discard this autosaved draft? Press OK to delete it now, or Cancel to keep it for later.')){
+      clearDraft();
+    }
+  }
+
+  if (notes) notes.addEventListener('input', queueDraftSave);
+  if (titleBox) titleBox.addEventListener('input', queueDraftSave);
+  if (classSel) classSel.addEventListener('change', queueDraftSave);
+  window.addEventListener('beforeunload', ()=>{ clearTimeout(draftTimer); persistDraft(); });
+
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
@@ -592,6 +679,7 @@
     const h2=document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
     const ul=document.createElement('ul'); bullets.forEach(b=>{ const li=document.createElement('li'); li.textContent=b; ul.appendChild(li); });
     notes.appendChild(h2); notes.appendChild(ul);
+    queueDraftSave();
   }
   summaryBtn.onclick=summarize;
 
@@ -625,6 +713,7 @@
       const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload(audioUrl))});
       await r.json();
       tag(stApi,"ok","API");
+      clearDraft();
       alert("Saved: audio downloaded, Airtable updated, Make triggered (if configured).");
     }catch(e){
       tag(stApi,"warn","API");
@@ -639,6 +728,8 @@
     if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); alert('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
   })();
   classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
+
+  maybeRestoreDraft();
 
   function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
