@@ -1,0 +1,463 @@
+{
+  "timestamp": "2025-09-17T15-29-04Z",
+  "operations": [
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates/f3745a179fcd5ce75a33beb0cdf66c0463d931fd0ea64e2f9c4c7e82919c2cd5",
+      "reason": "prepare duplicate quarantine"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates/d7e4ff06f53329f706ccd22d1229b3a6ee77f7b12b724db44803a41fceb1eba6",
+      "reason": "prepare duplicate quarantine"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates/d39eb6949b56f6a79f56b7f493a56cb49ca7465c20173f76beab15df3d26ad5a",
+      "reason": "prepare duplicate quarantine"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates/347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2",
+      "reason": "prepare duplicate quarantine"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates/154fb94fa50fb36a703706fa968beb5192a08a144b82513aa3777a49ad92c966",
+      "reason": "prepare duplicate quarantine"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates/11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a",
+      "reason": "prepare duplicate quarantine"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/duplicates",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/secrets",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "backups/organized-2025-09-17T15-29-04Z/secrets/extension",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "web",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "web/fonts",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "src-tauri",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "src-tauri/src",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "src-tauri/icons",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "scripts",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "docs",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "docs/extension",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "mkdir",
+      "path": "assets",
+      "reason": "ensure directory exists for reorganized layout"
+    },
+    {
+      "op": "move",
+      "from": "index.html",
+      "to": "web/index.html",
+      "reason": "place SPA entry under web/",
+      "size": 37591,
+      "hash": "c9d09b677ed30966bc3dd35f1557657e24932f22e323954d2d476bb0c2a65a8c"
+    },
+    {
+      "op": "move",
+      "from": "fonts/GalaxyCaterpillar.ttf",
+      "to": "web/fonts/GalaxyCaterpillar.ttf",
+      "reason": "group custom font with web assets",
+      "size": 30284,
+      "hash": "6f78b7e761a47398154f733f09307429a6f440ca86409f62ed8c71b82f8a633e"
+    },
+    {
+      "op": "move",
+      "from": "favicon.ico",
+      "to": "web/favicon.ico",
+      "reason": "keep favicon alongside SPA entry",
+      "size": 2564,
+      "hash": "d39eb6949b56f6a79f56b7f493a56cb49ca7465c20173f76beab15df3d26ad5a"
+    },
+    {
+      "op": "move",
+      "from": "nugget-16.png",
+      "to": "web/nugget-16.png",
+      "reason": "store 16px nugget icon with web bundle",
+      "size": 1254,
+      "hash": "5edb3e43f6d817de073aaae0ada853bf8aa543ebb7ce4f3491fdda9391a4d7da"
+    },
+    {
+      "op": "move",
+      "from": "nugget-180.png",
+      "to": "web/nugget-180.png",
+      "reason": "store apple-touch nugget icon with web bundle",
+      "size": 38674,
+      "hash": "f3eb16600b3a057c17eac8293d6e12a54d6a37a3ff434d92312b970f3d7d454d"
+    },
+    {
+      "op": "move",
+      "from": "nugget.png",
+      "to": "web/nugget.png",
+      "reason": "keep hero nugget art near SPA entry",
+      "size": 615665,
+      "hash": "347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2"
+    },
+    {
+      "op": "move",
+      "from": "Cargo.toml",
+      "to": "src-tauri/Cargo.toml",
+      "reason": "align cargo manifest with tauri convention",
+      "size": 74,
+      "hash": "9cb42f36e856bb1f0075cdc069bcac00eee23eef0c19b4837c045bc0a032439c"
+    },
+    {
+      "op": "move",
+      "from": "src/main.rs",
+      "to": "src-tauri/src/main.rs",
+      "reason": "align rust entry with tauri convention",
+      "size": 45,
+      "hash": "c8e0583694bb1e0188dbe28fe0d65ac1130723c55f968b6262b906c147f72549"
+    },
+    {
+      "op": "move",
+      "from": "icons/icon32.png",
+      "to": "src-tauri/icons/icon32.png",
+      "reason": "collect packaging icons under src-tauri",
+      "size": 2617,
+      "hash": "6fed88d72ea61ff8367f321cfedd9bcc9417f2cebef4658d96c69f829b2ee556"
+    },
+    {
+      "op": "move",
+      "from": "icons/scribecat-180.png",
+      "to": "src-tauri/icons/scribecat-180.png",
+      "reason": "collect packaging icons under src-tauri",
+      "size": 38769,
+      "hash": "6875d000e31aa893f273cce04ca2e91b55d9c6b622f0fbae95ba8879a9a9c064"
+    },
+    {
+      "op": "move",
+      "from": "icons/scribecat-512.png",
+      "to": "src-tauri/icons/scribecat-512.png",
+      "reason": "collect packaging icons under src-tauri",
+      "size": 261240,
+      "hash": "6c54c4424e859f33311d175ec0028a52d6f6c524718649045c1db5c75050ad24"
+    },
+    {
+      "op": "move",
+      "from": "ScribeCat.command",
+      "to": "scripts/ScribeCat.command",
+      "reason": "group launchers under scripts",
+      "size": 128,
+      "hash": "78623e390f0f635ec025a3f75135e9de768df0cd8b67ec7aad9d30aa84b5e250"
+    },
+    {
+      "op": "move",
+      "from": "__app_version.txt",
+      "to": "docs/__app_version.txt",
+      "reason": "archive version marker in docs",
+      "size": 7,
+      "hash": "aaeebc6ab5b9dd80bca452ec7a63a7175f6e9ce9b81b34a66c85e94a5e4d38ec"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper/background.js",
+      "to": "docs/extension/scribecat-canvas-helper/background.js",
+      "reason": "document browser helper source in docs",
+      "size": 702,
+      "hash": "62af374a1f5e115b09bf27ae43f5b632fcddfdc8ded8d7b6f2c493efad0f4e79"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper/content.js",
+      "to": "docs/extension/scribecat-canvas-helper/content.js",
+      "reason": "document browser helper source in docs",
+      "size": 4697,
+      "hash": "a5676cecdc5c581733b1309e1800b7b896b32c5eb66f97ea49897a624a35d5af"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper/icon128.png",
+      "to": "docs/extension/scribecat-canvas-helper/icon128.png",
+      "reason": "document browser helper assets in docs",
+      "size": 21444,
+      "hash": "65428c6da0ddd36f0044ee9947697d008d462a9c756df03b6009ddd6982ea41c"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper/manifest.json",
+      "to": "docs/extension/scribecat-canvas-helper/manifest.json",
+      "reason": "document chrome extension manifest in docs",
+      "size": 577,
+      "hash": "efbb3d78d2f5da89f4ecb5aa65efbd5d08f64a6919f9603c18878bb26d9e7156"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper/manifest.firefox.json",
+      "to": "docs/extension/scribecat-canvas-helper/manifest.firefox.json",
+      "reason": "document firefox extension manifest in docs",
+      "size": 577,
+      "hash": "efbb3d78d2f5da89f4ecb5aa65efbd5d08f64a6919f9603c18878bb26d9e7156"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper.crx",
+      "to": "docs/extension/scribecat-canvas-helper.crx",
+      "reason": "archive packaged extension in docs",
+      "size": 24782,
+      "hash": "cf979e4575945db71080015f265d38cdf4fbd4f0e31bf641037916bb70bc5b5d"
+    },
+    {
+      "op": "move",
+      "from": "extension/scribecat-canvas-helper.pem",
+      "to": "backups/organized-2025-09-17T15-29-04Z/secrets/extension/scribecat-canvas-helper.pem",
+      "reason": "quarantine extension signing key",
+      "size": 1704,
+      "hash": "ace8926888ae88978bdf722e82b2b36c6f3b4918a22eeb82751c3072c52d5890"
+    },
+    {
+      "op": "move",
+      "from": "nugget-32.png",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/d39eb6949b56f6a79f56b7f493a56cb49ca7465c20173f76beab15df3d26ad5a/nugget-32.png",
+      "reason": "dedupe nugget 32px icon; favicon.ico kept as canonical",
+      "size": 2564,
+      "hash": "d39eb6949b56f6a79f56b7f493a56cb49ca7465c20173f76beab15df3d26ad5a"
+    },
+    {
+      "op": "move",
+      "from": "icons/scribecat-src.png",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2/icons/scribecat-src.png",
+      "reason": "dedupe archived source nugget art",
+      "size": 615665,
+      "hash": "347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2"
+    },
+    {
+      "op": "move",
+      "from": "index.1.8.6.backup.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.1.8.6.backup.html",
+      "reason": "archive legacy index snapshot",
+      "size": 19033,
+      "hash": "f3745a179fcd5ce75a33beb0cdf66c0463d931fd0ea64e2f9c4c7e82919c2cd5"
+    },
+    {
+      "op": "move",
+      "from": "index.broken.1757900208.txt",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/f3745a179fcd5ce75a33beb0cdf66c0463d931fd0ea64e2f9c4c7e82919c2cd5/index.broken.1757900208.txt",
+      "reason": "group redundant HTML snapshot",
+      "size": 19033,
+      "hash": "f3745a179fcd5ce75a33beb0cdf66c0463d931fd0ea64e2f9c4c7e82919c2cd5"
+    },
+    {
+      "op": "move",
+      "from": "index.backup-20250915-211503.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.backup-20250915-211503.html",
+      "reason": "archive legacy index snapshot",
+      "size": 33415,
+      "hash": "11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a"
+    },
+    {
+      "op": "move",
+      "from": "index.backup-20250915-211525.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a/index.backup-20250915-211525.html",
+      "reason": "group redundant HTML snapshot",
+      "size": 33415,
+      "hash": "11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a"
+    },
+    {
+      "op": "move",
+      "from": "index.backup-20250915-211835.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a/index.backup-20250915-211835.html",
+      "reason": "group redundant HTML snapshot",
+      "size": 33415,
+      "hash": "11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a"
+    },
+    {
+      "op": "move",
+      "from": "index.backup.20250915-163515.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.backup.20250915-163515.html",
+      "reason": "archive legacy index snapshot",
+      "size": 17178,
+      "hash": "3b510f2c6434ea0d7b80839bc78f1f36c50179b1df84059f730b3cd421a7da4d"
+    },
+    {
+      "op": "move",
+      "from": "index.backup.20250915-170241.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.backup.20250915-170241.html",
+      "reason": "archive legacy index snapshot",
+      "size": 32288,
+      "hash": "f87cd86f5b27969cc94cf1003a43d634169075b87071877090fe48e226288230"
+    },
+    {
+      "op": "move",
+      "from": "index.backup.20250915-173751.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.backup.20250915-173751.html",
+      "reason": "archive legacy index snapshot",
+      "size": 33638,
+      "hash": "818b7428ecab2c849dffda55f6a4d9d68f79135187e793ae58b7906c367053c2"
+    },
+    {
+      "op": "move",
+      "from": "index.backup.20250915-184025.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.backup.20250915-184025.html",
+      "reason": "archive legacy index snapshot",
+      "size": 16363,
+      "hash": "d7e4ff06f53329f706ccd22d1229b3a6ee77f7b12b724db44803a41fceb1eba6"
+    },
+    {
+      "op": "move",
+      "from": "index.backup.20250915-195725.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/d7e4ff06f53329f706ccd22d1229b3a6ee77f7b12b724db44803a41fceb1eba6/index.backup.20250915-195725.html",
+      "reason": "group redundant HTML snapshot",
+      "size": 16363,
+      "hash": "d7e4ff06f53329f706ccd22d1229b3a6ee77f7b12b724db44803a41fceb1eba6"
+    },
+    {
+      "op": "move",
+      "from": "index.backup.20250915-201556.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.backup.20250915-201556.html",
+      "reason": "archive legacy index snapshot",
+      "size": 21603,
+      "hash": "91c6c7313265bbefb30b0400a1c15d41168582a26d0bcacb3fbbee162cab4b11"
+    },
+    {
+      "op": "move",
+      "from": "index.before_v1.8.8.1.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.before_v1.8.8.1.html",
+      "reason": "archive legacy index snapshot",
+      "size": 21037,
+      "hash": "8eba978f7900a6ac8b4efec312182e4380b40c7cb00c39d5f27132f859e4d3f4"
+    },
+    {
+      "op": "move",
+      "from": "index.before_v1.9.0.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.before_v1.9.0.html",
+      "reason": "archive legacy index snapshot",
+      "size": 26666,
+      "hash": "154fb94fa50fb36a703706fa968beb5192a08a144b82513aa3777a49ad92c966"
+    },
+    {
+      "op": "move",
+      "from": "index.before_v1.9.5.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/duplicates/154fb94fa50fb36a703706fa968beb5192a08a144b82513aa3777a49ad92c966/index.before_v1.9.5.html",
+      "reason": "group redundant HTML snapshot",
+      "size": 26666,
+      "hash": "154fb94fa50fb36a703706fa968beb5192a08a144b82513aa3777a49ad92c966"
+    },
+    {
+      "op": "move",
+      "from": "index.before_v1.9.6.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.before_v1.9.6.html",
+      "reason": "archive legacy index snapshot",
+      "size": 29327,
+      "hash": "54a5de4ae360ca299cc63c7c7c552add5a7de14ab52a39de9312ccabffca64df"
+    },
+    {
+      "op": "move",
+      "from": "index.before_v1.9.7.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.before_v1.9.7.html",
+      "reason": "archive legacy index snapshot",
+      "size": 31211,
+      "hash": "5642b4f53ec3d64bf87d987d2f71d3152924a6ad111df8e81a471202d9b34220"
+    },
+    {
+      "op": "move",
+      "from": "index.before_v1.9.8.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.before_v1.9.8.html",
+      "reason": "archive legacy index snapshot",
+      "size": 34114,
+      "hash": "f3a0807557ba3296bf092c55df689c98703a457e575fb3bce2d1267ecbf3c53f"
+    },
+    {
+      "op": "move",
+      "from": "index.broken.txt",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.broken.txt",
+      "reason": "archive legacy index snapshot",
+      "size": 27877,
+      "hash": "5f786156843375f20b6d12a4ffbfb949e4ce415470aaf255a21590f707086db3"
+    },
+    {
+      "op": "move",
+      "from": "index.head-backup.html",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.head-backup.html",
+      "reason": "archive legacy index snapshot",
+      "size": 21426,
+      "hash": "2b806afb7c75e2c5d214cdd3947d31d5bc2f1e5ec7bb020942d5e6bcc3cf4ba4"
+    },
+    {
+      "op": "move",
+      "from": "index.html.save",
+      "to": "backups/organized-2025-09-17T15-29-04Z/legacy-indexes/index.html.save",
+      "reason": "archive legacy index snapshot",
+      "size": 21324,
+      "hash": "2b738e1a050172ffabd2bb33cbd2d4ceb40a12ef94db3068fc01d4a19f6bb926"
+    }
+  ],
+  "tests": [
+    "npm install",
+    "npx tauri info",
+    "node server.mjs",
+    "curl http://localhost:8787/api"
+  ],
+  "notes": {
+    "duplicates_hashes": [
+      "11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a",
+      "154fb94fa50fb36a703706fa968beb5192a08a144b82513aa3777a49ad92c966",
+      "347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2",
+      "d39eb6949b56f6a79f56b7f493a56cb49ca7465c20173f76beab15df3d26ad5a",
+      "d7e4ff06f53329f706ccd22d1229b3a6ee77f7b12b724db44803a41fceb1eba6",
+      "f3745a179fcd5ce75a33beb0cdf66c0463d931fd0ea64e2f9c4c7e82919c2cd5"
+    ],
+    "legacy_index_count": 20
+  }
+}

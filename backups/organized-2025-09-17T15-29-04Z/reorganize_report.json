@@ -1,0 +1,108 @@
+{
+  "timestamp": "2025-09-17T15-29-04Z",
+  "summary": {
+    "total_files_scanned": 42,
+    "moves_performed": 42,
+    "duplicates_quarantined": 6,
+    "secrets_quarantined": 1
+  },
+  "important_moves": [
+    {
+      "from": "index.html",
+      "to": "web/index.html",
+      "reason": "place SPA entry under web/"
+    },
+    {
+      "from": "Cargo.toml",
+      "to": "src-tauri/Cargo.toml",
+      "reason": "align cargo manifest with tauri convention"
+    },
+    {
+      "from": "src/main.rs",
+      "to": "src-tauri/src/main.rs",
+      "reason": "align rust entry with tauri convention"
+    },
+    {
+      "from": "ScribeCat.command",
+      "to": "scripts/ScribeCat.command",
+      "reason": "group launchers under scripts"
+    },
+    {
+      "from": "__app_version.txt",
+      "to": "docs/__app_version.txt",
+      "reason": "archive version marker in docs"
+    },
+    {
+      "from": "extension/scribecat-canvas-helper/background.js",
+      "to": "docs/extension/scribecat-canvas-helper/background.js",
+      "reason": "document browser helper source in docs"
+    },
+    {
+      "from": "extension/scribecat-canvas-helper.pem",
+      "to": "backups/organized-2025-09-17T15-29-04Z/secrets/extension/scribecat-canvas-helper.pem",
+      "reason": "quarantine extension signing key"
+    }
+  ],
+  "duplicates": [
+    {
+      "hash": "11c813705ad820a37671479284ed5dbb0415c17b14e54b8c4f5d2831911bf12a",
+      "files": [
+        "index.backup-20250915-211525.html",
+        "index.backup-20250915-211835.html"
+      ]
+    },
+    {
+      "hash": "154fb94fa50fb36a703706fa968beb5192a08a144b82513aa3777a49ad92c966",
+      "files": [
+        "index.before_v1.9.5.html"
+      ]
+    },
+    {
+      "hash": "347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2",
+      "files": [
+        "icons/scribecat-src.png"
+      ]
+    },
+    {
+      "hash": "d39eb6949b56f6a79f56b7f493a56cb49ca7465c20173f76beab15df3d26ad5a",
+      "files": [
+        "nugget-32.png"
+      ]
+    },
+    {
+      "hash": "d7e4ff06f53329f706ccd22d1229b3a6ee77f7b12b724db44803a41fceb1eba6",
+      "files": [
+        "index.backup.20250915-195725.html"
+      ]
+    },
+    {
+      "hash": "f3745a179fcd5ce75a33beb0cdf66c0463d931fd0ea64e2f9c4c7e82919c2cd5",
+      "files": [
+        "index.broken.1757900208.txt"
+      ]
+    }
+  ],
+  "secrets_quarantined": [
+    {
+      "from": "extension/scribecat-canvas-helper.pem",
+      "to": "backups/organized-2025-09-17T15-29-04Z/secrets/extension/scribecat-canvas-helper.pem"
+    }
+  ],
+  "potential_breakages": [
+    "Dev server still needs to serve assets from the new web/ directory.",
+    "Tauri config is still missing; cargo manifest alone will not enable tauri dev/build.",
+    "Legacy HTML snapshots moved to backups; restore if referenced by documentation."
+  ],
+  "manual_checks": [
+    "npm install",
+    "npx tauri info",
+    "node server.mjs",
+    "curl http://localhost:8787/api"
+  ],
+  "suggested_readme_updates": [
+    "Document that the SPA now lives under web/ with fonts in web/fonts/.",
+    "Note that src-tauri/ holds the Rust stub and packaging icons.",
+    "Add instructions for using scripts/ScribeCat.command from repo root.",
+    "Mention legacy HTML backups relocated under backups/organized-2025-09-17T15-29-04Z/."
+  ]
+}
