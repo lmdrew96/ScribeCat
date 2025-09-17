@@ -7,3 +7,5 @@ secrets/**
 
 /target
 /backups/
+.DS_Store
+/backups/
