@@ -67,6 +67,17 @@
   .notes{outline:none}
   .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .toolbar select,.toolbar input[type="number"]{height:30px}
+  .toolbar .history-wrap{position:relative;display:flex}
+  .notes-history-panel{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 36px rgba(16,19,25,0.14);width:280px;max-height:320px;padding:12px;display:flex;flex-direction:column;gap:10px;z-index:30}
+  .notes-history-panel[hidden]{display:none}
+  .notes-history-title{font-size:14px;font-weight:600;color:var(--ink)}
+  .notes-history-sub{font-size:12px;color:var(--sub);line-height:1.4}
+  .notes-history-list{overflow-y:auto;max-height:220px;display:flex;flex-direction:column;gap:8px;margin:0;padding:0}
+  .notes-history-empty{font-size:12px;color:var(--sub)}
+  .notes-history-item{border:1px solid var(--border);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+  .notes-history-time{font-size:12px;font-weight:600;color:var(--ink)}
+  .notes-history-preview{font-size:12px;line-height:1.4;color:var(--sub)}
+  .notes-history-restore{font-size:12px;padding:6px 10px}
 
   /* Settings drawer */
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
@@ -154,6 +165,14 @@
         <button id="italicBtn" class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
         <button id="undoBtn" class="btn" title="Undo">↶</button>
         <button id="redoBtn" class="btn" title="Redo">↷</button>
+        <div class="history-wrap">
+          <button id="notesHistoryBtn" class="btn" title="Notes history">🕓</button>
+          <div id="notesHistoryPanel" class="notes-history-panel" hidden>
+            <div class="notes-history-title">Notes history</div>
+            <div class="notes-history-sub">Restore a previous snapshot if something goes wrong.</div>
+            <div id="notesHistoryList" class="notes-history-list"></div>
+          </div>
+        </div>
       </div>
     </div>
     <div id="notes" class="body notes" contenteditable="true">
@@ -216,6 +235,148 @@
   const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
   const saveBtn=byId("saveBtn"), summaryBtn=byId("summaryBtn");
   const live=byId("live"), notes=byId("notes");
+  const NOTES_CURRENT_KEY='lc_notes_current';
+  const NOTES_HISTORY_KEY='lc_notes_history';
+  const NOTES_HISTORY_LIMIT=5;
+  const notesHistoryBtn=byId("notesHistoryBtn");
+  const notesHistoryPanel=byId("notesHistoryPanel");
+  const notesHistoryList=byId("notesHistoryList");
+  let notesHistory=[];
+  let lastSavedHtml="";
+  let notesSaveTimer=null;
+
+  function readValue(key){
+    try{ return localStorage.getItem(key); }catch(_){ return null; }
+  }
+  function writeValue(key,value){
+    try{ localStorage.setItem(key,value); }catch(_){ }
+  }
+  function readJson(key){
+    try{ const raw=localStorage.getItem(key); return raw?JSON.parse(raw):null; }catch(_){ return null; }
+  }
+  function writeJson(key,value){
+    try{ localStorage.setItem(key,JSON.stringify(value)); }catch(_){ }
+  }
+  function stripHtml(html){
+    const tmp=document.createElement('div');
+    tmp.innerHTML=html||"";
+    return tmp.textContent||"";
+  }
+  function renderNotesHistory(list){
+    if(!notesHistoryList) return;
+    notesHistoryList.textContent="";
+    const snapshots=Array.isArray(list)?list:notesHistory;
+    if(!snapshots||snapshots.length===0){
+      const empty=document.createElement('div');
+      empty.className='notes-history-empty';
+      empty.textContent='No snapshots yet. Start typing to build a history.';
+      notesHistoryList.appendChild(empty);
+      return;
+    }
+    snapshots.forEach((snap,index)=>{
+      const item=document.createElement('div');
+      item.className='notes-history-item';
+      item.dataset.index=String(index);
+      const time=document.createElement('div');
+      time.className='notes-history-time';
+      const ts=new Date(snap?.ts||Date.now());
+      time.textContent=ts.toLocaleString();
+      const preview=document.createElement('div');
+      preview.className='notes-history-preview';
+      const plain=stripHtml(snap?.html||"").replace(/\s+/g,' ').trim();
+      preview.textContent=plain? (plain.length>160?plain.slice(0,157)+'…':plain) : '(blank)';
+      const restore=document.createElement('button');
+      restore.type='button';
+      restore.className='btn notes-history-restore';
+      restore.dataset.restore=String(index);
+      restore.textContent='Restore';
+      item.appendChild(time);
+      item.appendChild(preview);
+      item.appendChild(restore);
+      notesHistoryList.appendChild(item);
+    });
+  }
+  function toggleHistoryPanel(show){
+    if(!notesHistoryPanel) return;
+    const isHidden=notesHistoryPanel.hasAttribute('hidden');
+    const shouldShow=(typeof show==='boolean')?show:isHidden;
+    if(shouldShow){
+      renderNotesHistory();
+      notesHistoryPanel.removeAttribute('hidden');
+      if(notesHistoryBtn) notesHistoryBtn.setAttribute('aria-expanded','true');
+    }else{
+      notesHistoryPanel.setAttribute('hidden','');
+      if(notesHistoryBtn) notesHistoryBtn.setAttribute('aria-expanded','false');
+    }
+  }
+  function commitNotesSnapshot(){
+    if(!notes) return;
+    const html=notes.innerHTML;
+    if(html===lastSavedHtml) return;
+    lastSavedHtml=html;
+    writeValue(NOTES_CURRENT_KEY,html);
+    const snapshot={ts:Date.now(),html};
+    if(!Array.isArray(notesHistory)) notesHistory=[];
+    if(notesHistory.length && notesHistory[0]?.html===html){
+      notesHistory[0].ts=snapshot.ts;
+    }else{
+      notesHistory=notesHistory.filter((snap)=>snap?.html!==html);
+      notesHistory.unshift(snapshot);
+    }
+    if(notesHistory.length>NOTES_HISTORY_LIMIT){
+      notesHistory=notesHistory.slice(0,NOTES_HISTORY_LIMIT);
+    }
+    writeJson(NOTES_HISTORY_KEY,notesHistory);
+    if(notesHistoryPanel && !notesHistoryPanel.hasAttribute('hidden')) renderNotesHistory();
+  }
+  function scheduleNotesSnapshot(){
+    clearTimeout(notesSaveTimer);
+    notesSaveTimer=setTimeout(commitNotesSnapshot,800);
+  }
+
+  (function restoreNotes(){
+    notesHistory=readJson(NOTES_HISTORY_KEY) || [];
+    if(!Array.isArray(notesHistory)) notesHistory=[];
+    const saved=readValue(NOTES_CURRENT_KEY);
+    if(typeof saved==='string' && saved.length){
+      notes.innerHTML=saved;
+    }else if(notesHistory.length && typeof notesHistory[0]?.html==='string'){
+      notes.innerHTML=notesHistory[0].html;
+    }
+    lastSavedHtml=notes.innerHTML;
+    if(notesHistoryBtn) notesHistoryBtn.setAttribute('aria-expanded','false');
+  })();
+
+  notesHistoryBtn?.addEventListener('click',(e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    toggleHistoryPanel();
+  });
+  document.addEventListener('click',(e)=>{
+    if(!notesHistoryPanel || notesHistoryPanel.hasAttribute('hidden')) return;
+    if(notesHistoryPanel.contains(e.target)) return;
+    if(notesHistoryBtn && (e.target===notesHistoryBtn || notesHistoryBtn.contains(e.target))) return;
+    toggleHistoryPanel(false);
+  });
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape') toggleHistoryPanel(false);
+  });
+  notesHistoryList?.addEventListener('click',(e)=>{
+    const target = e.target instanceof Element ? e.target : null;
+    const restoreBtn=target?.closest('[data-restore]');
+    if(!restoreBtn) return;
+    const index=parseInt(restoreBtn.dataset.restore,10);
+    if(Number.isNaN(index) || !notesHistory[index]) return;
+    toggleHistoryPanel(false);
+    notes.innerHTML=notesHistory[index].html||"";
+    lastSavedHtml="";
+    commitNotesSnapshot();
+    notes.focus();
+  });
+
+  notes?.addEventListener('input',scheduleNotesSnapshot);
+  notes?.addEventListener('blur',commitNotesSnapshot);
+  window.addEventListener('beforeunload',commitNotesSnapshot);
   const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
@@ -592,6 +753,7 @@
     const h2=document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
     const ul=document.createElement('ul'); bullets.forEach(b=>{ const li=document.createElement('li'); li.textContent=b; ul.appendChild(li); });
     notes.appendChild(h2); notes.appendChild(ul);
+    scheduleNotesSnapshot();
   }
   summaryBtn.onclick=summarize;
 
