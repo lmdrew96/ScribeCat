@@ -23,7 +23,7 @@ aliasEnv("AIRTABLE_PAT", ["AIRTABLE_API_KEY"]);
 aliasEnv("AIRTABLE_BASE", ["AIRTABLE_BASE_ID"]);
 aliasEnv("AIRTABLE_TABLE", ["AIRTABLE_TABLE_NAME"]);
 
-const PORT = 8787;
+const PORT = 3000;
 let lastCanvasCourses = []; // [{id,name}]
 
 const headers = {
@@ -278,7 +278,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
       return;
     }
 
-    if (p === "/" && req.method === "GET") return text(res, 200, "Local API on http://localhost:8787");
+    if (p === "/" && req.method === "GET") return text(res, 200, "Local API on http://localhost:3000");
     return json(res, 404, { error:"Not found" });
   } catch (e){ return json(res, 500, { error: e?.message || String(e) }); }
 });

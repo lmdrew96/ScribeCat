@@ -4,7 +4,7 @@ api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.type === "pushCourses") {
     (async () => {
       try {
-        const r = await fetch("http://localhost:8787/api/canvas-push", {
+        const r = await fetch("http://localhost:3000/api/canvas-push", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ courses: msg.courses || [] })
