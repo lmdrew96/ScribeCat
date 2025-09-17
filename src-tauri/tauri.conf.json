@@ -11,10 +11,6 @@
     "frontendDist": "."
   },
 
-  "security": {
-    "csp": null
-  },
-
   "app": {
     "windows": [
       {
