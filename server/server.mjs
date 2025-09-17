@@ -24,6 +24,27 @@ aliasEnv("AIRTABLE_BASE", ["AIRTABLE_BASE_ID"]);
 aliasEnv("AIRTABLE_TABLE", ["AIRTABLE_TABLE_NAME"]);
 
 const PORT = 8787;
+const DEFAULT_BIND_HOSTS = ["127.0.0.1", "::1"];
+const explicitBind = (process.env.SCRIBECAT_BIND_HOST || process.env.SERVER_HOST || "").trim();
+const requestedBindHosts = (() => {
+  const raw = explicitBind
+    ? explicitBind.split(",")
+    : DEFAULT_BIND_HOSTS;
+  const cleaned = [];
+  for (const entry of raw) {
+    if (!entry) continue;
+    let host = entry.trim();
+    if (!host) continue;
+    if (host.startsWith("[") && host.endsWith("]")) {
+      host = host.slice(1, -1);
+    }
+    if (!host) continue;
+    if (!cleaned.includes(host)) cleaned.push(host);
+  }
+  return cleaned.length ? cleaned : ["127.0.0.1"];
+})();
+const boundHosts = new Set();
+
 let lastCanvasCourses = []; // [{id,name}]
 
 const headers = {
@@ -120,7 +141,7 @@ async function makeKick(payload){
   return { status:r.status, body:j };
 }
 
-const server = http.createServer(async (req, res) => {
+const requestHandler = async (req, res) => {
   if (req.method === "OPTIONS") return json(res, 200, {ok:true});
   const u = new URL(req.url, `http://${req.headers.host}`);
   const p = u.pathname;
@@ -278,9 +299,34 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
       return;
     }
 
-    if (p === "/" && req.method === "GET") return text(res, 200, "Local API on http://localhost:8787");
+    if (p === "/" && req.method === "GET"){
+      return text(res, 200, `ScribeCat local API listening on ${formatBoundSummary()}. Set SCRIBECAT_BIND_HOST to override.`);
+    }
     return json(res, 404, { error:"Not found" });
   } catch (e){ return json(res, 500, { error: e?.message || String(e) }); }
-});
+};
 
-server.listen(PORT, ()=>console.log(`Local API on http://localhost:${PORT}`));
+function formatHostForUrl(host){
+  return host.includes(":") ? `[${host}]` : host;
+}
+
+function formatBoundSummary(){
+  const hosts = boundHosts.size ? Array.from(boundHosts) : requestedBindHosts;
+  return hosts.map((host)=>`http://${formatHostForUrl(host)}:${PORT}`).join(", ");
+}
+
+for (const host of requestedBindHosts){
+  const server = http.createServer(requestHandler);
+  server.on("error", (err) => {
+    if (!explicitBind && host === "::1"){
+      console.warn(`Skipping IPv6 loopback bind (::1): ${err?.code || err?.message || err}`);
+      return;
+    }
+    console.error(`Failed to bind on ${host}:${PORT} - ${err?.message || err}`);
+    process.exit(1);
+  });
+  server.listen(PORT, host, () => {
+    boundHosts.add(host);
+    console.log(`Local API on http://${formatHostForUrl(host)}:${PORT}`);
+  });
+}
