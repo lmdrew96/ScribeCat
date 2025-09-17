@@ -487,18 +487,99 @@
     document.execCommand(listType === "ul" ? "insertUnorderedList" : "insertOrderedList");
   }
 
+  function replaceSymbols(str) {
+    return str
+      .replace(/-->/g, "→")
+      .replace(/(^|\s)--(?=[\s.,;!?)]|$)/g, "$1—");
+  }
+
+  function getSelectionOffsets(block, range) {
+    if (!block.contains(range.startContainer) || !block.contains(range.endContainer)) {
+      return null;
+    }
+    const pre = range.cloneRange();
+    pre.selectNodeContents(block);
+    pre.setEnd(range.startContainer, range.startOffset);
+    const start = pre.toString().length;
+    return { start, end: start + range.toString().length };
+  }
+
+  function mapOffsetAfterReplacements(text, offset) {
+    if (offset <= 0) return 0;
+    return replaceSymbols(text.slice(0, offset)).length;
+  }
+
+  function findTextPosition(block, offset) {
+    let remaining = offset;
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null);
+    let node = walker.nextNode();
+    let lastNode = null;
+
+    while (node) {
+      const len = node.textContent.length;
+      if (remaining <= len) {
+        return { node, offset: remaining };
+      }
+      remaining -= len;
+      lastNode = node;
+      node = walker.nextNode();
+    }
+
+    if (lastNode) {
+      return { node: lastNode, offset: lastNode.textContent.length };
+    }
+
+    return { node: block, offset: Math.min(offset, block.childNodes.length) };
+  }
+
+  function restoreSelection(block, start, end) {
+    const sel = window.getSelection();
+    if (!sel) return;
+
+    const textLength = block.textContent ? block.textContent.length : 0;
+    const clamp = (value) => Math.max(0, Math.min(value, textLength));
+    const startPos = findTextPosition(block, clamp(start));
+    const endPos = findTextPosition(block, clamp(end));
+
+    const range = document.createRange();
+    try {
+      range.setStart(startPos.node, startPos.offset);
+      range.setEnd(endPos.node, endPos.offset);
+    } catch (_) {
+      return;
+    }
+
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
   // Replace symbols and detect list markers after each input
   function autoformatInput() {
     const block = getBlockEl();
     if (!block) return;
 
-    // 1) Symbol replacements everywhere in the block
-    // "-->" → arrow,  "--" → em dash (only when used like punctuation)
-    block.innerHTML = block.innerHTML
-      .replace(/-->/g, "→")
-      .replace(/(^|[\s])--(?=[\s.,;!?)]|$)/g, "$1—");
+    const sel = window.getSelection();
+    const range = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+    // Capture the caret/selection relative to this block so it can be restored after rewriting HTML.
+    const offsets = range ? getSelectionOffsets(block, range) : null;
+    const originalText = block.textContent || "";
 
-    // 2) List triggers only at line start
+    // Perform replacements on a clone to avoid mutating live DOM nodes mid-selection.
+    const clone = block.cloneNode(true);
+    const nextHTML = replaceSymbols(clone.innerHTML);
+    if (nextHTML !== clone.innerHTML) {
+      clone.innerHTML = nextHTML;
+      block.innerHTML = clone.innerHTML;
+
+      if (offsets) {
+        const newStart = mapOffsetAfterReplacements(originalText, offsets.start);
+        const mappedEnd = mapOffsetAfterReplacements(originalText, offsets.end);
+        const newEnd = Math.max(newStart, mappedEnd);
+        restoreSelection(block, newStart, newEnd);
+      }
+    }
+
+    // After replacements, check for list triggers only at the start of the line.
     const text = block.textContent;                 // plain text of this block
     const trimmedStart = text.replace(/^\s+/, "");  // ignore leading spaces
 
