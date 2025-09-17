@@ -23,7 +23,7 @@ aliasEnv("AIRTABLE_PAT", ["AIRTABLE_API_KEY"]);
 aliasEnv("AIRTABLE_BASE", ["AIRTABLE_BASE_ID"]);
 aliasEnv("AIRTABLE_TABLE", ["AIRTABLE_TABLE_NAME"]);
 
-const PORT = 8787;
+const PORT = 3000;
 let lastCanvasCourses = []; // [{id,name}]
 
 const headers = {
