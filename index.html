@@ -564,13 +564,65 @@
 
   function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
   function applyStyleToSelection(style){
-    const sel=window.getSelection(); if(!sel||sel.rangeCount===0) return false;
-    const rng=sel.getRangeAt(0); if(rng.collapsed) return false;
-    try{ const span=document.createElement('span'); Object.assign(span.style, style); rng.surroundContents(span); return true; }catch(e){ return false; }
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) return false;
+
+    const ancestor = range.commonAncestorContainer;
+    if (!notes.contains(ancestor) && ancestor !== notes) return false;
+
+    const root = ancestor.nodeType === Node.TEXT_NODE ? ancestor.parentNode : ancestor;
+    if (!root || (!notes.contains(root) && root !== notes)) return false;
+
+    const originalRange = range.cloneRange();
+    const startContainer = originalRange.startContainer;
+    const startOffset = originalRange.startOffset;
+    const endContainer = originalRange.endContainer;
+    const endOffset = originalRange.endOffset;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node){
+        if (!notes.contains(node)) return NodeFilter.FILTER_REJECT;
+        if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+        return originalRange.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+
+    const createdSpans = [];
+    let node = walker.nextNode();
+    while (node){
+      const from = node === startContainer ? startOffset : 0;
+      const to = node === endContainer ? endOffset : node.nodeValue.length;
+      if (to > from){
+        const subRange = document.createRange();
+        subRange.setStart(node, from);
+        subRange.setEnd(node, to);
+        if (!subRange.collapsed){
+          try{
+            const span = document.createElement('span');
+            Object.assign(span.style, style);
+            subRange.surroundContents(span);
+            createdSpans.push(span);
+          }catch(_){ /* ignore range errors */ }
+        }
+      }
+      node = walker.nextNode();
+    }
+
+    if (!createdSpans.length) return false;
+
+    const newRange = document.createRange();
+    newRange.setStartBefore(createdSpans[0]);
+    newRange.setEndAfter(createdSpans[createdSpans.length-1]);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    return true;
   }
-  sizeSel.onchange=()=>{ const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
-  sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
-  famSel.onchange = ()=>{ const fam=famSel.value; if(!applyStyleToSelection({fontFamily:fam})){ notes.style.fontFamily=fam; } };
+  sizeSel.onchange=()=>{ const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; applyStyleToSelection({fontSize:px+'px'}); };
+  sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; applyStyleToSelection({fontSize:px+'px'}); };
+  famSel.onchange = ()=>{ const fam=famSel.value; applyStyleToSelection({fontFamily:fam}); };
 
   byId("boldBtn").onclick=()=>document.execCommand('bold');
   byId("italicBtn").onclick=()=>document.execCommand('italic');
@@ -581,7 +633,7 @@
   const fontColorBtn=byId("fontColorBtn"), fontColor=byId("fontColor"), hlBtn=byId("hlBtn"), hlColor=byId("hlColor"), hexBox=byId("hexBox");
   fontColorBtn.onclick=()=>fontColor.click();
   hlBtn.onclick=()=>hlColor.click();
-  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } };
+  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; applyStyleToSelection({color:c}); };
   hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
   hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
 
