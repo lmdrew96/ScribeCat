@@ -65,6 +65,10 @@ fn main() {
     let server_state = ServerProc(Mutex::new(None));
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(server_state)
         .setup(|app| {
             let state = app.state::<ServerProc>();

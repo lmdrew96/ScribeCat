@@ -7,15 +7,19 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
+    "devUrl": null,
     "frontendDist": "."
   },
 
-  "security": {
-    "csp": null
-  },
-
   "app": {
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.assemblyai.com https://api.airtable.com https://hook.us2.make.com wss://streaming.assemblyai.com; media-src 'self' blob:; frame-ancestors 'none';",
+      "devCsp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.assemblyai.com https://api.airtable.com https://hook.us2.make.com wss://streaming.assemblyai.com; media-src 'self' blob:; frame-ancestors 'none';",
+      "capabilities": [
+        "main"
+      ]
+    },
+
     "windows": [
       {
         "title": "ScribeCat",
