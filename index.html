@@ -71,6 +71,16 @@
   /* Settings drawer */
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
   .drawer .group{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
+  .drawer .class-manager{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .drawer .class-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #e2e8ff;border-radius:8px;background:#f8faff}
+  .drawer .class-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .drawer .class-actions{display:flex;gap:6px}
+  .drawer .mini-btn{padding:4px 8px;border:1px solid #dbe1ff;border-radius:8px;background:var(--chip);cursor:pointer;font-size:12px;line-height:1.2}
+  .drawer .mini-btn:disabled{opacity:.5;cursor:default}
+  .drawer .add-btn{background:var(--accent);color:#fff;border-color:transparent}
+  .drawer .class-add{display:flex;gap:8px;margin-top:10px}
+  .drawer .class-add input{flex:1}
+  .drawer .class-empty{font-size:12px;color:#6a7180;padding:4px 0}
   .sub{color:#6a7180;font-size:12px}
 
   /* Version at bottom */
@@ -195,6 +205,16 @@
   </div>
 
   <div class="group">
+    <h4>Classes</h4>
+    <div class="sub">Rename, delete, reorder, or add classes. Changes update the main selector instantly.</div>
+    <div id="classList" class="class-manager"></div>
+    <form id="addClassForm" class="class-add">
+      <input id="addClassInput" type="text" placeholder="Add class name" autocomplete="off"/>
+      <button type="submit" class="mini-btn add-btn">Add</button>
+    </form>
+  </div>
+
+  <div class="group">
     <h4>Danger zone</h4>
     <button id="quitBtn" class="btn" style="background:#ffe3e3;border-color:#ffb3b3">Quit ScribeCat</button>
   </div>
@@ -221,6 +241,7 @@
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
   const stackedToggle=byId("stackedToggle");
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
+  const classListWrap=byId("classList"), addClassForm=byId("addClassForm"), addClassInput=byId("addClassInput");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
@@ -634,11 +655,243 @@
   saveBtn.onclick=saveAll;
 
   /* ======== Boot: classes + status ======== */
-  function renderClassOptions(list){ classSel.innerHTML='<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("")+'<option value="__other__">Other…</option>'; }
-  (function bootClasses(){ const saved=JSON.parse(localStorage.getItem("lc_classes")||"[]"); renderClassOptions(saved);
-    if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); alert('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
-  })();
-  classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
+  const CLASS_KEY = "lc_classes";
+  let classes = [];
+  let lastClassValue = "";
+
+  function cleanClasses(list){
+    const seen = new Set();
+    const result = [];
+    (Array.isArray(list) ? list : []).forEach(item => {
+      const name = String(item ?? "").trim();
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push(name);
+    });
+    return result;
+  }
+
+  function loadClasses(){
+    try {
+      const raw = JSON.parse(localStorage.getItem(CLASS_KEY) || "[]");
+      return cleanClasses(raw);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function updateTitleFromClass(){
+    if (classSel.value && classSel.value !== "__other__") {
+      titleBox.value = `${classSel.value} — ${new Date().toISOString().slice(0,10)}`;
+    } else if (!classSel.value) {
+      titleBox.value = "";
+    }
+  }
+
+  function renderClassOptions(list, keepValue){
+    const desired = keepValue !== undefined ? keepValue : classSel.value;
+    const prior = classSel.value;
+    classSel.innerHTML = "";
+    const blankOpt = document.createElement("option");
+    blankOpt.value = "";
+    blankOpt.textContent = "Choose class…";
+    classSel.appendChild(blankOpt);
+    list.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      classSel.appendChild(opt);
+    });
+    const otherOpt = document.createElement("option");
+    otherOpt.value = "__other__";
+    otherOpt.textContent = "Other…";
+    classSel.appendChild(otherOpt);
+
+    let nextValue = "";
+    if (desired === "__other__") {
+      nextValue = "__other__";
+    } else if (desired) {
+      const match = list.find(n => n.toLowerCase() === String(desired).toLowerCase());
+      if (match) nextValue = match;
+    }
+    classSel.value = nextValue;
+    if (prior !== classSel.value) {
+      updateTitleFromClass();
+    }
+    lastClassValue = classSel.value;
+  }
+
+  function renderClassManager(list){
+    if (!classListWrap) return;
+    classListWrap.innerHTML = "";
+    if (!list.length) {
+      const empty = document.createElement("div");
+      empty.className = "class-empty";
+      empty.textContent = "No saved classes yet. Import from Canvas or add below.";
+      classListWrap.appendChild(empty);
+      return;
+    }
+    list.forEach((name, index) => {
+      const row = document.createElement("div");
+      row.className = "class-row";
+      row.dataset.index = String(index);
+
+      const label = document.createElement("div");
+      label.className = "class-name";
+      label.textContent = name;
+      row.appendChild(label);
+
+      const actions = document.createElement("div");
+      actions.className = "class-actions";
+
+      function miniBtn(action, text, title, disabled){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mini-btn";
+        btn.dataset.action = action;
+        btn.textContent = text;
+        if (title) {
+          btn.title = title;
+          btn.setAttribute("aria-label", title);
+        }
+        if (disabled) btn.disabled = true;
+        return btn;
+      }
+
+      actions.appendChild(miniBtn("up", "↑", "Move up", index === 0));
+      actions.appendChild(miniBtn("down", "↓", "Move down", index === list.length - 1));
+      actions.appendChild(miniBtn("rename", "Rename", "Rename class", false));
+      actions.appendChild(miniBtn("delete", "Delete", "Delete class", false));
+      row.appendChild(actions);
+      classListWrap.appendChild(row);
+    });
+  }
+
+  function saveClasses(next, opts = {}){
+    classes = cleanClasses(next);
+    localStorage.setItem(CLASS_KEY, JSON.stringify(classes));
+    renderClassOptions(classes, opts.keep);
+    renderClassManager(classes);
+    return classes;
+  }
+
+  function addClasses(newOnes, opts = {}){
+    const merged = cleanClasses([...(classes || []), ...(newOnes || [])]);
+    const newCount = merged.length - classes.length;
+    saveClasses(merged, opts);
+    return newCount;
+  }
+
+  function bootClasses(){
+    classes = loadClasses();
+    renderClassOptions(classes);
+    renderClassManager(classes);
+    const hashPrefix = "#classes=";
+    if (location.hash.startsWith(hashPrefix)){
+      try {
+        const arr = JSON.parse(decodeURIComponent(location.hash.slice(hashPrefix.length)));
+        const cleaned = cleanClasses(arr);
+        const added = addClasses(cleaned, { keep: classSel.value });
+        history.replaceState(null,"",location.pathname+location.search);
+        if (cleaned.length){
+          alert(added>0 ? `Imported ${added} new class${added===1?"":"es"} from Canvas.` : "All imported classes were already saved.");
+        }
+      } catch (_) {}
+    }
+  }
+  bootClasses();
+
+  function moveClass(index, delta){
+    const target = index + delta;
+    if (target < 0 || target >= classes.length) return;
+    const updated = classes.slice();
+    const [item] = updated.splice(index, 1);
+    updated.splice(target, 0, item);
+    saveClasses(updated, { keep: classSel.value });
+  }
+
+  function renameClass(index){
+    const current = classes[index];
+    if (!current) return;
+    const next = prompt("Rename class", current);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) return;
+    const lower = trimmed.toLowerCase();
+    if (classes.some((n, i) => i !== index && n.toLowerCase() === lower)){
+      alert("That class already exists.");
+      renderClassOptions(classes, trimmed);
+      return;
+    }
+    const updated = classes.slice();
+    updated[index] = trimmed;
+    saveClasses(updated, { keep: trimmed });
+  }
+
+  function deleteClass(index){
+    const name = classes[index];
+    if (!name) return;
+    if (!confirm(`Delete "${name}" from saved classes?`)) return;
+    const keep = classSel.value === name ? "" : classSel.value;
+    saveClasses(classes.filter((_, i) => i !== index), { keep });
+  }
+
+  if (classListWrap){
+    classListWrap.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const row = btn.closest('.class-row');
+      if (!row) return;
+      const index = parseInt(row.dataset.index, 10);
+      if (Number.isNaN(index)) return;
+      const action = btn.dataset.action;
+      if (action === 'up') moveClass(index, -1);
+      else if (action === 'down') moveClass(index, 1);
+      else if (action === 'rename') renameClass(index);
+      else if (action === 'delete') deleteClass(index);
+    });
+  }
+
+  if (addClassForm){
+    addClassForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = (addClassInput?.value || "").trim();
+      if (!name){
+        if (addClassInput) addClassInput.focus();
+        return;
+      }
+      if (classes.some(c => c.toLowerCase() === name.toLowerCase())){
+        alert("That class already exists.");
+        renderClassOptions(classes, name);
+        if (addClassInput){ addClassInput.select(); }
+        return;
+      }
+      saveClasses([...(classes || []), name], { keep: name });
+      if (addClassInput){ addClassInput.value = ""; addClassInput.focus(); }
+    });
+  }
+
+  classSel.onchange=()=>{
+    const previousValue = lastClassValue;
+    if (classSel.value === "__other__"){
+      const entered = prompt("Enter class name:") || "";
+      const trimmed = entered.trim();
+      if (trimmed){
+        if (classes.some(c => c.toLowerCase() === trimmed.toLowerCase())){
+          alert("That class already exists.");
+          renderClassOptions(classes, trimmed);
+        } else {
+          saveClasses([...(classes || []), trimmed], { keep: trimmed });
+        }
+      } else {
+        renderClassOptions(classes, previousValue);
+      }
+    }
+    updateTitleFromClass();
+    lastClassValue = classSel.value;
+  };
 
   function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
