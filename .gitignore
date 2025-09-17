@@ -1,9 +1,11 @@
+/target/
+/src-tauri/target/
+/dist/
+/node_modules/
+/web/assets/
+/web/fonts/
+/src-tauri/icons/
 .env
-*.env
-secrets/**
-
-
-# Added by cargo
-
-/target
-/backups/
+server/.env
+.DS_Store
+logs/
