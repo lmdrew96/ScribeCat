@@ -1,13 +1,15 @@
 # AGENTS.md
 
 ## Project
-ScribeCat — local Node server (`server.mjs`) + static web app in `web/`.
+ScribeCat — Tauri desktop shell bundling the static web app in `web/` (legacy Node helper in `server.mjs`).
 
 ## Setup
 - Node 20
 - Install deps:
   - `npm ci` (fallback `npm i` if no lockfile)
-- Start dev server:
+- Desktop shell (Tauri):
+  - `npm run tauri -- dev`
+- Legacy HTTP helper (avoid for desktop runtime):
   - `node server.mjs`
 
 ## Environment
