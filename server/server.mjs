@@ -26,13 +26,59 @@ aliasEnv("AIRTABLE_TABLE", ["AIRTABLE_TABLE_NAME"]);
 const PORT = 8787;
 let lastCanvasCourses = []; // [{id,name}]
 
-const headers = {
-  "access-control-allow-origin": "*",
+const ORIGIN_ALLOWLIST = [
+  "tauri://localhost",
+  "http://127.0.0.1:8787",
+  "http://localhost:8787",
+  "chrome-extension://jafbaglnkkikhocbfkgonlmopgadmbih"
+];
+const ORIGIN_LOOKUP = new Map(ORIGIN_ALLOWLIST.map(origin => [origin.toLowerCase(), origin]));
+const BASE_CORS_HEADERS = {
   "access-control-allow-headers": "content-type",
-  "access-control-allow-methods": "GET,POST,OPTIONS"
+  "access-control-allow-methods": "GET,POST,OPTIONS",
+  "vary": "Origin"
 };
-const json = (res, code, obj) => { res.writeHead(code, {"content-type":"application/json", ...headers}); res.end(JSON.stringify(obj)); };
-const text = (res, code, str) => { res.writeHead(code, {"content-type":"text/plain; charset=utf-8", ...headers}); res.end(str); };
+
+function matchAllowedOrigin(value) {
+  if (!value) return null;
+  return ORIGIN_LOOKUP.get(String(value).toLowerCase()) || null;
+}
+
+function deriveOriginFromHost(host) {
+  if (!host) return null;
+  const trimmed = String(host).trim();
+  if (!trimmed) return null;
+  return matchAllowedOrigin(`http://${trimmed}`);
+}
+
+function evaluateCors(req) {
+  const headerOrigin = req.headers.origin;
+  if (headerOrigin) {
+    const allowed = matchAllowedOrigin(headerOrigin);
+    if (allowed) return { allowed: true, origin: allowed };
+    return { allowed: false, origin: null };
+  }
+
+  const hostOrigin = deriveOriginFromHost(req.headers.host);
+  if (hostOrigin) return { allowed: true, origin: hostOrigin };
+
+  return { allowed: true, origin: null };
+}
+
+function corsHeaders(cors) {
+  const h = { ...BASE_CORS_HEADERS };
+  if (cors?.origin) h["access-control-allow-origin"] = cors.origin;
+  return h;
+}
+
+const json = (res, code, obj, cors) => {
+  res.writeHead(code, { "content-type": "application/json", ...corsHeaders(cors) });
+  res.end(JSON.stringify(obj));
+};
+const text = (res, code, str, cors) => {
+  res.writeHead(code, { "content-type": "text/plain; charset=utf-8", ...corsHeaders(cors) });
+  res.end(str);
+};
 async function bodyJSON(req){ const chunks=[]; for await (const c of req) chunks.push(c); if (!chunks.length) return {}; try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { return {}; }}
 
 // === Name cleaners ===
@@ -121,7 +167,18 @@ async function makeKick(payload){
 }
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === "OPTIONS") return json(res, 200, {ok:true});
+  const cors = evaluateCors(req);
+
+  if (req.method === "OPTIONS") {
+    if (!cors.allowed) {
+      res.writeHead(403, corsHeaders(cors));
+      return res.end();
+    }
+    res.writeHead(204, corsHeaders(cors));
+    return res.end();
+  }
+
+  if (!cors.allowed) return json(res, 403, { error: "origin_forbidden" }, cors);
   const u = new URL(req.url, `http://${req.headers.host}`);
   const p = u.pathname;
 
@@ -132,15 +189,14 @@ const server = http.createServer(async (req, res) => {
         method:"GET", headers:{ "Authorization": process.env.AAI_API_KEY }
       });
       const j = await r.json();
-      if (!r.ok) return json(res, r.status, j);
-      return json(res, 200, j);
+      if (!r.ok) return json(res, r.status, j, cors);
+      return json(res, 200, j, cors);
     }
 
     if (p === "/api/fetch-ics" && req.method === "GET"){
-      const src = u.searchParams.get("url"); if (!src) return text(res, 400, "missing url");
+      const src = u.searchParams.get("url"); if (!src) return text(res, 400, "missing url", cors);
       const r = await fetch(src); const t = await r.text();
-      res.writeHead(200, { "content-type":"text/plain; charset=utf-8", ...headers });
-      return res.end(t);
+      return text(res, 200, t, cors);
     }
 
     // ===== Canvas helper endpoints =====
@@ -165,11 +221,11 @@ const server = http.createServer(async (req, res) => {
       }
       clean.sort((a,b)=>a.name.localeCompare(b.name));
       lastCanvasCourses = clean.slice(0, 200);
-      return json(res, 200, { ok:true, count:lastCanvasCourses.length });
+      return json(res, 200, { ok:true, count:lastCanvasCourses.length }, cors);
     }
     if (p === "/api/canvas-pull" && req.method === "GET"){
       // Always return formatted names
-      return json(res, 200, { courses: lastCanvasCourses.map(c => ({ id:c.id, name: formatCodeTitle(c.name) })) });
+      return json(res, 200, { courses: lastCanvasCourses.map(c => ({ id:c.id, name: formatCodeTitle(c.name) })) }, cors);
     }
 
     // ===== OpenAI polish/summarize/chat =====
@@ -187,22 +243,22 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
         headers:{ "authorization":`Bearer ${process.env.OPENAI_API_KEY}`, "content-type":"application/json" },
         body: JSON.stringify({ model:"gpt-4o-mini", messages:[{role:"user", content:prompt}], temperature:0.3 })
       });
-      const j = await r.json(); if (!r.ok) return json(res, r.status, j);
-      return json(res, 200, { summary_md: j.choices?.[0]?.message?.content || "" });
+      const j = await r.json(); if (!r.ok) return json(res, r.status, j, cors);
+      return json(res, 200, { summary_md: j.choices?.[0]?.message?.content || "" }, cors);
     }
 
     if (p === "/api/polish" && req.method === "POST"){
       const b = await bodyJSON(req);
       const transcript = String(b.transcript_text||"").slice(0, 100000);
-      if (!process.env.OPENAI_API_KEY) return json(res, 200, { polished: transcript, skipped: true, reason:"no_openai_key" });
+      if (!process.env.OPENAI_API_KEY) return json(res, 200, { polished: transcript, skipped: true, reason:"no_openai_key" }, cors);
       const prompt = `Fix casing, punctuation, and obvious mis-hearings in this ASR transcript. Keep meaning; do not summarize.\n\nRAW:\n${transcript}`;
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method:"POST",
         headers:{ "authorization":`Bearer ${process.env.OPENAI_API_KEY}`, "content-type":"application/json" },
         body: JSON.stringify({ model:"gpt-4o-mini", messages:[{role:"user", content:prompt}], temperature:0.2 })
       });
-      const j = await r.json(); if (!r.ok) return json(res, r.status, j);
-      return json(res, 200, { polished: j.choices?.[0]?.message?.content || transcript, skipped:false });
+      const j = await r.json(); if (!r.ok) return json(res, r.status, j, cors);
+      return json(res, 200, { polished: j.choices?.[0]?.message?.content || transcript, skipped:false }, cors);
     }
 
     if (p === "/api/openai-chat" && req.method === "POST"){
@@ -219,8 +275,8 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
         headers:{ "authorization":`Bearer ${process.env.OPENAI_API_KEY}`, "content-type":"application/json" },
         body: JSON.stringify({ model:"gpt-4o-mini", messages: msgs, temperature:0.3 })
       });
-      const j = await r.json(); if (!r.ok) return json(res, r.status, j);
-      return json(res, 200, { reply: j.choices?.[0]?.message?.content || "" });
+      const j = await r.json(); if (!r.ok) return json(res, r.status, j, cors);
+      return json(res, 200, { reply: j.choices?.[0]?.message?.content || "" }, cors);
     }
 
     // ===== Save to Airtable =====
@@ -237,7 +293,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
 
       let created;
       try{ created = await airtableCreate(fields); }
-      catch(e){ return json(res, 500, { error: String(e), hint: "Check Airtable PAT scope & base access; field names/types must match." }); }
+      catch(e){ return json(res, 500, { error: String(e), hint: "Check Airtable PAT scope & base access; field names/types must match." }, cors); }
 
       const recordId = created.id;
       let makeResult;
@@ -250,7 +306,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
           airtable: { baseId: process.env.AIRTABLE_BASE, table: process.env.AIRTABLE_TABLE || "Recordings", recordId }
         });
       }catch(e){ makeResult = { error: String(e) }; }
-      return json(res, 200, { ok:true, airtable_record_id: recordId, make: makeResult });
+      return json(res, 200, { ok:true, airtable_record_id: recordId, make: makeResult }, cors);
     }
 
     if (p === "/api/diag-env" && req.method === "GET"){
@@ -261,7 +317,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
         AIRTABLE_BASE: !!process.env.AIRTABLE_BASE,
         AIRTABLE_TABLE: process.env.AIRTABLE_TABLE || "Recordings",
         MAKE_WEBHOOK_URL: !!process.env.MAKE_WEBHOOK_URL
-      });
+      }, cors);
     }
     if (p === "/api/diag-airtable" && req.method === "POST"){
       let rec = null, del = null, err=null;
@@ -269,18 +325,18 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
         rec = await airtableCreate({ "Title":"_diag", "Class":"_diag" });
         try{ del = await airtableDelete(rec.id); }catch(e){ del = { error: String(e) }; }
       }catch(e){ err = String(e); }
-      return json(res, 200, { create: rec, delete: del, error: err });
+      return json(res, 200, { create: rec, delete: del, error: err }, cors);
     }
 
     if (p === "/api/quit" && req.method === "POST"){
-      json(res, 200, { ok:true });
+      json(res, 200, { ok:true }, cors);
       setTimeout(()=>process.exit(0), 150);
       return;
     }
 
-    if (p === "/" && req.method === "GET") return text(res, 200, "Local API on http://localhost:8787");
-    return json(res, 404, { error:"Not found" });
-  } catch (e){ return json(res, 500, { error: e?.message || String(e) }); }
+    if (p === "/" && req.method === "GET") return text(res, 200, "Local API on http://localhost:8787", cors);
+    return json(res, 404, { error:"Not found" }, cors);
+  } catch (e){ return json(res, 500, { error: e?.message || String(e) }, cors); }
 });
 
 server.listen(PORT, ()=>console.log(`Local API on http://localhost:${PORT}`));
