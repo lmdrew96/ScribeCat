@@ -64,7 +64,11 @@
   .panel .body{padding:12px 16px;overflow:auto;min-height:0;overscroll-behavior:contain}
   .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
 
-  .notes{outline:none}
+  .notes:focus-visible{
+    outline:2px solid var(--ink);
+    outline-offset:2px;
+    box-shadow:0 0 0 2px var(--accent);
+  }
   .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .toolbar select,.toolbar input[type="number"]{height:30px}
 
