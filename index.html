@@ -64,7 +64,7 @@
   .panel .body{padding:12px 16px;overflow:auto;min-height:0;overscroll-behavior:contain}
   .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
 
-  .notes{outline:none}
+  .notes{outline:none;font-family:var(--notes);}
   .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .toolbar select,.toolbar input[type="number"]{height:30px}
 
@@ -72,6 +72,22 @@
   .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
   .drawer .group{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
   .sub{color:#6a7180;font-size:12px}
+  .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:12px 0 6px}
+  .theme-card{appearance:none;border:0;background:transparent;padding:0;border-radius:14px;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:transform .15s ease,box-shadow .15s ease,outline .15s ease;display:block;width:100%}
+  .theme-card:focus-visible{outline:2px solid var(--accent)}
+  .theme-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(16,19,25,.12)}
+  .theme-card.selected{outline:2px solid var(--accent);outline-offset:2px}
+  .theme-card-inner{border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:146px;height:100%}
+  .theme-mini-top{display:flex;align-items:center;justify-content:space-between;border-radius:10px;padding:8px;font-size:12px;font-weight:600}
+  .theme-mini-pill{padding:4px 8px;border-radius:999px;font-size:11px}
+  .theme-mini-body{background:rgba(255,255,255,.4);border-radius:10px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px}
+  .theme-mini-chip{padding:4px 8px;border-radius:999px;border:1px solid rgba(0,0,0,.08)}
+  .theme-mini-btn{padding:4px 10px;border-radius:10px;font-weight:600}
+  .theme-swatches{display:flex;gap:6px;margin-top:4px}
+  .theme-swatch{flex:1;height:10px;border-radius:999px}
+  .theme-name{font-size:13px;font-weight:600}
+  .theme-font{font-size:11px}
+  .theme-select-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   /* Version at bottom */
   .ver{position:fixed;left:12px;bottom:8px;font-size:12px;color:#77819a;opacity:.85}
@@ -180,9 +196,10 @@
 
   <div class="group">
     <h4>Theme presets</h4>
-    <div class="sub">High-contrast palettes that recolor background, cards, text, and accents.</div>
-    <select id="themeSel" style="width:100%;margin:8px 0"></select>
-    <button id="applyTheme" class="btn">Apply</button>
+    <div class="sub">High-contrast palettes that recolor background, cards, text, and accents. Click a card to preview and apply; each theme swaps in its own label font.</div>
+    <div id="themeGrid" class="theme-grid"></div>
+    <select id="themeSel" class="theme-select-hidden" aria-label="Theme selection"></select>
+    <button id="applyTheme" class="btn">Apply selection</button>
   </div>
 
   <div class="group">
@@ -220,7 +237,7 @@
   const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
   const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
   const stackedToggle=byId("stackedToggle");
-  const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
+  const themeSel=byId("themeSel"), applyTheme=byId("applyTheme"), themeGrid=byId("themeGrid");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
@@ -231,40 +248,160 @@
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
   const THEMES = {
-  "Clean":      {bg:'#f6f7fb',surface:'#fff',ink:'#101319',sub:'#6a7180',border:'#e3e7ef',brand:'#ffd200',accent:'#506fff',accent2:'#ff5c8a',btn:'#fff',btnText:'#111'},
-  "Dark Ink":   {bg:'#0f1115',surface:'#161a22',ink:'#f1f5f9',sub:'#93a4b3',border:'#232b3a',brand:'#ffd200',accent:'#8aa9ff',accent2:'#ff95b2',btn:'#1f2532',btnText:'#fff'},
-  "Slate Pop":  {bg:'#f2f5f7',surface:'#ffffff',ink:'#1c212b',sub:'#5f6e80',border:'#d7e0e9',brand:'#ffd200',accent:'#ff5c8a',accent2:'#2e6aff',btn:'#fff',btnText:'#111'},
-  "Ocean":      {bg:'#e9f1f7',surface:'#ffffff',ink:'#0b2239',sub:'#4d6174',border:'#d2e0eb',brand:'#ffd200',accent:'#2e6aff',accent2:'#0ea5e9',btn:'#fff',btnText:'#0b2239'},
-  "Paper":      {bg:'#fbfbf7',surface:'#fff',ink:'#111',sub:'#666',border:'#ecebe6',brand:'#ffd200',accent:'#2f6fff',accent2:'#c2410c',btn:'#fff',btnText:'#111'},
-  "Plum":       {bg:'#f7f4fa',surface:'#fff',ink:'#201226',sub:'#6c5a76',border:'#e8e1ee',brand:'#ffd200',accent:'#7b3eff',accent2:'#ff5ea8',btn:'#fff',btnText:'#201226'},
-  "Forest":     {bg:'#f2f7f4',surface:'#fff',ink:'#0c2116',sub:'#476453',border:'#d9e7df',brand:'#ffd200',accent:'#1f8a6f',accent2:'#3b82f6',btn:'#fff',btnText:'#0c2116'},
-  "Charcoal":   {bg:'#15181d',surface:'#1b2027',ink:'#f2f4f8',sub:'#97a3b0',border:'#28303a',brand:'#ffd200',accent:'#7aa2ff',accent2:'#ff8fb0',btn:'#242b35',btnText:'#f2f4f8'},
-  "Citrus":     {bg:'#fffdf6',surface:'#ffffff',ink:'#1f1407',sub:'#6b5a44',border:'#efe7d6',brand:'#ffd200',accent:'#ff7d26',accent2:'#0ea5e9',btn:'#fff',btnText:'#1f1407'},
-  "Neon Night": {bg:'#0b0e18',surface:'#101425',ink:'#eaf1ff',sub:'#9fb0c9',border:'#1a2140',brand:'#ffd200',accent:'#4be9b9',accent2:'#a78bfa',btn:'#16203a',btnText:'#eaf1ff'},
-  "Rose Slate": {bg:'#f9f4f6',surface:'#ffffff',ink:'#28151b',sub:'#6d545f',border:'#ecdbe1',brand:'#ffd200',accent:'#ff5c8a',accent2:'#7c3aed',btn:'#fff',btnText:'#28151b'},
-  "High Noon":  {bg:'#fff8e6',surface:'#ffffff',ink:'#2b1a00',sub:'#7a5a2b',border:'#f1e4c7',brand:'#ffd200',accent:'#d97706',accent2:'#2563eb',btn:'#fff',btnText:'#2b1a00'}
-};
+    "Clean":      {ui:'"Inter", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Inter', bg:'#f6f7fb',surface:'#fff',ink:'#101319',sub:'#6a7180',border:'#e3e7ef',brand:'#ffd200',accent:'#506fff',accent2:'#ff5c8a',btn:'#fff',btnText:'#111'},
+    "Dark Ink":   {ui:'"Space Grotesk", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Space Grotesk', bg:'#0f1115',surface:'#161a22',ink:'#f1f5f9',sub:'#93a4b3',border:'#232b3a',brand:'#ffd200',accent:'#8aa9ff',accent2:'#ff95b2',btn:'#1f2532',btnText:'#fff'},
+    "Slate Pop":  {ui:'"Manrope", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Manrope', bg:'#f2f5f7',surface:'#ffffff',ink:'#1c212b',sub:'#5f6e80',border:'#d7e0e9',brand:'#ffd200',accent:'#ff5c8a',accent2:'#2e6aff',btn:'#fff',btnText:'#111'},
+    "Ocean":      {ui:'"Source Sans 3", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Source Sans 3', bg:'#e9f1f7',surface:'#ffffff',ink:'#0b2239',sub:'#4d6174',border:'#d2e0eb',brand:'#ffd200',accent:'#2e6aff',accent2:'#0ea5e9',btn:'#fff',btnText:'#0b2239'},
+    "Paper":      {ui:'"Libre Baskerville","Times New Roman",serif', fontLabel:'Libre Baskerville', bg:'#fbfbf7',surface:'#fff',ink:'#111',sub:'#666',border:'#ecebe6',brand:'#ffd200',accent:'#2f6fff',accent2:'#c2410c',btn:'#fff',btnText:'#111'},
+    "Plum":       {ui:'"Poppins", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Poppins', bg:'#f7f4fa',surface:'#fff',ink:'#201226',sub:'#6c5a76',border:'#e8e1ee',brand:'#ffd200',accent:'#7b3eff',accent2:'#ff5ea8',btn:'#fff',btnText:'#201226'},
+    "Forest":     {ui:'"IBM Plex Sans", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'IBM Plex Sans', bg:'#f2f7f4',surface:'#fff',ink:'#0c2116',sub:'#476453',border:'#d9e7df',brand:'#ffd200',accent:'#1f8a6f',accent2:'#3b82f6',btn:'#fff',btnText:'#0c2116'},
+    "Charcoal":   {ui:'"Roboto", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Roboto', bg:'#15181d',surface:'#1b2027',ink:'#f2f4f8',sub:'#97a3b0',border:'#28303a',brand:'#ffd200',accent:'#7aa2ff',accent2:'#ff8fb0',btn:'#242b35',btnText:'#f2f4f8'},
+    "Citrus":     {ui:'"Montserrat", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Montserrat', bg:'#fffdf6',surface:'#ffffff',ink:'#1f1407',sub:'#6b5a44',border:'#efe7d6',brand:'#ffd200',accent:'#ff7d26',accent2:'#0ea5e9',btn:'#fff',btnText:'#1f1407'},
+    "Neon Night": {ui:'"Outfit", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Outfit', bg:'#0b0e18',surface:'#101425',ink:'#eaf1ff',sub:'#9fb0c9',border:'#1a2140',brand:'#ffd200',accent:'#4be9b9',accent2:'#a78bfa',btn:'#16203a',btnText:'#eaf1ff'},
+    "Rose Slate": {ui:'"Merriweather","Times New Roman",serif', fontLabel:'Merriweather', bg:'#f9f4f6',surface:'#ffffff',ink:'#28151b',sub:'#6d545f',border:'#ecdbe1',brand:'#ffd200',accent:'#ff5c8a',accent2:'#7c3aed',btn:'#fff',btnText:'#28151b'},
+    "High Noon":  {ui:'"IBM Plex Serif","Times New Roman",serif', fontLabel:'IBM Plex Serif', bg:'#fff8e6',surface:'#ffffff',ink:'#2b1a00',sub:'#7a5a2b',border:'#f1e4c7',brand:'#ffd200',accent:'#d97706',accent2:'#2563eb',btn:'#fff',btnText:'#2b1a00'},
+    "Aurora":     {ui:'"Source Serif 4","Times New Roman",serif', fontLabel:'Source Serif 4', bg:'#f4f3ff',surface:'#ffffff',ink:'#1b1934',sub:'#5d5a7f',border:'#dcd8f4',brand:'#ffd200',accent:'#6d5dfc',accent2:'#10b981',btn:'#fff',btnText:'#1b1934'},
+    "Lagoon":     {ui:'"Open Sans", system-ui,-apple-system,"Segoe UI",sans-serif', fontLabel:'Open Sans', bg:'#eef9ff',surface:'#ffffff',ink:'#053248',sub:'#3f6574',border:'#c9e6f2',brand:'#ffd200',accent:'#0ea5e9',accent2:'#14b8a6',btn:'#fff',btnText:'#053248'},
+    "Sundown":    {ui:'"Crimson Text","Times New Roman",serif', fontLabel:'Crimson Text', bg:'#fff6f1',surface:'#ffffff',ink:'#3b1a0a',sub:'#7a4a39',border:'#f1ded4',brand:'#ffd200',accent:'#f97316',accent2:'#dc2626',btn:'#fff',btnText:'#3b1a0a'}
+  };
   themeSel.innerHTML = Object.keys(THEMES).map(n=>`<option>${n}</option>`).join("");
-  function applyThemeVars(t){
+  const warn=byId("contrastWarn");
+  let currentTheme = "Clean";
+
+  function contrastRatio(hex1, hex2){
+    function luminance(hex){
+      const c=parseInt(hex.slice(1),16);
+      const r=(c>>16)&255, g=(c>>8)&255, b=c&255;
+      const arr=[r,g,b].map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+      return 0.2126*arr[0]+0.7152*arr[1]+0.0722*arr[2];
+    }
+    const L1=luminance(hex1), L2=luminance(hex2);
+    return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05);
+  }
+
+  function applyThemeVars(name){
+    const t = THEMES[name] || THEMES["Clean"];
     const r=document.documentElement.style;
-    const warn=$("#contrastWarn");
     const pairs=[[t.surface,t.ink],[t.bg,t.ink],[t.btn,t.btnText]];
     let needsWarn=false;
-    function ratio(hex1,hex2){
-      function lum(h){const c=parseInt(h.slice(1),16);const r=(c>>16)&255,g=(c>>8)&255,b=c&255;const a=[r,g,b].map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];}
-      const L1=lum(hex1),L2=lum(hex2); const R=(Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); return R;
-    }
-    pairs.forEach(([bg,fg])=>{ try{ if(ratio(bg,fg)<4.5) needsWarn=true; }catch{} });
-    ["--bg","--surface","--ink","--sub","--border","--brand","--accent","--accent-2","--btn","--btn-text"]
-      .forEach(()=>{});
-    r.setProperty('--bg',t.bg); r.setProperty('--surface',t.surface); r.setProperty('--ink',t.ink);
-    r.setProperty('--sub',t.sub); r.setProperty('--border',t.border); r.setProperty('--brand',t.brand);
-    r.setProperty('--accent',t.accent); r.setProperty('--accent-2',t.accent2);
-    r.setProperty('--btn',t.btn); r.setProperty('--btn-text',t.btnText);
+    pairs.forEach(([bg,fg])=>{ try{ if(contrastRatio(bg,fg)<4.5) needsWarn=true; }catch{} });
+    r.setProperty('--bg',t.bg);
+    r.setProperty('--surface',t.surface);
+    r.setProperty('--ink',t.ink);
+    r.setProperty('--sub',t.sub);
+    r.setProperty('--border',t.border);
+    r.setProperty('--brand',t.brand);
+    r.setProperty('--accent',t.accent);
+    r.setProperty('--accent-2',t.accent2);
+    r.setProperty('--btn',t.btn);
+    r.setProperty('--btn-text',t.btnText);
+    r.setProperty('--ui',t.ui);
     warn.style.display = needsWarn ? 'block' : 'none';
+    currentTheme = name in THEMES ? name : "Clean";
+    themeSel.value = currentTheme;
+    highlightThemeCard();
   }
-  applyThemeVars(THEMES["Clean"]);
-  applyTheme.onclick = ()=> applyThemeVars(THEMES[themeSel.value]||THEMES["Clean"]);
+
+  function highlightThemeCard(){
+    if (!themeGrid) return;
+    themeGrid.querySelectorAll('.theme-card').forEach(card=>{
+      const active = card.dataset.theme === currentTheme;
+      card.classList.toggle('selected', active);
+      card.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function buildThemeCard(name, t){
+    const card=document.createElement('button');
+    card.type='button';
+    card.className='theme-card';
+    card.dataset.theme=name;
+    card.title = `${name} · ${t.fontLabel}`;
+    card.setAttribute('aria-label', `${name} theme using ${t.fontLabel}`);
+
+    const inner=document.createElement('div');
+    inner.className='theme-card-inner';
+    inner.style.background=t.bg;
+    inner.style.border=`1px solid ${t.border}`;
+    inner.style.color=t.ink;
+    inner.style.fontFamily=t.ui;
+
+    const top=document.createElement('div');
+    top.className='theme-mini-top';
+    top.style.background=t.surface;
+    top.style.color=t.ink;
+    const topTitle=document.createElement('span');
+    topTitle.textContent='ScribeCat';
+    const topPill=document.createElement('span');
+    topPill.className='theme-mini-pill';
+    topPill.textContent='LIVE';
+    topPill.style.background=t.brand;
+    topPill.style.color='#111';
+    top.append(topTitle, topPill);
+
+    const body=document.createElement('div');
+    body.className='theme-mini-body';
+    body.style.background=t.surface;
+    body.style.border=`1px solid ${t.border}`;
+    body.style.color=t.ink;
+
+    const chip=document.createElement('div');
+    chip.className='theme-mini-chip';
+    chip.textContent='Chip';
+    chip.style.background=t.surface;
+    chip.style.border=`1px solid ${t.border}`;
+    chip.style.color=t.sub;
+
+    const btnSample=document.createElement('div');
+    btnSample.className='theme-mini-btn';
+    btnSample.textContent='Button';
+    btnSample.style.background=t.btn;
+    btnSample.style.color=t.btnText;
+    btnSample.style.border=`1px solid ${t.border}`;
+
+    body.append(chip, btnSample);
+
+    const swatches=document.createElement('div');
+    swatches.className='theme-swatches';
+    [t.accent, t.accent2, t.brand].forEach(color=>{
+      const sw=document.createElement('div');
+      sw.className='theme-swatch';
+      sw.style.background=color;
+      swatches.appendChild(sw);
+    });
+
+    const nameEl=document.createElement('div');
+    nameEl.className='theme-name';
+    nameEl.textContent=name;
+    nameEl.style.color=t.ink;
+
+    const fontEl=document.createElement('div');
+    fontEl.className='theme-font';
+    fontEl.textContent=`${t.fontLabel} UI`;
+    fontEl.style.color=t.sub;
+    fontEl.style.fontFamily=t.ui;
+
+    inner.append(top, body, swatches, nameEl, fontEl);
+    card.appendChild(inner);
+    card.addEventListener('click', ()=> applyThemeVars(name));
+    return card;
+  }
+
+  function renderThemeGrid(){
+    if (!themeGrid) return;
+    themeGrid.innerHTML='';
+    const frag=document.createDocumentFragment();
+    Object.entries(THEMES).forEach(([name, theme])=>{
+      frag.appendChild(buildThemeCard(name, theme));
+    });
+    themeGrid.appendChild(frag);
+    highlightThemeCard();
+  }
+
+  renderThemeGrid();
+  applyThemeVars(currentTheme);
+  applyTheme.onclick = ()=> applyThemeVars(themeSel.value);
+  themeSel.onchange = ()=> applyThemeVars(themeSel.value);
 
   /* ======== MIC/STREAM/TRANSCRIPT ======== */
   let running=false, paused=false, startTs=null, ws=null;
