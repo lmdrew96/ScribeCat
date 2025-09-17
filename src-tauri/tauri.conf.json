@@ -7,15 +7,14 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
+    "devUrl": null,
     "frontendDist": "."
   },
 
-  "security": {
-    "csp": null
-  },
-
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "ScribeCat",
