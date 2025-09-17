@@ -1,18 +1,6 @@
 // src-tauri/src/main.rs
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // harmless on macOS
 
-fn main() {
-  // In dev, load env from .env (src-tauri/.env or project-root/.env)
-  #[cfg(debug_assertions)]
-  {
-    let _ = dotenvy::from_filename(".env")
-      .or_else(|_| dotenvy::from_filename("../.env"));
-  }
-
-  tauri::Builder::default()
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
-}
 use std::fs::{remove_file, OpenOptions};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
@@ -75,6 +63,11 @@ fn terminate_server(child_opt: &mut Option<Child>) {
 }
 
 fn main() {
+    #[cfg(debug_assertions)]
+    {
+        let _ = dotenvy::from_filename(".env").or_else(|_| dotenvy::from_filename("../.env"));
+    }
+
     let server_state = ServerProc(Mutex::new(None));
 
     tauri::Builder::default()
@@ -83,7 +76,8 @@ fn main() {
             let state = app.state::<ServerProc>();
             let mut guard = state.0.lock().unwrap();
             if guard.is_none() {
-                let child = spawn_server().map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+                let child =
+                    spawn_server().map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
                 *guard = Some(child);
             }
             Ok(())
