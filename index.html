@@ -79,8 +79,9 @@
   /* Contrast helpers */
   .theme-warning{position:fixed;right:12px;bottom:8px;font-size:12px;color:#fff;background:#e62e4d;padding:6px 10px;border-radius:10px;display:none}
 /* Hover-only timestamps in transcript */
-#live .line .ts{opacity:0;transition:opacity .15s ease;cursor:pointer}
+#live .line .ts{opacity:0;transition:opacity .15s ease;cursor:pointer;margin-right:8px;display:inline-block}
 #live .line:hover .ts{opacity:.65}
+body.no-ts #live .line .ts{display:none}
 
 /* Bottom footer bar */
 .footbar{position:fixed;right:12px;bottom:8px;display:flex;gap:8px;align-items:center;z-index:25}
@@ -276,10 +277,14 @@
   live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
   function clock(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
   function mmss(){ const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0"); return `${mm}:${ss}`; }window.mmss = mmss;
+  function timestampsEnabled(){ return tsChk.checked || b_timestamps.checked; }
+  function syncTimestampVisibility(){ document.body.classList.toggle('no-ts', !timestampsEnabled()); }
   function makeTimestampSpan(){
-  const tsOn = (tsChk.checked || b_timestamps.checked);
-  return tsOn ? `<span class="ts">[${mmss()}]</span> ` : '';
-}
+    return timestampsEnabled() ? `<span class="ts">[${mmss()}]&nbsp;</span>` : '';
+  }
+  tsChk.addEventListener('change', syncTimestampVisibility);
+  b_timestamps.addEventListener('change', syncTimestampVisibility);
+  syncTimestampVisibility();
   function makeLine(html, isLive){
     const id = `t-${mmss().replace(':','')}-${(++lineCounter)}`;
     const div = document.createElement('div');
@@ -346,7 +351,7 @@
           const trimmed = txt.trim();
           const done = /[.!?]\s*$/.test(trimmed);
           if (done){
-            transcriptText += (tsChk.checked||b_timestamps.checked ? (`[${mmss()}] `) : '') + trimmed + "\n";
+            transcriptText += (timestampsEnabled() ? (`[${mmss()}] `) : '') + trimmed + "\n";
             finalizeCurrentLine(trimmed);
             sentBuf = '';
           } else {
