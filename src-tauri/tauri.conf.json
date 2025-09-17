@@ -7,15 +7,14 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
-  },
-
-  "security": {
-    "csp": null
+    "devUrl": "tauri://localhost/index.html",
+    "frontendDist": "../web"
   },
 
   "app": {
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "ScribeCat",
