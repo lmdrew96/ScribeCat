@@ -1,9 +1,0 @@
-.env
-*.env
-secrets/**
-
-
-# Added by cargo
-
-/target
-/backups/
