@@ -271,6 +271,11 @@
   let audioCtx, source, processor, mediaStream;
   let userNearBottom=true, sentBuf="", transcriptText="";
   let wavChunks=[], wavSampleRate=44100, audioBlob=null, lineCounter=0, lastLineId=null, currentLineEl=null;
+  const WS_RETRY_BASE_DELAY = 1000;
+  const WS_RETRY_MAX_DELAY = 30000;
+  let wsRetryDelay = WS_RETRY_BASE_DELAY;
+  let wsRetryTimer = null;
+  let wsShouldRetry = false;
 
   function nearBottom(el,px=48){ return (el.scrollHeight - el.scrollTop - el.clientHeight) <= px; }
   live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
@@ -314,6 +319,72 @@
   }
   function updateTailHTML(html){ setCurrentLineText(html); }
 
+  function clearWsRetryTimer(){ if (wsRetryTimer){ clearTimeout(wsRetryTimer); wsRetryTimer=null; } }
+
+  function showRetryingPill(delayMs){
+    if (delayMs >= 1000){
+      const secs = Math.round(delayMs/1000);
+      tag(stStream, "warn", `Retrying in ${secs}s`);
+    } else {
+      tag(stStream, "warn", "Retrying…");
+    }
+  }
+
+  function handleStreamDisconnect(){
+    if (!wsShouldRetry){
+      tag(stStream, "warn", "Stream");
+      return;
+    }
+    if (!b_autoretry.checked){
+      tag(stStream, "warn", "Stream");
+      return;
+    }
+    scheduleWsReconnect();
+  }
+
+  async function attemptWsReconnect(){
+    if (!wsShouldRetry || !b_autoretry.checked){
+      tag(stStream, "warn", "Stream");
+      return;
+    }
+    try{
+      const socket = await openWS();
+      if (socket){
+        if (!wsShouldRetry){
+          try{ socket.close(); }catch(_){ }
+          return;
+        }
+        ws = socket;
+        return;
+      }
+    }catch(_){ }
+    scheduleWsReconnect();
+  }
+
+  function scheduleWsReconnect(){
+    if (wsRetryTimer || !wsShouldRetry || !b_autoretry.checked) return;
+    const delay = wsRetryDelay;
+    showRetryingPill(delay);
+    wsRetryTimer = setTimeout(()=>{
+      wsRetryTimer = null;
+      attemptWsReconnect();
+    }, delay);
+    wsRetryDelay = Math.min(wsRetryDelay * 2, WS_RETRY_MAX_DELAY);
+  }
+
+  b_autoretry.addEventListener('change', ()=>{
+    if (!b_autoretry.checked){
+      clearWsRetryTimer();
+      wsRetryDelay = WS_RETRY_BASE_DELAY;
+      tag(stStream, (ws && ws.readyState===1) ? "ok" : "warn", "Stream");
+      return;
+    }
+    if (wsShouldRetry && (!ws || ws.readyState!==1)){
+      wsRetryDelay = WS_RETRY_BASE_DELAY;
+      scheduleWsReconnect();
+    }
+  });
+
   document.addEventListener('click',(e)=>{
     const a=e.target.closest('a[href^="#t-"]');
     if (!a) return;
@@ -335,9 +406,21 @@
       const {token} = await tr.json();
       const s = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`);
       s.binaryType="arraybuffer";
-      s.onopen=()=>tag(stStream,"ok","Stream");
-      s.onclose=()=>tag(stStream,"warn","Stream");
-      s.onerror=()=>tag(stStream,"bad","Stream");
+      s.onopen=()=>{
+        ws = s;
+        wsRetryDelay = WS_RETRY_BASE_DELAY;
+        clearWsRetryTimer();
+        tag(stStream,"ok","Stream");
+      };
+      s.onclose=()=>{
+        if (ws===s) ws=null;
+        handleStreamDisconnect();
+      };
+      s.onerror=()=>{
+        if (ws===s) ws=null;
+        tag(stStream,"bad","Stream");
+        handleStreamDisconnect();
+      };
       s.onmessage=(m)=>{ if(typeof m.data!=="string") return; try{
         const j=JSON.parse(m.data);
         const txt=j.formatted_transcript||j.transcript||(j.turn&&(j.turn.formatted_transcript||j.turn.transcript))||j.text;
@@ -379,6 +462,9 @@
   async function start(){
     if (running) return;
     running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf=""; audioBlob=null; wavChunks=[]; lineCounter=0; lastLineId=null;
+    wsShouldRetry = true;
+    wsRetryDelay = WS_RETRY_BASE_DELAY;
+    clearWsRetryTimer();
     try{
       const deviceId = micSel.value || undefined;
       mediaStream = await navigator.mediaDevices.getUserMedia({audio:{deviceId,channelCount:1},video:false});
@@ -387,6 +473,9 @@
       source = audioCtx.createMediaStreamSource(mediaStream);
       processor = audioCtx.createScriptProcessor(4096,1,1);
       ws = await openWS();
+      if (!ws && wsShouldRetry && b_autoretry.checked){
+        scheduleWsReconnect();
+      }
       processor.onaudioprocess = (e)=>{
         if (paused) return;
         const ch=e.inputBuffer.getChannelData(0);
@@ -406,6 +495,9 @@
     }catch(e){
       appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
       tag(stMic,"bad","Mic");
+      wsShouldRetry=false;
+      clearWsRetryTimer();
+      wsRetryDelay = WS_RETRY_BASE_DELAY;
       running=false;
     }
   }
@@ -418,6 +510,9 @@
   }
   async function stop(){
     paused=false;
+    wsShouldRetry=false;
+    clearWsRetryTimer();
+    wsRetryDelay = WS_RETRY_BASE_DELAY;
     if (processor){ processor.disconnect(); processor=null; }
     if (source){ source.disconnect(); source=null; }
     if (audioCtx){ try{ await audioCtx.close(); }catch(_){} audioCtx=null; }
