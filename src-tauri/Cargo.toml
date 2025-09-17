@@ -8,6 +8,10 @@ description = "ScribeCat desktop shell"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2", features = [] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+once_cell = "1.19"
+regex = "1.10"
+urlencoding = "2.1"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

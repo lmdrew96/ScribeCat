@@ -85,6 +85,13 @@
 /* Bottom footer bar */
 .footbar{position:fixed;right:12px;bottom:8px;display:flex;gap:8px;align-items:center;z-index:25}
 .footbtn{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--chip);cursor:pointer;font-size:14px}
+.toast-stack{position:fixed;right:12px;bottom:64px;display:flex;flex-direction:column;gap:8px;align-items:flex-end;z-index:40;pointer-events:none}
+.toast{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:10px 14px;box-shadow:0 12px 24px rgba(16,19,25,0.16);font-size:14px;max-width:320px;pointer-events:auto;opacity:0;transform:translateY(12px);transition:opacity .2s ease,transform .2s ease}
+.toast.ok{border-color:var(--accent)}
+.toast.warn{border-color:var(--warn)}
+.toast.bad{border-color:var(--bad)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.hide{opacity:0;transform:translateY(12px)}
 </style>
 </head>
 <body>
@@ -208,7 +215,7 @@
 
 <script>
 (function(){
-  const API = "http://127.0.0.1:8787";
+  const LEGACY_API = "http://127.0.0.1:8787";
   const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
   const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
   const classSel=byId("classSel"), titleBox=byId("titleBox");
@@ -223,8 +230,54 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
+  const hasTauri = !!window.__TAURI__?.core?.invoke;
+  const toastStack = document.createElement('div');
+  toastStack.className = 'toast-stack';
+  document.body.appendChild(toastStack);
+
+  function toast(message, { type = 'ok', duration = 4200 } = {}){
+    if (!message) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    toastStack.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+    const ttl = Math.max(1200, duration|0);
+    setTimeout(()=>{
+      el.classList.add('hide');
+      setTimeout(()=>{ if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+    }, ttl);
+    while (toastStack.children.length > 4){ toastStack.removeChild(toastStack.firstChild); }
+  }
+
+  function notify(message, opts){
+    toast(message, opts);
+    if (!hasTauri){
+      try{ alert(message); }catch(_){/* noop */}
+    }
+  }
+
+  async function callNative(command, payload){
+    if (!hasTauri) throw new Error('Tauri bridge unavailable');
+    return await window.__TAURI__.core.invoke(command, payload);
+  }
+
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
-  fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
+  async function refreshApiStatus(){
+    if (hasTauri){
+      try {
+        const diag = await callNative('diag_env');
+        tag(stApi, diag?.healthy ? 'ok' : 'warn', 'API');
+      } catch {
+        tag(stApi,'warn','API');
+      }
+    } else {
+      fetch(LEGACY_API+"/")
+        .then(r=>tag(stApi, r.ok?"ok":"bad", "API"))
+        .catch(()=>tag(stApi,"bad","API"));
+    }
+  }
+  refreshApiStatus();
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
   manageBtn.onclick = ()=> drawer.style.display='block';
   stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
@@ -330,9 +383,16 @@
 
   async function openWS(){
     try{
-      const tr = await fetch(API+"/api/aai-token?expires_in_seconds=300");
-      if (!tr.ok) throw new Error("token");
-      const {token} = await tr.json();
+      let tokenResp;
+      if (hasTauri){
+        tokenResp = await callNative('request_aai_token', { expires_in_seconds: 300 });
+      } else {
+        const tr = await fetch(LEGACY_API+"/api/aai-token?expires_in_seconds=300");
+        if (!tr.ok) throw new Error("token");
+        tokenResp = await tr.json();
+      }
+      const token = tokenResp?.token;
+      if (!token) throw new Error('token');
       const s = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`);
       s.binaryType="arraybuffer";
       s.onopen=()=>tag(stStream,"ok","Stream");
@@ -374,7 +434,6 @@
   listMics();
 
   function sanitizeName(s){ return String(s||"Lecture").replace(/[\/\\:?*"<>|]/g,"_").slice(0,100); }
-  let audioUploadURL="";
 
   async function start(){
     if (running) return;
@@ -607,28 +666,118 @@
     };
   }
   async function saveAll(){
-    // Download WAV locally
-    try{
-      const nameBase = sanitizeName(titleBox.value || classSel.value || "Lecture");
-      if (audioBlob){ const fname=`${new Date().toISOString().replace(/[:.]/g,'-')}—${nameBase}.wav`; const a=document.createElement("a"); a.href=URL.createObjectURL(audioBlob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1200); }
-    }catch(_){}
-    // Upload audio, then save to Airtable via server
-    let audioUrl="";
+    const baseName = sanitizeName(titleBox.value || classSel.value || "Lecture");
+    const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+    const filename = `${stamp}—${baseName}.wav`;
+
     try{
       if (audioBlob){
-        const fname = `${new Date().toISOString().replace(/[:.]/g,'-')}—${sanitizeName(titleBox.value||classSel.value||"Lecture")}.wav`;
-        const r = await fetch(`${API}/api/upload-audio?filename=${encodeURIComponent(fname)}`, { method:"POST", headers:{ "content-type":"application/octet-stream" }, body: await audioBlob.arrayBuffer() });
-        const j = await r.json(); if (r.ok && j?.url) audioUrl=j.url;
+        const a=document.createElement("a");
+        a.href=URL.createObjectURL(audioBlob);
+        a.download=filename;
+        a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),1200);
       }
-    }catch(_){}
-    try{
-      const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload(audioUrl))});
-      await r.json();
+    }catch(err){ console.error('Local download failed', err); }
+
+    let audioUrl="";
+    let audioPath="";
+    let audioBuffer=null;
+    if (audioBlob){
+      try{ audioBuffer = await audioBlob.arrayBuffer(); }
+      catch(err){ console.error('Unable to read audio blob', err); }
+    }
+
+    if (audioBlob && audioBuffer){
+      let nativeHandled=false;
+      if (hasTauri){
+        try{
+          const bytes = Array.from(new Uint8Array(audioBuffer));
+          const res = await callNative('upload_audio', { filename, bytes });
+          nativeHandled = !res?.skipped;
+          if (res?.url) audioUrl = res.url;
+          if (res?.path){
+            audioPath = res.path;
+            notify(`Audio stored locally at ${audioPath}`, { type:'ok', duration:6400 });
+          }
+          if (res?.reason && res.skipped){ console.warn('upload_audio skipped:', res.reason); }
+        }catch(err){
+          nativeHandled=false;
+          console.error('upload_audio failed', err);
+        }
+      }
+
+      if (!audioUrl && (!hasTauri || !nativeHandled)){
+        try{
+          const r = await fetch(`${LEGACY_API}/api/upload-audio?filename=${encodeURIComponent(filename)}`, {
+            method:"POST",
+            headers:{ "content-type":"application/octet-stream" },
+            body: audioBuffer
+          });
+          const j = await r.json().catch(()=>({}));
+          if (r.ok){
+            if (j?.url) audioUrl = j.url;
+            if (j?.path && !audioPath){
+              audioPath = j.path;
+              notify(`Audio stored locally at ${audioPath}`, { type:'ok', duration:6400 });
+            }
+          }
+        }catch(err){ console.error('Legacy audio upload failed', err); }
+      }
+    }
+
+    let saveOk=false;
+    let saveErr="";
+    const payloadBody = payload(audioUrl);
+    if (hasTauri){
+      try{
+        const res = await callNative('save_session', payloadBody);
+        if (res?.ok){
+          saveOk=true;
+        } else {
+          throw new Error('Native save failed');
+        }
+      }catch(err){
+        console.error('save_session failed', err);
+      }
+    }
+
+    if (!saveOk){
+      try{
+        const r=await fetch(LEGACY_API+"/api/save",{
+          method:"POST",
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify(payloadBody)
+        });
+        const j = await r.json().catch(()=>({}));
+        if (r.ok){
+          saveOk=true;
+        } else {
+          saveErr = j?.error || r.statusText || 'Server error';
+        }
+      }catch(err){
+        console.error('Legacy save failed', err);
+        saveErr = err?.message || 'Save failed';
+      }
+    }
+
+    if (saveOk){
       tag(stApi,"ok","API");
-      alert("Saved: audio downloaded, Airtable updated, Make triggered (if configured).");
-    }catch(e){
+      const bits = ["Saved: Airtable updated and Make triggered (if configured)."];
+      if (audioUrl){
+        bits.push(`Audio uploaded: ${audioUrl}`);
+      } else if (audioPath){
+        bits.push(`Audio stored locally: ${audioPath}`);
+      } else if (audioBlob){
+        bits.push('Audio downloaded locally.');
+      }
+      notify(bits.join('\n'), { type:'ok', duration:6800 });
+    } else {
       tag(stApi,"warn","API");
-      alert("Server save failed. Your audio was downloaded locally.");
+      const warnBits = ['Save failed. Your audio was downloaded locally.'];
+      if (audioPath){ warnBits.push(`Local audio path: ${audioPath}`); }
+      if (saveErr){ warnBits.push(`Reason: ${saveErr}`); }
+      notify(warnBits.join('\n'), { type:'warn', duration:6800 });
     }
   }
   saveBtn.onclick=saveAll;
@@ -642,15 +791,15 @@
 
   async function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
-    if (window.__TAURI__?.core?.invoke) {
+    if (hasTauri){
       try {
-        await window.__TAURI__.core.invoke('quit_app');
+        await callNative('quit_app');
         return;
       } catch (err) {
         console.error('quit_app failed', err);
       }
     }
-    fetch(API+'/api/quit',{method:'POST'}).catch(()=>{});
+    fetch(LEGACY_API+'/api/quit',{method:'POST'}).catch(()=>{});
     setTimeout(()=>{ window.close(); },200);
     setTimeout(()=>{ window.location.href='about:blank'; },600);
   }
