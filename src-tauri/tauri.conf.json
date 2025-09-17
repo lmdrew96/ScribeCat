@@ -7,8 +7,8 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devUrl": "index.html",
-    "frontendDist": "."
+    "devUrl": "tauri://localhost/index.html",
+    "frontendDist": "../web"
   },
 
   "security": {
@@ -30,8 +30,8 @@
     "active": true,
     "targets": "all",
     "icon": [
-      "icons/scribecat-512.png",
-      "icons/icon32.png"
+      "../icons/scribecat-512.png",
+      "../icons/icon32.png"
     ]
   }
 }
