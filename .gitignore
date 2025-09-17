@@ -1,6 +1,8 @@
 .env
 *.env
 secrets/**
+.DS_Store
+.trash/
 
 
 # Added by cargo

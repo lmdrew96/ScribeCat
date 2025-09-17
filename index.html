@@ -208,7 +208,20 @@
 
 <script>
 (function(){
-  const API = "http://127.0.0.1:8787";
+  const Tauri = window.__TAURI__ || {};
+  const invoke = Tauri.invoke || (Tauri.core && Tauri.core.invoke);
+  const dialog = Tauri.dialog || (Tauri.api && Tauri.api.dialog);
+  const messageBox = (body, title = "ScribeCat") => {
+    if (dialog && typeof dialog.message === "function") {
+      return dialog.message(body, { title });
+    }
+    alert(body);
+    return Promise.resolve();
+  };
+  async function call(cmd, payload){
+    if (!invoke) throw new Error("Tauri invoke unavailable");
+    return await invoke(cmd, payload);
+  }
   const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
   const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
   const classSel=byId("classSel"), titleBox=byId("titleBox");
@@ -224,7 +237,11 @@
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
-  fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
+  if (invoke){
+    call('ping').then(()=>tag(stApi,'ok','API')).catch(()=>tag(stApi,'bad','API'));
+  } else {
+    tag(stApi,'warn','API');
+  }
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
   manageBtn.onclick = ()=> drawer.style.display='block';
   stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
@@ -330,9 +347,9 @@
 
   async function openWS(){
     try{
-      const tr = await fetch(API+"/api/aai-token?expires_in_seconds=300");
-      if (!tr.ok) throw new Error("token");
-      const {token} = await tr.json();
+      const res = await call('get_assemblyai_token', { expiresInSeconds: 300 });
+      const token = res?.token;
+      if (!token) throw new Error("token");
       const s = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`);
       s.binaryType="arraybuffer";
       s.onopen=()=>tag(stStream,"ok","Stream");
@@ -606,29 +623,39 @@
       audio_url: audio_url || ""
     };
   }
+  function arrayBufferToBase64(buffer){
+    const bytes = new Uint8Array(buffer);
+    const chunk = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunk){
+      const slice = bytes.subarray(i, i + chunk);
+      binary += String.fromCharCode.apply(null, slice);
+    }
+    return btoa(binary);
+  }
   async function saveAll(){
-    // Download WAV locally
-    try{
-      const nameBase = sanitizeName(titleBox.value || classSel.value || "Lecture");
-      if (audioBlob){ const fname=`${new Date().toISOString().replace(/[:.]/g,'-')}—${nameBase}.wav`; const a=document.createElement("a"); a.href=URL.createObjectURL(audioBlob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1200); }
-    }catch(_){}
-    // Upload audio, then save to Airtable via server
-    let audioUrl="";
-    try{
-      if (audioBlob){
+    if (!invoke){
+      await messageBox("Native bridge unavailable. Cannot save session.");
+      return;
+    }
+    let audioPath = "";
+    if (audioBlob){
+      try{
         const fname = `${new Date().toISOString().replace(/[:.]/g,'-')}—${sanitizeName(titleBox.value||classSel.value||"Lecture")}.wav`;
-        const r = await fetch(`${API}/api/upload-audio?filename=${encodeURIComponent(fname)}`, { method:"POST", headers:{ "content-type":"application/octet-stream" }, body: await audioBlob.arrayBuffer() });
-        const j = await r.json(); if (r.ok && j?.url) audioUrl=j.url;
-      }
-    }catch(_){}
+        const base64 = arrayBufferToBase64(await audioBlob.arrayBuffer());
+        const res = await call('persist_audio_wav', { fileName: fname, base64Data: base64 });
+        if (res?.localPath) audioPath = res.localPath;
+      }catch(err){ console.error('persist_audio_wav failed', err); }
+    }
     try{
-      const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload(audioUrl))});
-      await r.json();
+      await call('save_session', payload(audioPath));
       tag(stApi,"ok","API");
-      alert("Saved: audio downloaded, Airtable updated, Make triggered (if configured).");
+      const extra = audioPath ? `\nAudio saved to ${audioPath}` : '';
+      await messageBox(`Saved: Airtable updated and Make triggered (if configured).${extra}`);
     }catch(e){
+      console.error('save_session failed', e);
       tag(stApi,"warn","API");
-      alert("Server save failed. Your audio was downloaded locally.");
+      await messageBox("Save failed. Your audio is stored locally if recording finished.");
     }
   }
   saveBtn.onclick=saveAll;
@@ -636,15 +663,17 @@
   /* ======== Boot: classes + status ======== */
   function renderClassOptions(list){ classSel.innerHTML='<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("")+'<option value="__other__">Other…</option>'; }
   (function bootClasses(){ const saved=JSON.parse(localStorage.getItem("lc_classes")||"[]"); renderClassOptions(saved);
-    if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); alert('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
+    if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); messageBox('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
   })();
   classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
 
   function quitScribeCat(){
     [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
-    fetch(API+'/api/quit',{method:'POST'}).catch(()=>{});
-    setTimeout(()=>{ window.close(); },200);
-    setTimeout(()=>{ window.location.href='about:blank'; },600);
+    if (invoke){
+      call('quit_app').catch(err=>console.error('quit_app failed', err));
+    } else {
+      window.close();
+    }
   }
   [quitDrawerBtn, quitTopBtn].forEach(btn=>btn&&btn.addEventListener('click', quitScribeCat));
 })();
