@@ -1,0 +1,14 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "identifier": "com.scribecat.app",
+  "productName": "ScribeCat",
+  "version": "0.1.0",
+  "build": {
+    "devUrl": "http://localhost:8787",
+    "beforeDevCommand": "node server.mjs",
+    "beforeBuildCommand": "",
+    "frontendDist": "../web"
+  },
+  "app": { "security": { "csp": null }, "windows": [ { "title": "ScribeCat", "width": 1100, "height": 760, "resizable": true } ] },
+  "bundle": { "icon": ["icons/icon.png"] }
+}
