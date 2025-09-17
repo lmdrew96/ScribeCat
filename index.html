@@ -69,7 +69,8 @@
   .toolbar select,.toolbar input[type="number"]{height:30px}
 
   /* Settings drawer */
-  .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
+  .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;max-width:calc(100% - 24px);background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:100;box-shadow:0 18px 40px rgba(16,19,25,.28)}
+  .drawer-backdrop{position:fixed;inset:0;background:rgba(16,19,25,.45);backdrop-filter:blur(1px);z-index:90}
   .drawer .group{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
   .sub{color:#6a7180;font-size:12px}
 
@@ -99,7 +100,7 @@
       <div id="stMic" class="pill warn">Mic</div>
       <div id="stStream" class="pill warn">Stream</div>
       <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
-      <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
+      <button id="gearBtn" class="chip" title="Settings" aria-haspopup="dialog" aria-controls="drawer" aria-expanded="false">⚙︎</button>
     </div>
   </div>
 </div>
@@ -107,7 +108,7 @@
 <div class="controls container">
   <div class="ctrl-row">
     <select id="classSel" title="Class"></select>
-    <button id="manageBtn" class="btn">Manage</button>
+    <button id="manageBtn" class="btn" aria-haspopup="dialog" aria-controls="drawer" aria-expanded="false">Manage</button>
     <input id="titleBox" placeholder="Title (auto)" style="flex:1;min-width:220px"/>
     <select id="micSel" title="Microphone"></select>
     <div class="vu"><div id="vuBar"></div></div>
@@ -162,7 +163,7 @@
   </div>
 </div>
 
-<div id="drawer" class="drawer">
+<div id="drawer" class="drawer" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
   <div class="group">
     <h4>Layout</h4>
     <label><input type="checkbox" id="stackedToggle"> Stacked mode (instead of side-by-side)</label>
@@ -223,10 +224,118 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
+  const focusableSelector = 'a[href],button:not([disabled]),input:not([type="hidden"]):not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  let drawerBackdrop = null;
+  let drawerTrigger = null;
+
+  function isDrawerOpen(){
+    return drawer.getAttribute('aria-hidden') === 'false';
+  }
+
+  function getFocusableInDrawer(){
+    return Array.from(drawer.querySelectorAll(focusableSelector)).filter(el=>{
+      if (el.disabled) return false;
+      if (el.getAttribute('aria-hidden') === 'true') return false;
+      const style = window.getComputedStyle(el);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+  }
+
+  function focusFirstDrawerElement(){
+    const focusables = getFocusableInDrawer();
+    if (focusables.length){
+      focusables[0].focus();
+    } else {
+      drawer.focus({preventScroll:true});
+    }
+  }
+
+  function onDrawerKeyDown(e){
+    if (!isDrawerOpen()) return;
+    if (e.key === 'Escape' || e.key === 'Esc'){
+      e.preventDefault();
+      closeDrawer();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const focusables = getFocusableInDrawer();
+    if (!focusables.length){
+      e.preventDefault();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey){
+      if (active === first || !drawer.contains(active)){
+        last.focus();
+        e.preventDefault();
+      }
+    } else {
+      if (active === last){
+        first.focus();
+        e.preventDefault();
+      } else if (!drawer.contains(active)){
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  }
+
+  function closeDrawer({returnFocus=true}={}){
+    if (!isDrawerOpen()) return;
+    drawer.style.display = 'none';
+    drawer.setAttribute('aria-hidden','true');
+    document.body.classList.remove('drawer-open');
+    document.removeEventListener('keydown', onDrawerKeyDown);
+    if (drawerBackdrop){
+      drawerBackdrop.remove();
+    }
+    const trigger = drawerTrigger;
+    drawerTrigger = null;
+    if (trigger){
+      trigger.setAttribute('aria-expanded','false');
+      if (returnFocus){
+        trigger.focus();
+      }
+    }
+  }
+
+  function openDrawer(trigger){
+    if (isDrawerOpen()){
+      if (trigger && trigger === drawerTrigger){
+        focusFirstDrawerElement();
+        return;
+      }
+      closeDrawer({returnFocus:false});
+    }
+    drawerTrigger = trigger || null;
+    if (!drawerBackdrop){
+      drawerBackdrop = document.createElement('div');
+      drawerBackdrop.className = 'drawer-backdrop';
+      drawerBackdrop.addEventListener('click', ()=> closeDrawer());
+    }
+    document.body.appendChild(drawerBackdrop);
+    drawer.style.display = 'block';
+    drawer.setAttribute('aria-hidden','false');
+    document.body.classList.add('drawer-open');
+    if (drawerTrigger){
+      drawerTrigger.setAttribute('aria-expanded','true');
+    }
+    focusFirstDrawerElement();
+    document.addEventListener('keydown', onDrawerKeyDown);
+  }
+
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
-  gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
-  manageBtn.onclick = ()=> drawer.style.display='block';
+  gearBtn.addEventListener('click', ()=>{
+    if (isDrawerOpen() && drawerTrigger === gearBtn){
+      closeDrawer();
+    } else {
+      openDrawer(gearBtn);
+    }
+  });
+  manageBtn.addEventListener('click', ()=> openDrawer(manageBtn));
   stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
