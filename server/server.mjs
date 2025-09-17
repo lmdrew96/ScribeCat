@@ -31,9 +31,109 @@ const headers = {
   "access-control-allow-headers": "content-type",
   "access-control-allow-methods": "GET,POST,OPTIONS"
 };
-const json = (res, code, obj) => { res.writeHead(code, {"content-type":"application/json", ...headers}); res.end(JSON.stringify(obj)); };
+const json = (res, code, obj, extraHeaders) => {
+  res.writeHead(code, {"content-type":"application/json", ...headers, ...(extraHeaders||{})});
+  res.end(JSON.stringify(obj));
+};
 const text = (res, code, str) => { res.writeHead(code, {"content-type":"text/plain; charset=utf-8", ...headers}); res.end(str); };
 async function bodyJSON(req){ const chunks=[]; for await (const c of req) chunks.push(c); if (!chunks.length) return {}; try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { return {}; }}
+
+// === Rate limiting ===
+function parseLimit(value, fallback){
+  if (value === undefined || value === null || value === "") return fallback;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  if (n <= 0) return 0;
+  return Math.floor(n);
+}
+function parseWindow(value, fallback){
+  if (value === undefined || value === null || value === "") return fallback;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return Math.floor(n);
+}
+const CLIENT_LIMIT = parseLimit(process.env.RATE_LIMIT_CLIENT_REQUESTS_PER_MINUTE ?? process.env.RATE_LIMIT_CLIENT_REQUESTS, 5);
+const CLIENT_WINDOW_MS = parseWindow(process.env.RATE_LIMIT_CLIENT_WINDOW_MS, 60_000);
+const GLOBAL_LIMIT = parseLimit(process.env.RATE_LIMIT_GLOBAL_REQUESTS_PER_MINUTE ?? process.env.RATE_LIMIT_GLOBAL_REQUESTS, 30);
+const GLOBAL_WINDOW_MS = parseWindow(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 60_000);
+const clientBuckets = new Map();
+const globalBucket = GLOBAL_LIMIT > 0 ? { tokens: GLOBAL_LIMIT, lastRefill: Date.now(), lastSeen: Date.now() } : null;
+function getClientKey(req){
+  const headersToCheck = ["x-scribecat-client", "x-client-id", "x-shared-secret", "x-api-key", "authorization"];
+  for (const key of headersToCheck) {
+    const raw = req.headers?.[key];
+    if (typeof raw === "string" && raw.trim()) return `${key}:${raw.trim()}`;
+  }
+  const xff = req.headers?.["x-forwarded-for"];
+  if (typeof xff === "string" && xff.trim()) return `xff:${xff.split(",")[0].trim()}`;
+  return `ip:${req.socket?.remoteAddress || "unknown"}`;
+}
+function refillBucket(bucket, limit, windowMs, now){
+  const elapsed = now - bucket.lastRefill;
+  if (elapsed <= 0) return;
+  const rate = limit / windowMs;
+  bucket.tokens = Math.min(limit, bucket.tokens + elapsed * rate);
+  bucket.lastRefill = now;
+}
+function consumeToken(bucket, limit, windowMs, now){
+  refillBucket(bucket, limit, windowMs, now);
+  if (bucket.tokens >= 1) {
+    bucket.tokens -= 1;
+    return { allowed: true };
+  }
+  const rate = limit / windowMs;
+  const waitMs = Math.ceil((1 - bucket.tokens) / rate);
+  return { allowed: false, retryAfterMs: waitMs };
+}
+function cleanupClientBuckets(now){
+  if (clientBuckets.size <= 500) return;
+  for (const [key, bucket] of clientBuckets.entries()) {
+    if (now - (bucket.lastSeen || bucket.lastRefill) > CLIENT_WINDOW_MS * 4) clientBuckets.delete(key);
+  }
+}
+function sendRateLimit(res, scope, retryAfterMs){
+  const retrySeconds = (Number.isFinite(retryAfterMs) && retryAfterMs > 0) ? Math.ceil(retryAfterMs / 1000) : undefined;
+  const body = {
+    error: "rate_limit_exceeded",
+    message: scope === "global"
+      ? "Global activity is too high right now. Please pause and try again shortly."
+      : "You are sending requests too quickly. Please slow down and try again in a moment.",
+    scope,
+    limit: scope === "global"
+      ? { max: GLOBAL_LIMIT, window_ms: GLOBAL_WINDOW_MS }
+      : { max: CLIENT_LIMIT, window_ms: CLIENT_WINDOW_MS }
+  };
+  if (retrySeconds) body.retry_after_seconds = retrySeconds;
+  const extra = retrySeconds ? { "retry-after": String(Math.max(1, retrySeconds)) } : undefined;
+  json(res, 429, body, extra);
+}
+function enforceRateLimit(req, res){
+  const now = Date.now();
+  if (CLIENT_LIMIT > 0) {
+    const key = getClientKey(req);
+    let bucket = clientBuckets.get(key);
+    if (!bucket) {
+      bucket = { tokens: CLIENT_LIMIT, lastRefill: now, lastSeen: now };
+      clientBuckets.set(key, bucket);
+    }
+    const result = consumeToken(bucket, CLIENT_LIMIT, CLIENT_WINDOW_MS, now);
+    bucket.lastSeen = now;
+    if (!result.allowed) {
+      sendRateLimit(res, "client", result.retryAfterMs);
+      return true;
+    }
+    cleanupClientBuckets(now);
+  }
+  if (globalBucket && GLOBAL_LIMIT > 0) {
+    const result = consumeToken(globalBucket, GLOBAL_LIMIT, GLOBAL_WINDOW_MS, now);
+    globalBucket.lastSeen = now;
+    if (!result.allowed) {
+      sendRateLimit(res, "global", result.retryAfterMs);
+      return true;
+    }
+  }
+  return false;
+}
 
 // === Name cleaners ===
 function stripNoise(s){
@@ -174,6 +274,7 @@ const server = http.createServer(async (req, res) => {
 
     // ===== OpenAI polish/summarize/chat =====
     if (p === "/api/summarize" && req.method === "POST"){
+      if (enforceRateLimit(req, res)) return;
       const b = await bodyJSON(req);
       const prompt = `Summarize this university lecture transcript into:
 - 5-10 bullet key points
@@ -192,6 +293,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
     }
 
     if (p === "/api/polish" && req.method === "POST"){
+      if (enforceRateLimit(req, res)) return;
       const b = await bodyJSON(req);
       const transcript = String(b.transcript_text||"").slice(0, 100000);
       if (!process.env.OPENAI_API_KEY) return json(res, 200, { polished: transcript, skipped: true, reason:"no_openai_key" });
@@ -206,6 +308,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
     }
 
     if (p === "/api/openai-chat" && req.method === "POST"){
+      if (enforceRateLimit(req, res)) return;
       const b = await bodyJSON(req);
       const include = !!b.include_context;
       const notes = (b.notes_html||"").replace(/<[^>]+>/g," ");
@@ -225,6 +328,7 @@ Return Markdown. Transcript:\n${b.transcript_text||""}`;
 
     // ===== Save to Airtable =====
     if (p === "/api/save" && req.method === "POST"){
+      if (enforceRateLimit(req, res)) return;
       const b = await bodyJSON(req);
       const fields = {};
       fields["Title"] = b.title || "Lecture";
