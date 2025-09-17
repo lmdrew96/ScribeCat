@@ -1,0 +1,4 @@
+{ "files": [
+  { "dest": "web/fonts/GalaxyCaterpillar.ttf", "url": "https://github.com/lmdrew96/ScribeCat/releases/download/assets-v0/GalaxyCaterpillar.ttf", "sha256": "6f78b7e761a47398154f733f09307429a6f440ca86409f62ed8c71b82f8a633e" }
+,  { "dest": "web/assets/nugget.png", "url": "https://github.com/lmdrew96/ScribeCat/releases/download/assets-v0/nugget.png", "sha256": "347c33cc70a9744f47d9721fb6b422d6955053a4c711112eade96c24a98223d2" }
+] }
