@@ -277,15 +277,93 @@
   function clock(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
   function mmss(){ const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0"); return `${mm}:${ss}`; }window.mmss = mmss;
   function makeTimestampSpan(){
-  const tsOn = (tsChk.checked || b_timestamps.checked);
-  return tsOn ? `<span class="ts">[${mmss()}]</span> ` : '';
-}
-  function makeLine(html, isLive){
+    if (!(tsChk.checked || b_timestamps.checked)) return null;
+    const span = document.createElement('span');
+    span.className = 'ts';
+    span.textContent = `[${mmss()}]`;
+    return span;
+  }
+  function getTextSpan(lineEl){
+    if (!lineEl) return null;
+    if (lineEl._textSpan && lineEl._textSpan.isConnected) return lineEl._textSpan;
+    const textSpanId = lineEl.dataset?.textSpanId;
+    if (!textSpanId) return null;
+    const found = document.getElementById(textSpanId);
+    if (found) lineEl._textSpan = found;
+    return found;
+  }
+  function getTimestampSpan(lineEl){
+    if (!lineEl) return null;
+    if (lineEl._tsSpan && lineEl._tsSpan.isConnected) return lineEl._tsSpan;
+    const tsSpanId = lineEl.dataset?.tsSpanId;
+    if (!tsSpanId) return null;
+    const found = document.getElementById(tsSpanId);
+    if (found) lineEl._tsSpan = found;
+    return found;
+  }
+  function ensureTimestamp(lineEl){
+    if (!lineEl) return;
+    const shouldShow = (tsChk.checked || b_timestamps.checked);
+    const textSpan = getTextSpan(lineEl);
+    let tsSpan = getTimestampSpan(lineEl);
+    if (shouldShow){
+      if (!tsSpan){
+        tsSpan = makeTimestampSpan();
+        if (!tsSpan){
+          lineEl.dataset.hasTimestamp = '0';
+          return;
+        }
+        const tsId = (lineEl.dataset.tsSpanId && lineEl.dataset.tsSpanId.trim()) || `${lineEl.id}-ts`;
+        tsSpan.id = tsId;
+        lineEl.dataset.tsSpanId = tsId;
+        lineEl._tsSpan = tsSpan;
+        const spacer = document.createTextNode(' ');
+        lineEl._tsSpace = spacer;
+        if (textSpan && textSpan.parentNode === lineEl){
+          lineEl.insertBefore(tsSpan, textSpan);
+          lineEl.insertBefore(spacer, textSpan);
+        } else {
+          lineEl.appendChild(tsSpan);
+          lineEl.appendChild(spacer);
+        }
+      } else {
+        tsSpan.textContent = `[${mmss()}]`;
+        if (!lineEl._tsSpace){
+          const spacer = document.createTextNode(' ');
+          lineEl._tsSpace = spacer;
+        }
+        if (lineEl._tsSpace && lineEl._tsSpace.parentNode !== lineEl){
+          if (textSpan && textSpan.parentNode === lineEl){
+            lineEl.insertBefore(lineEl._tsSpace, textSpan);
+          } else {
+            lineEl.appendChild(lineEl._tsSpace);
+          }
+        }
+      }
+      lineEl.dataset.hasTimestamp = '1';
+    } else {
+      if (tsSpan && tsSpan.parentNode === lineEl) lineEl.removeChild(tsSpan);
+      const spacer = lineEl._tsSpace;
+      if (spacer && spacer.parentNode === lineEl) lineEl.removeChild(spacer);
+      lineEl._tsSpan = null;
+      lineEl._tsSpace = null;
+      lineEl.dataset.tsSpanId = '';
+      lineEl.dataset.hasTimestamp = '0';
+    }
+  }
+  function makeLine(text, isLive){
     const id = `t-${mmss().replace(':','')}-${(++lineCounter)}`;
     const div = document.createElement('div');
     div.className = isLive ? 'line liveLine' : 'line';
     div.id = id;
-    div.innerHTML = makeTimestampSpan() + html;
+    const transcriptSpan = document.createElement('span');
+    transcriptSpan.className = 'transcript';
+    transcriptSpan.id = `${id}-text`;
+    transcriptSpan.textContent = text ?? '';
+    div._textSpan = transcriptSpan;
+    div.dataset.textSpanId = transcriptSpan.id;
+    div.appendChild(transcriptSpan);
+    ensureTimestamp(div);
     live.appendChild(div);
     if (!isLive){
       lastLineId = id;
@@ -294,15 +372,19 @@
     if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
     return div;
   }
-  function setCurrentLineText(html){
-    if (!currentLineEl){ currentLineEl = makeLine(html, true); return; }
-    currentLineEl.innerHTML = makeTimestampSpan() + html;
+  function setCurrentLineText(text){
+    if (!currentLineEl){ currentLineEl = makeLine(text, true); return; }
+    const transcriptSpan = getTextSpan(currentLineEl);
+    if (transcriptSpan) transcriptSpan.textContent = text ?? '';
+    ensureTimestamp(currentLineEl);
     if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
   }
   function finalizeCurrentLine(finalText){
     if (currentLineEl){
+      const transcriptSpan = getTextSpan(currentLineEl);
+      if (transcriptSpan) transcriptSpan.textContent = finalText ?? '';
+      ensureTimestamp(currentLineEl);
       currentLineEl.classList.remove('liveLine');
-      currentLineEl.innerHTML = makeTimestampSpan() + finalText;
       lastLineId = currentLineEl.id;
       window.lastLineId = lastLineId;
       currentLineEl = null;
@@ -312,7 +394,8 @@
     // If we somehow didn't have a live line, append a fresh finalized one
     makeLine(finalText, false);
   }
-  function updateTailHTML(html){ setCurrentLineText(html); }
+  function appendLineHTML(text){ makeLine(text, false); }
+  function updateTailHTML(text){ setCurrentLineText(text); }
 
   document.addEventListener('click',(e)=>{
     const a=e.target.closest('a[href^="#t-"]');
