@@ -99,11 +99,19 @@
     </footer>
   </div>
 
-  <div class="hotkey-overlay" id="hotkeyOverlay" hidden>
-    <div class="hotkey-dialog" role="dialog" aria-modal="true" aria-labelledby="hotkeyTitle">
+  <div class="hotkey-overlay" data-modal="hotkeys" data-modal-overlay hidden aria-hidden="true">
+    <div
+      class="hotkey-dialog"
+      data-modal-dialog
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hotkeyTitle"
+      aria-describedby="hotkeyDescription"
+      tabindex="-1"
+    >
       <header class="hotkey-header">
         <h2 id="hotkeyTitle">Keyboard shortcuts</h2>
-        <button type="button" class="header-button" data-action="close-hotkeys" aria-label="Close shortcut help">×</button>
+        <button type="button" class="header-button" data-modal-close aria-label="Close shortcut help">×</button>
       </header>
       <ul class="hotkey-list">
         <li><kbd>?</kbd> Toggle this overlay</li>
@@ -111,7 +119,7 @@
         <li><kbd>R</kbd> Rerun status checks</li>
         <li><kbd>L</kbd> Clear recent logs</li>
       </ul>
-      <p class="hotkey-footnote">Shortcuts are ignored while typing in inputs or editable regions.</p>
+      <p class="hotkey-footnote" id="hotkeyDescription">Shortcuts are ignored while typing in inputs or editable regions.</p>
     </div>
   </div>
 
