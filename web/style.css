@@ -465,11 +465,19 @@ kbd {
   position: fixed;
   inset: 0;
   background: rgba(10, 14, 22, 0.55);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 2rem;
   z-index: 40;
+}
+
+.hotkey-overlay.is-open {
+  display: flex;
+}
+
+.hotkey-overlay[hidden] {
+  display: none !important;
 }
 
 .hotkey-dialog {

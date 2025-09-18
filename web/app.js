@@ -1,3 +1,5 @@
+import { initHotkeysModal } from "./hotkeys.js";
+
 const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.1.0" };
 const THEME_STORAGE_KEY = "scribe-theme";
 const LOG_LIMIT = 60;
@@ -13,7 +15,7 @@ let logHostEl = null;
 let logFallbackEl = null;
 let appShellEl = null;
 let themeToggleBtn = null;
-let hotkeyOverlayEl = null;
+let hotkeysController = null;
 let hasExplicitTheme = false;
 let currentTheme = "light";
 let currentProduct = { ...DEFAULT_PRODUCT };
@@ -302,32 +304,33 @@ function isTypingTarget(target) {
   return Boolean(interactive);
 }
 
-function toggleHotkeyOverlay(force) {
-  if (!hotkeyOverlayEl) return;
-  const shouldShow = force ?? hotkeyOverlayEl.hidden;
-  hotkeyOverlayEl.hidden = !shouldShow;
-  hotkeyOverlayEl.setAttribute("aria-hidden", hotkeyOverlayEl.hidden ? "true" : "false");
-}
-
-function hideHotkeyOverlay() {
-  if (!hotkeyOverlayEl) return;
-  hotkeyOverlayEl.hidden = true;
-  hotkeyOverlayEl.setAttribute("aria-hidden", "true");
-}
-
 function handleKeydown(event) {
   if (event.defaultPrevented) return;
   const key = event.key;
-  if (key === "?" && !isTypingTarget(event.target)) {
+  const target = event.target;
+
+  if (key === "?" && !event.repeat && !isTypingTarget(target)) {
     event.preventDefault();
-    toggleHotkeyOverlay();
+    const trigger = target instanceof HTMLElement ? target : null;
+    if (hotkeysController) {
+      if (hotkeysController.isOpen()) {
+        hotkeysController.close();
+      } else {
+        hotkeysController.open(trigger);
+      }
+    }
     return;
   }
-  if (key === "Escape" && hotkeyOverlayEl && !hotkeyOverlayEl.hidden) {
-    hideHotkeyOverlay();
+
+  if (hotkeysController?.isOpen()) {
+    if (key === "Escape") {
+      event.preventDefault();
+      hotkeysController.close();
+    }
     return;
   }
-  if (isTypingTarget(event.target)) return;
+
+  if (isTypingTarget(target)) return;
   const lower = key.toLowerCase();
   if (lower === "t") {
     event.preventDefault();
@@ -344,7 +347,6 @@ function handleKeydown(event) {
 document.addEventListener("DOMContentLoaded", () => {
   appShellEl = document.querySelector(".app-shell");
   themeToggleBtn = document.getElementById("themeToggle");
-  hotkeyOverlayEl = document.getElementById("hotkeyOverlay");
   logListEl = document.querySelector("[data-log-list]");
   logPanelEl = document.getElementById("logPanel");
   logOriginEl = logPanelEl ? logPanelEl.parentElement : null;
@@ -378,19 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (clearBtn) {
     clearBtn.addEventListener("click", clearLogs);
   }
-  if (hotkeyOverlayEl) {
-    hotkeyOverlayEl.hidden = true;
-    hotkeyOverlayEl.setAttribute("aria-hidden", "true");
-    hotkeyOverlayEl.addEventListener("click", (event) => {
-      if (event.target === hotkeyOverlayEl) {
-        hideHotkeyOverlay();
-      }
-    });
-  }
-  const closeHotkeysBtn = document.querySelector("[data-action=\"close-hotkeys\"]");
-  if (closeHotkeysBtn) {
-    closeHotkeysBtn.addEventListener("click", hideHotkeyOverlay);
-  }
+  hotkeysController = initHotkeysModal(document);
 
   applyRoute(window.location.hash);
   window.addEventListener("hashchange", () => applyRoute(window.location.hash));
