@@ -726,3 +726,244 @@ kbd {
 .status-overlay__time-value {
   font-variant-numeric: tabular-nums;
 }
+
+[data-recorder] {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  display: grid;
+  gap: 0.75rem;
+}
+
+[data-recorder][data-recorder-state="idle"] {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  max-width: 360px;
+}
+
+[data-recorder][data-recorder-state="idle"] .recorder-body {
+  display: none;
+}
+
+[data-recorder][data-recorder-state="recording"] {
+  border-color: var(--status-error);
+  box-shadow: 0 0 0 3px rgba(199, 66, 66, 0.18);
+}
+
+[data-recorder][data-recorder-state="processing"] {
+  border-color: var(--status-checking);
+}
+
+[data-recorder][data-recorder-state="transcribed"] {
+  border-color: var(--status-ok);
+}
+
+[data-recorder][data-recorder-state="error"] {
+  border-color: var(--status-error);
+  box-shadow: 0 0 0 3px rgba(199, 66, 66, 0.18);
+}
+
+.recorder-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+[data-recorder-dot] {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--color-muted);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+[data-recorder][data-recorder-state="recording"] [data-recorder-dot] {
+  background: var(--status-error);
+  transform: scale(1.1);
+}
+
+[data-recorder][data-recorder-state="processing"] [data-recorder-dot] {
+  background: var(--status-checking);
+}
+
+[data-recorder][data-recorder-state="transcribed"] [data-recorder-dot] {
+  background: var(--status-ok);
+}
+
+.recorder-summary-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.recorder-summary-caption {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.recorder-body {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.recorder-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.recorder-timer {
+  font-family: "Roboto Mono", "SFMono-Regular", Menlo, monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.recorder-size {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.recorder-meter {
+  flex: 1 1 160px;
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-surface-subtle);
+  overflow: hidden;
+}
+
+.recorder-meter-bar {
+  --recorder-meter-level: 0;
+  width: calc(var(--recorder-meter-level) * 100%);
+  max-width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--status-checking), var(--status-error));
+  transition: width 0.12s ease;
+}
+
+.recorder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recorder-button {
+  min-width: 90px;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  font-weight: 600;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recorder-button:not(:disabled):hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.recorder-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.recorder-button--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.recorder-button--primary:disabled {
+  opacity: 0.6;
+}
+
+.recorder-button:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.recorder-error {
+  min-height: 1.2rem;
+  font-size: 0.85rem;
+  color: var(--status-error);
+}
+
+.transcript-panel {
+  margin-top: var(--gap-md);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.transcript-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.transcript-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.transcript-status {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.transcript-body {
+  max-height: 240px;
+  overflow-y: auto;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.status-overlay__mic {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.status-overlay__mic-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-muted);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-overlay__mic-dot[data-state="recording"] {
+  background: var(--status-error);
+  transform: scale(1.1);
+}
+
+.status-overlay__mic-dot[data-state="processing"] {
+  background: var(--status-checking);
+}
+
+.status-overlay__mic-dot[data-state="transcribed"] {
+  background: var(--status-ok);
+}
+
+.status-overlay__mic-dot[data-state="error"] {
+  background: var(--status-error);
+  box-shadow: 0 0 0 2px rgba(199, 66, 66, 0.3);
+}
+

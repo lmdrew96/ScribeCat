@@ -1,7 +1,10 @@
 import { initHotkeysModal } from "./hotkeys.js";
 import { initStatusOverlay } from "./status.js";
+import { createAudioRecorder } from "./recorder.js";
+import { createTranscriber } from "./transcribe.js";
 
-const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.1.0" };
+const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.2.0" };
+const env = (window.SC_ENV = window.SC_ENV || {});
 const THEME_STORAGE_KEY = "scribe-theme";
 const LOG_LIMIT = 60;
 const ROUTES = new Set(["dashboard", "logs", "about"]);
@@ -20,6 +23,7 @@ let hotkeysController = null;
 let hasExplicitTheme = false;
 let currentTheme = "light";
 let currentProduct = { ...DEFAULT_PRODUCT };
+let overlayController = null;
 
 function formatConsoleArguments(args) {
   return args
@@ -80,6 +84,24 @@ function renderLogs() {
 function scrollLogsToBottom() {
   if (!logListEl) return;
   logListEl.scrollTop = logListEl.scrollHeight;
+}
+
+function formatDuration(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return "00:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0.00 MB";
+  const megabytes = bytes / (1024 * 1024);
+  if (megabytes >= 0.1) {
+    return `${megabytes.toFixed(2)} MB`;
+  }
+  const kilobytes = bytes / 1024;
+  return `${kilobytes.toFixed(1)} KB`;
 }
 
 function addLogEntry(level, message) {
@@ -345,6 +367,515 @@ function handleKeydown(event) {
   }
 }
 
+function inferExtension(mimeType) {
+  if (typeof mimeType !== "string" || mimeType.length === 0) return "ogg";
+  if (mimeType.includes("wav")) return "wav";
+  if (mimeType.includes("ogg")) return "ogg";
+  if (mimeType.includes("webm")) return "webm";
+  if (mimeType.includes("mp4")) return "m4a";
+  return "ogg";
+}
+
+function initRecorderPanel() {
+  const recorderRoot = document.querySelector("[data-recorder]");
+  if (!recorderRoot) return;
+
+  const transcriptRoot = document.querySelector("[data-transcript]");
+  const captionEl = recorderRoot.querySelector("[data-recorder-caption]");
+  const dotEl = recorderRoot.querySelector("[data-recorder-dot]");
+  const timerEl = recorderRoot.querySelector("[data-recorder-timer]");
+  const sizeEl = recorderRoot.querySelector("[data-recorder-size]");
+  const meterEl = recorderRoot.querySelector("[data-recorder-meter]");
+  const errorEl = recorderRoot.querySelector("[data-recorder-error]");
+  const audioEl = recorderRoot.querySelector("[data-recorder-audio]");
+  const downloadEl = recorderRoot.querySelector("[data-recorder-download]");
+  const transcriptStatusEl = transcriptRoot?.querySelector("[data-transcript-status]") || null;
+  const transcriptOutputEl = transcriptRoot?.querySelector("[data-transcript-output]") || null;
+
+  const buttonsByAction = new Map();
+  recorderRoot.querySelectorAll("[data-recorder-action]").forEach((button) => {
+    const action = button.getAttribute("data-recorder-action");
+    if (!buttonsByAction.has(action)) {
+      buttonsByAction.set(action, []);
+    }
+    buttonsByAction.get(action).push(button);
+  });
+
+  const transcriber = createTranscriber({ apiKey: env.AAI });
+  const recorder = createAudioRecorder({
+    maxBytes: 30 * 1024 * 1024,
+    onMeter(level) {
+      updateMeter(level);
+    },
+    onElapsed(ms) {
+      timerEl.textContent = formatDuration(ms);
+      current.durationMs = ms;
+    },
+    onStateChange(details) {
+      handleRecorderState(details || {});
+    },
+    onError(error) {
+      handleRecorderError(error);
+    },
+  });
+
+  if (!recorder || !recorder.isSupported()) {
+    disableAllButtons();
+    setRecorderUiState("error", {
+      message: "Audio recording is not supported in this browser.",
+      overlayState: "error",
+    });
+    return;
+  }
+
+  const current = {
+    blob: null,
+    url: null,
+    extension: "ogg",
+    durationMs: 0,
+    size: 0,
+    mimeType: "",
+  };
+
+  let isPlaying = false;
+  let transcribeAbort = null;
+
+  if (audioEl) {
+    audioEl.addEventListener("play", () => {
+      isPlaying = true;
+      updatePlayButtons();
+    });
+    audioEl.addEventListener("pause", () => {
+      isPlaying = false;
+      updatePlayButtons();
+    });
+    audioEl.addEventListener("ended", () => {
+      isPlaying = false;
+      updatePlayButtons();
+    });
+  }
+
+  function updateOverlayMic(state) {
+    if (!overlayController || typeof overlayController.setMicState !== "function") return;
+    try {
+      overlayController.setMicState(state);
+    } catch (err) {
+      console.warn("Failed to sync microphone state", err);
+    }
+  }
+
+  function setRecorderUiState(state, options = {}) {
+    const { message, overlayState } = options;
+    recorderRoot.dataset.recorderState = state;
+    if (captionEl && typeof message === "string") {
+      captionEl.textContent = message;
+    }
+    const dotState =
+      overlayState ||
+      (state === "recording"
+        ? "recording"
+        : state === "processing"
+        ? "processing"
+        : state === "transcribed"
+        ? "transcribed"
+        : state === "error"
+        ? "error"
+        : "idle");
+    if (dotEl) {
+      dotEl.dataset.state = dotState;
+    }
+    updateOverlayMic(dotState);
+  }
+
+  function updateMeter(level) {
+    const normalized = Math.min(Math.max(Number(level) || 0, 0), 1);
+    if (meterEl) {
+      meterEl.style.setProperty("--recorder-meter-level", normalized.toFixed(3));
+    }
+  }
+
+  function updatePlayButtons() {
+    const label = isPlaying ? "Pause" : "Play";
+    (buttonsByAction.get("play") || []).forEach((button) => {
+      button.textContent = label;
+    });
+  }
+
+  function setButtonDisabled(action, disabled) {
+    (buttonsByAction.get(action) || []).forEach((button) => {
+      button.disabled = disabled;
+    });
+  }
+
+  function disableAllButtons() {
+    buttonsByAction.forEach((buttonList) => {
+      buttonList.forEach((button) => {
+        button.disabled = true;
+      });
+    });
+  }
+
+  function clearError() {
+    if (errorEl) {
+      errorEl.textContent = "";
+    }
+  }
+
+  function showError(message) {
+    if (errorEl) {
+      errorEl.textContent = message;
+    }
+  }
+
+  function handleRecorderError(error) {
+    const message = typeof error === "string" ? error : error?.message || "Recording failed.";
+    showError(message);
+    setRecorderUiState("error", { message, overlayState: "error" });
+    addLogEntry("error", `Recorder error (${message}).`);
+    setButtonDisabled("record", false);
+    setButtonDisabled("stop", true);
+    setButtonDisabled("play", true);
+    setButtonDisabled("save", true);
+    setButtonDisabled("clear", false);
+    setButtonDisabled("transcribe", true);
+    updateMeter(0);
+  }
+
+  function revokeObjectUrl() {
+    if (current.url) {
+      URL.revokeObjectURL(current.url);
+      current.url = null;
+    }
+  }
+
+  function attachAudio(blob) {
+    if (!audioEl || !blob) return;
+    revokeObjectUrl();
+    const url = URL.createObjectURL(blob);
+    current.url = url;
+    audioEl.src = url;
+    audioEl.hidden = false;
+    try {
+      audioEl.load();
+    } catch {}
+    updatePlayButtons();
+  }
+
+  function clearAudio() {
+    if (!audioEl) return;
+    try {
+      audioEl.pause();
+    } catch {}
+    audioEl.hidden = true;
+    audioEl.removeAttribute("src");
+    try {
+      audioEl.load();
+    } catch {}
+    isPlaying = false;
+    updatePlayButtons();
+  }
+
+  function cancelTranscription(message) {
+    if (transcribeAbort) {
+      transcribeAbort.abort();
+      transcribeAbort = null;
+      if (transcriptStatusEl && message) {
+        transcriptStatusEl.textContent = message;
+      }
+    }
+  }
+
+  function resetState() {
+    cancelTranscription("Transcription reset.");
+    clearAudio();
+    revokeObjectUrl();
+    current.blob = null;
+    current.durationMs = 0;
+    current.size = 0;
+    current.mimeType = "";
+    current.extension = "ogg";
+    timerEl.textContent = "00:00";
+    sizeEl.textContent = "0.00 MB";
+    updateMeter(0);
+    clearError();
+    if (transcriptOutputEl) {
+      transcriptOutputEl.textContent = "";
+    }
+    if (transcriptStatusEl) {
+      transcriptStatusEl.textContent = transcriber.hasApiKey
+        ? "Set up a recording to transcribe."
+        : "Set ASSEMBLYAI_API_KEY to enable transcription.";
+    }
+    setRecorderUiState("idle", { message: "Ready to capture audio.", overlayState: "idle" });
+    setButtonDisabled("record", false);
+    setButtonDisabled("stop", true);
+    setButtonDisabled("play", true);
+    setButtonDisabled("save", true);
+    setButtonDisabled("clear", true);
+    setButtonDisabled("transcribe", true);
+  }
+
+  function handleRecorderState(details) {
+    const state = details.state;
+    switch (state) {
+      case "requesting": {
+        clearError();
+        setRecorderUiState("active", { message: "Requesting microphone access…" });
+        setButtonDisabled("record", true);
+        setButtonDisabled("stop", true);
+        setButtonDisabled("play", true);
+        setButtonDisabled("save", true);
+        setButtonDisabled("clear", true);
+        setButtonDisabled("transcribe", true);
+        cancelTranscription("Recording in progress.");
+        break;
+      }
+      case "recording": {
+        setRecorderUiState("recording", { message: "Recording…" });
+        clearError();
+        cancelTranscription("Recording in progress.");
+        setButtonDisabled("record", true);
+        setButtonDisabled("stop", false);
+        setButtonDisabled("play", true);
+        setButtonDisabled("save", true);
+        setButtonDisabled("clear", true);
+        setButtonDisabled("transcribe", true);
+        addLogEntry("info", "Recording started.");
+        break;
+      }
+      case "finalizing": {
+        setRecorderUiState("processing", { message: "Processing audio…" });
+        setButtonDisabled("record", true);
+        setButtonDisabled("stop", true);
+        setButtonDisabled("play", true);
+        setButtonDisabled("save", true);
+        setButtonDisabled("clear", true);
+        setButtonDisabled("transcribe", true);
+        break;
+      }
+      case "ready": {
+        current.blob = details.blob || null;
+        current.size = details.bytes ?? (current.blob ? current.blob.size : 0);
+        current.durationMs = details.duration ?? current.durationMs;
+        current.mimeType = details.mimeType || (current.blob ? current.blob.type : "");
+        current.extension = details.extension || inferExtension(current.mimeType);
+        timerEl.textContent = formatDuration(current.durationMs);
+        sizeEl.textContent = formatSize(current.size);
+        updateMeter(0);
+        if (details.notice) {
+          showError(details.notice);
+          addLogEntry("warn", details.notice);
+        } else {
+          clearError();
+        }
+        if (current.blob) {
+          attachAudio(current.blob);
+        }
+        const canTranscribe = Boolean(current.blob) && transcriber.hasApiKey;
+        if (transcriptOutputEl && !current.blob) {
+          transcriptOutputEl.textContent = "";
+        }
+        if (transcriptStatusEl) {
+          transcriptStatusEl.textContent = canTranscribe
+            ? "Ready to transcribe."
+            : transcriber.hasApiKey
+              ? "Record audio to enable transcription."
+              : "Set ASSEMBLYAI_API_KEY to enable transcription.";
+        }
+        setRecorderUiState("active", { message: "Recording ready." });
+        setButtonDisabled("record", false);
+        setButtonDisabled("stop", true);
+        setButtonDisabled("play", !current.blob);
+        setButtonDisabled("save", !current.blob);
+        setButtonDisabled("clear", !current.blob);
+        setButtonDisabled("transcribe", !canTranscribe);
+        addLogEntry("info", "Recording ready.");
+        break;
+      }
+      case "idle": {
+        resetState();
+        break;
+      }
+      case "error": {
+        handleRecorderError(details.error);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  function ensureRecordingStopped() {
+    if (recorder.isRecording()) {
+      recorder.stop().catch(() => {});
+    }
+  }
+
+  async function startRecording() {
+    clearError();
+    cancelTranscription("Recording in progress.");
+    try {
+      await recorder.start();
+    } catch (error) {
+      const message = error?.message || "Failed to start recording.";
+      handleRecorderError(message);
+      addLogEntry("error", `Failed to start recording (${message}).`);
+    }
+  }
+
+  async function stopRecording() {
+    if (!recorder.isRecording()) return;
+    try {
+      await recorder.stop();
+      addLogEntry("info", "Recording stopped.");
+    } catch (error) {
+      const message = error?.message || "Failed to stop recording.";
+      handleRecorderError(message);
+      addLogEntry("error", `Failed to stop recording (${message}).`);
+    }
+  }
+
+  async function togglePlayback() {
+    if (!audioEl || !current.url) return;
+    try {
+      if (audioEl.paused) {
+        await audioEl.play();
+      } else {
+        audioEl.pause();
+      }
+    } catch (error) {
+      const message = error?.message || "Unable to play recording.";
+      showError(message);
+      addLogEntry("warn", `Playback failed (${message}).`);
+    }
+  }
+
+  function saveRecording() {
+    if (!current.blob || !current.url || !downloadEl) return;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const extension = current.extension || inferExtension(current.mimeType);
+    const filename = `scribecat-${timestamp}.${extension}`;
+    downloadEl.href = current.url;
+    downloadEl.download = filename;
+    downloadEl.click();
+    addLogEntry("info", `Recording saved (${filename}).`);
+  }
+
+  function clearRecordingAction() {
+    cancelTranscription("Transcription reset.");
+    recorder.reset();
+    resetState();
+    addLogEntry("info", "Recorder reset.");
+  }
+
+  function setTranscribeBusy(active) {
+    const buttons = buttonsByAction.get("transcribe") || [];
+    buttons.forEach((button) => {
+      button.disabled = active || !current.blob || !transcriber.hasApiKey;
+      button.textContent = active ? "Transcribing…" : "Transcribe";
+    });
+    setButtonDisabled("record", active);
+    setButtonDisabled("stop", true);
+  }
+
+  async function runTranscription() {
+    if (!transcriber.hasApiKey) {
+      showError("AssemblyAI API key is not configured.");
+      return;
+    }
+    if (!current.blob) {
+      showError("Record audio before requesting a transcript.");
+      return;
+    }
+    cancelTranscription();
+    transcribeAbort = new AbortController();
+    setTranscribeBusy(true);
+    setRecorderUiState("processing", {
+      message: "Submitting for transcription…",
+      overlayState: "processing",
+    });
+    if (transcriptOutputEl) {
+      transcriptOutputEl.textContent = "";
+    }
+    if (transcriptStatusEl) {
+      transcriptStatusEl.textContent = "Uploading audio…";
+    }
+    try {
+      const result = await transcriber.transcribe(current.blob, {
+        signal: transcribeAbort.signal,
+        onStatus(status) {
+          if (status?.message && transcriptStatusEl) {
+            transcriptStatusEl.textContent = status.message;
+          }
+        },
+      });
+      if (transcriptOutputEl) {
+        const text = (result?.text || "").trim();
+        transcriptOutputEl.textContent = text.length > 0 ? text : "(No transcript returned.)";
+      }
+      if (transcriptStatusEl) {
+        transcriptStatusEl.textContent = "Transcription completed.";
+      }
+      setRecorderUiState("transcribed", { message: "Transcript ready.", overlayState: "transcribed" });
+      addLogEntry("info", "Transcription completed.");
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        if (transcriptStatusEl) {
+          transcriptStatusEl.textContent = "Transcription canceled.";
+        }
+        addLogEntry("warn", "Transcription canceled.");
+      } else {
+        const message = error?.message || "Transcription failed.";
+        showError(message);
+        if (transcriptStatusEl) {
+          transcriptStatusEl.textContent = message;
+        }
+        addLogEntry("error", `Transcription failed (${message}).`);
+      }
+      setRecorderUiState("active", { message: "Recording ready." });
+    } finally {
+      setTranscribeBusy(false);
+      transcribeAbort = null;
+      setButtonDisabled("transcribe", !current.blob || !transcriber.hasApiKey);
+    }
+  }
+
+  (buttonsByAction.get("record") || []).forEach((button) => {
+    button.addEventListener("click", startRecording);
+  });
+  (buttonsByAction.get("stop") || []).forEach((button) => {
+    button.addEventListener("click", stopRecording);
+  });
+  (buttonsByAction.get("play") || []).forEach((button) => {
+    button.addEventListener("click", togglePlayback);
+  });
+  (buttonsByAction.get("save") || []).forEach((button) => {
+    button.addEventListener("click", saveRecording);
+  });
+  (buttonsByAction.get("clear") || []).forEach((button) => {
+    button.addEventListener("click", clearRecordingAction);
+  });
+  (buttonsByAction.get("transcribe") || []).forEach((button) => {
+    button.addEventListener("click", runTranscription);
+  });
+
+  if (!transcriber.hasApiKey) {
+    setButtonDisabled("transcribe", true);
+    if (transcriptStatusEl) {
+      transcriptStatusEl.textContent = "Set ASSEMBLYAI_API_KEY to enable transcription.";
+    }
+  }
+
+  resetState();
+
+  window.addEventListener("beforeunload", () => {
+    cancelTranscription();
+    ensureRecordingStopped();
+    recorder.reset();
+    revokeObjectUrl();
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   appShellEl = document.querySelector(".app-shell");
   themeToggleBtn = document.getElementById("themeToggle");
@@ -396,6 +927,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadVersion();
 
   if (typeof initStatusOverlay === "function") {
-    initStatusOverlay({ rootId: "status-root" });
+    overlayController = initStatusOverlay({ rootId: "status-root" }) || null;
   }
+  initRecorderPanel();
 });

@@ -3,9 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="git" content="branch=unknown;sha=unknown" />
+  <meta name="git" content="branch=work;sha=ac6938c" />
   <title>ScribeCat Dev Console</title>
   <link rel="stylesheet" href="./style.css" />
+  <script>
+    window.SC_ENV = window.SC_ENV || {};
+    try {
+      const script = document.createElement("script");
+      script.src = "./.runtime/env.js";
+      script.defer = true;
+      script.onerror = () => {
+        console.info("No runtime env file found; transcription will remain disabled until the key is provided.");
+      };
+      document.head.appendChild(script);
+    } catch (error) {
+      console.info("Failed to prime runtime env", error);
+    }
+  </script>
 </head>
 <body>
   <div class="app-shell" data-route="dashboard">
@@ -13,7 +27,7 @@
       <div class="brand">
         <div class="brand-title">
           <span class="brand-name" id="productName">ScribeCat</span>
-          <span class="brand-version" id="productVersion">0.1.0</span>
+          <span class="brand-version" id="productVersion">0.2.0</span>
         </div>
         <span class="badge-dev" role="status" aria-live="polite">DEV BUILD</span>
       </div>
@@ -64,6 +78,50 @@
               <p class="status-meta">Last updated: <time data-status-time>never</time></p>
             </article>
           </div>
+          <section class="recorder-panel" data-recorder data-recorder-state="idle">
+            <div class="recorder-summary">
+              <span class="recorder-dot" data-recorder-dot aria-hidden="true"></span>
+              <div class="recorder-summary-text">
+                <span class="recorder-summary-title">Recorder</span>
+                <span class="recorder-summary-caption" data-recorder-caption>Ready to capture audio.</span>
+              </div>
+              <button type="button" class="recorder-button recorder-button--primary" data-recorder-action="record">Record</button>
+            </div>
+            <div class="recorder-body">
+              <div class="recorder-display">
+                <span class="recorder-timer" data-recorder-timer>00:00</span>
+                <span class="recorder-size" data-recorder-size>0.00 MB</span>
+                <div class="recorder-meter" aria-hidden="true">
+                  <div class="recorder-meter-bar" data-recorder-meter></div>
+                </div>
+              </div>
+              <div class="recorder-actions">
+                <button type="button" class="recorder-button" data-recorder-action="stop" disabled>Stop</button>
+                <button type="button" class="recorder-button" data-recorder-action="play" disabled>Play</button>
+                <button type="button" class="recorder-button" data-recorder-action="save" disabled>Save</button>
+                <button type="button" class="recorder-button" data-recorder-action="clear" disabled>Clear</button>
+                <button
+                  type="button"
+                  class="recorder-button"
+                  data-recorder-action="transcribe"
+                  data-recorder-transcribe
+                  disabled
+                >
+                  Transcribe
+                </button>
+              </div>
+              <div class="recorder-error" data-recorder-error role="status" aria-live="polite"></div>
+              <audio data-recorder-audio hidden controls></audio>
+              <a data-recorder-download hidden download></a>
+            </div>
+          </section>
+          <section class="transcript-panel" data-transcript>
+            <header class="transcript-header">
+              <h2>Transcript</h2>
+              <span class="transcript-status" data-transcript-status>Transcription requires ASSEMBLYAI_API_KEY.</span>
+            </header>
+            <div class="transcript-body" data-transcript-output aria-live="polite"></div>
+          </section>
           <section class="log-panel" id="logPanel" aria-live="polite">
             <header class="log-header">
               <h2>Recent Logs</h2>
