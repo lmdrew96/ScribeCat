@@ -1,0 +1,10 @@
+{
+  "identifier": "com.scribecat.app",
+  "productName": "ScribeCat",
+  "version": "0.1.0",
+  "build": {
+    "beforeDevCommand": "node scripts/fetch_assets.mjs && bash scripts/start_static.sh",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../web"
+  }
+}

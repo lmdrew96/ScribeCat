@@ -33,3 +33,14 @@ logs/
 .githooks/
 .DS_Store
 logs/
+/src-tauri/target/
+/target/
+/node_modules/
+/web/assets/
+/web/fonts/
+/src-tauri/icons/
+.githooks/
+.env
+server/.env
+.DS_Store
+logs/
