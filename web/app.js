@@ -197,8 +197,18 @@ async function checkStatic() {
     }
     const payload = await response.json();
     if (payload && payload.ok) {
-      setStatus("static", "ok", "Online");
-      addLogEntry("info", "Static server responded with ok=true.");
+      let message = "Online";
+      let logDetails = "Static server responded with ok=true.";
+      if (payload.ts) {
+        const ts = new Date(payload.ts);
+        if (!Number.isNaN(ts.getTime())) {
+          const displayTime = ts.toLocaleTimeString();
+          message = `Online • ${displayTime}`;
+          logDetails = `Static server responded with ok=true at ${displayTime}.`;
+        }
+      }
+      setStatus("static", "ok", message);
+      addLogEntry("info", logDetails);
     } else {
       setStatus("static", "error", "Down");
       addLogEntry("warn", "Static server responded without ok=true.");
