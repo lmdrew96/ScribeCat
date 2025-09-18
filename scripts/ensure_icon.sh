@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p src-tauri/icons
-if [ -f web/assets/nugget.png ]; then
-  if command -v sips >/dev/null 2>&1; then sips -s format png -Z 512 web/assets/nugget.png --out src-tauri/icons/icon.png >/dev/null
-  else cp -f web/assets/nugget.png src-tauri/icons/icon.png
-  fi
-else
-  python3 - "$@" <<'PY'
-import base64,os
-b="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII="
+python3 - <<'PY'
+import struct,zlib,binascii,os
 os.makedirs("src-tauri/icons",exist_ok=True)
-open("src-tauri/icons/icon.png","wb").write(base64.b64decode(b))
-print("wrote placeholder icon")
+def chunk(tag,data): return struct.pack(">I",len(data))+tag+data+struct.pack(">I",binascii.crc32(tag+data)&0xffffffff)
+w,h=64,64
+sig=b"\x89PNG\r\n\x1a\n"
+ihdr=struct.pack(">IIBBBBB",w,h,8,6,0,0,0)
+px=bytes([124,58,237,255])
+row=bytes([0])+px*w
+raw=row*h
+idat=zlib.compress(raw,9)
+open("src-tauri/icons/icon.png","wb").write(sig+chunk(b'IHDR',ihdr)+chunk(b'IDAT',idat)+chunk(b'IEND',b''))
+data=open("src-tauri/icons/icon.png","rb").read()
+assert data[:8]==sig
+print("color_type",data[25])
 PY
-fi
 [ -f src-tauri/icons/icon.png ] || { echo "icon missing"; exit 1; }
-echo "icon ready at src-tauri/icons/icon.png"
