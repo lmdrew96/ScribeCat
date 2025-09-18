@@ -469,7 +469,7 @@
       source.connect(processor); processor.connect(audioCtx.destination);
       finalizeCurrentLine("Session started");
     }catch(e){
-      appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
+      makeLine("Mic denied/unavailable. Type notes while we sort it.");
       tag(stMic,"bad","Mic");
       running=false;
     }
