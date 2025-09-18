@@ -1,653 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>ScribeCat v1.9.9</title>
-
-<!-- Google Fonts: 30-note menu (5 classic serif, 10 classic sans, 5 quirky serif, 10 quirky sans) -->
-<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Merriweather:wght@400;700&family=Source+Serif+4:wght@400;700&family=IBM+Plex+Serif:wght@400;700&family=Crimson+Text:wght@400;700&family=Inter:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Noto+Sans:wght@400;700&family=IBM+Plex+Sans:wght@400;700&family=Source+Sans+3:wght@400;700&family=Manrope:wght@400;700&family=Work+Sans:wght@400;700&family=Fira+Sans:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Outfit:wght@400;700&family=Space+Grotesk:wght@400;700&family=Playfair+Display:wght@400;700&family=Cinzel:wght@400;700&family=Alegreya:wght@400;700&family=Bodoni+Moda:wght@400;700&family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet"/>
-
-<style>
-  /* Title face: Galaxy Caterpillar (drop your file at web/fonts/GalaxyCaterpillar.ttf) */
-  @font-face {
-    font-family: "Galaxy Caterpillar";
-    src: url("./fonts/GalaxyCaterpillar.ttf") format("truetype");
-    font-display: swap;
-  }
-
-  :root{
-    /* Base neutral theme (all others override these vars) */
-    --bg:#f6f7fb; --surface:#ffffff; --ink:#101319; --sub:#6a7180; --border:#e3e7ef;
-    --brand:#ffd200; --accent:#506fff; --accent-2:#ff5c8a;
-    --btn:#ffffff; --btn-text:#111; --chip:#fff;
-
-    --ok:#2eb450; --warn:#aa7a15; --bad:#e62e4d;
-    --ui:Inter, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
-    --notes:Inter, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
-  }
-
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--ui);overflow:hidden}
-
-  .container{max-width:1180px;margin:0 auto}
-
-  /* Top bar */
-  .topbar{background:var(--surface);border-bottom:1px solid var(--border)}
-  .topbar .inner{min-height:64px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:12px}
-  .titlewrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-  .nugget{width:48px;height:48px;object-fit:contain;flex:0 0 48px}
-  .title{font-family:"Galaxy Caterpillar", var(--ui);font-size:clamp(24px,5vw,44px);line-height:1;flex:1;white-space:nowrap;overflow:hidden}
-  .badge{padding:4px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--sub);opacity:.85}
-  .status{display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:44%}
-  .pill{border-radius:999px;padding:2px 8px;font-size:11px;border:1px solid var(--border);background:var(--chip);opacity:.72}
-  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-  .chip{padding:6px 10px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:var(--chip);display:inline-flex;gap:8px;align-items:center;color:var(--ink)}
-  .chip.danger{background:var(--bad);border-color:var(--bad);color:#fff}
-
-  /* Controls */
-  .controls{padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
-  .ctrl-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .btn{padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--btn);color:var(--btn-text);cursor:pointer}
-  .btn:active{transform:translateY(1px)}
-  select,input[type="text"]{height:36px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--ink)}
-  .vu{height:12px;background:#eaeaf3;border-radius:12px;overflow:hidden;min-width:160px;flex:1}
-  .vu>div{height:100%;width:0;background:#2ee6a6;transition:width .08s}
-
-  /* Grid: side-by-side vs stacked (toggle in Settings) */
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 16px 24px;height:calc(100vh - 64px - 120px)}
-  body.stacked .grid{grid-template-columns:1fr}
-
-  .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;min-height:0}
-  .panel .head{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:10px}
-  .panel .body{padding:12px 16px;overflow:auto;min-height:0;overscroll-behavior:contain}
-  .footer{padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--sub);display:flex;gap:8px;align-items:center}
-
-  .notes{outline:none}
-  .toolbar{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  .toolbar select,.toolbar input[type="number"]{height:30px}
-
-  /* Settings drawer */
-  .drawer{position:fixed;right:12px;top:76px;bottom:12px;width:460px;background:#f3f6ff;border:1px solid #dbe1ff;border-radius:14px;padding:10px 12px;overflow:auto;display:none;z-index:20}
-  .drawer .group{background:#fff;border:1px solid #dbe1ff;border-radius:10px;padding:10px;margin-bottom:10px}
-  .sub{color:#6a7180;font-size:12px}
-
-  /* Version at bottom */
-  .ver{position:fixed;left:12px;bottom:8px;font-size:12px;color:#77819a;opacity:.85}
-
-  /* Contrast helpers */
-  .theme-warning{position:fixed;right:12px;bottom:8px;font-size:12px;color:#fff;background:#e62e4d;padding:6px 10px;border-radius:10px;display:none}
-/* Hover-only timestamps in transcript */
-#live .line .ts{opacity:0;transition:opacity .15s ease;cursor:pointer}
-#live .line:hover .ts{opacity:.65}
-
-/* Bottom footer bar */
-.footbar{position:fixed;right:12px;bottom:8px;display:flex;gap:8px;align-items:center;z-index:25}
-.footbtn{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--chip);cursor:pointer;font-size:14px}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScribeCat Dev Console</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-<div class="topbar">
-  <div class="inner container">
-    <div class="titlewrap">
-      <img class="nugget" src="./nugget.png" alt="Nugget"/>
-      <div class="title">ScribeCat</div>
-    </div>
-    <div class="status">
-      <div id="stApi" class="pill warn">API</div>
-      <div id="stMic" class="pill warn">Mic</div>
-      <div id="stStream" class="pill warn">Stream</div>
-      <button id="quitBtnTop" class="chip danger" title="Quit ScribeCat">Quit</button>
-      <button id="gearBtn" class="chip" title="Settings">⚙︎</button>
-    </div>
-  </div>
-</div>
-
-<div class="controls container">
-  <div class="ctrl-row">
-    <select id="classSel" title="Class"></select>
-    <button id="manageBtn" class="btn">Manage</button>
-    <input id="titleBox" placeholder="Title (auto)" style="flex:1;min-width:220px"/>
-    <select id="micSel" title="Microphone"></select>
-    <div class="vu"><div id="vuBar"></div></div>
-  </div>
-  <div class="ctrl-row" style="justify-self:end">
-    <button id="startBtn"  class="btn">▶ Start</button>
-    <button id="pauseBtn"  class="btn" style="display:none">Pause</button>
-    <button id="resumeBtn" class="btn" style="display:none">Resume</button>
-    <button id="stopBtn"   class="btn" style="display:none">⏹ Stop</button>
-    <button id="summaryBtn" class="btn" style="display:none">Summarize → Notes</button>
-    <button id="saveBtn" class="btn" style="background:var(--accent);color:#fff;border-color:transparent">Save</button>
-  </div>
-</div>
-
-<div class="grid container">
-  <div class="panel">
-    <div class="head">
-      <div>Live Transcript</div>
-      <label class="chip"><input id="sentenceChk" type="checkbox" checked/> sentence</label>
-      <label class="chip"><input id="tsChk" type="checkbox" checked/> timestamps</label>
-    </div>
-    <div id="live" class="body" style="color:var(--ink);font-size:14px;line-height:1.45"></div>
-    <div class="footer">
-      <label><input id="autoScrollChk" type="checkbox" checked/> Auto-scroll</label>
-      <span class="sub">(Scroll up to pause; resume near bottom)</span>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="head">
-      <div>Notes</div>
-      <div class="toolbar">
-        <div><select id="fontSizeSel" title="Font size"></select><input id="fontSizeBox" type="number" min="4" max="60" value="16" title="Font size (type)"/></div>
-        <select id="fontFamilySel" title="Font family (selection)"></select>
-        <div id="colorTools" style="display:flex;gap:6px;align-items:center">
-          <button id="fontColorBtn" class="btn" title="Font color">A</button>
-          <input id="fontColor" type="color" style="width:0;height:0;border:0;padding:0;opacity:0"/>
-          <button id="hlBtn" class="btn" title="Highlighter">🖍️</button>
-          <input id="hlColor" type="color" value="#ffd200" style="width:0;height:0;border:0;padding:0;opacity:0"/>
-          <input id="hexBox" placeholder="#hex" style="width:80px;height:30px;border:1px solid var(--border);border-radius:8px;padding:0 6px"/>
+  <div class="app-shell" data-route="dashboard">
+    <header class="app-header" role="banner">
+      <div class="brand">
+        <div class="brand-title">
+          <span class="brand-name" id="productName">ScribeCat</span>
+          <span class="brand-version" id="productVersion">0.1.0</span>
         </div>
-        <button id="unhlBtn" class="btn" title="Clear inline styles">🧽</button>
-        <button id="boldBtn" class="btn" title="Bold (⌘/Ctrl+B)">B</button>
-        <button id="italicBtn" class="btn" title="Italic (⌘/Ctrl+I)" style="font-style:italic">I</button>
-        <button id="undoBtn" class="btn" title="Undo">↶</button>
-        <button id="redoBtn" class="btn" title="Redo">↷</button>
       </div>
+      <div class="header-actions">
+        <button type="button" class="header-button" id="rerunChecks" title="Rerun status checks (R)" aria-label="Rerun status checks">
+          ↻
+        </button>
+        <button type="button" class="header-button" id="themeToggle" title="Toggle theme (T)" aria-pressed="false" aria-label="Toggle theme">
+          ☀︎
+        </button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <nav class="sidebar" aria-label="Sections">
+        <a class="nav-link is-active" href="#dashboard" data-nav="dashboard" aria-current="page">Dashboard</a>
+        <a class="nav-link" href="#logs" data-nav="logs">Logs</a>
+        <a class="nav-link" href="#about" data-nav="about">About</a>
+      </nav>
+
+      <main class="app-main" id="mainContent">
+        <section id="dashboard" class="view" data-view="dashboard">
+          <h1 class="visually-hidden">Dashboard</h1>
+          <p class="view-description">Monitor connectivity, server status, and application readiness at a glance.</p>
+          <div class="status-grid">
+            <article class="status-card" data-status-card="internet" data-state="idle">
+              <div class="status-header">
+                <h2>Internet</h2>
+                <span class="status-indicator" aria-hidden="true"></span>
+              </div>
+              <p class="status-message" data-status-message>Requires JavaScript to run connectivity checks.</p>
+              <p class="status-meta">Last updated: <time data-status-time>never</time></p>
+            </article>
+            <article class="status-card" data-status-card="static" data-state="idle">
+              <div class="status-header">
+                <h2>Static Server</h2>
+                <span class="status-indicator" aria-hidden="true"></span>
+              </div>
+              <p class="status-message" data-status-message>Requires JavaScript to contact the local static server.</p>
+              <p class="status-meta">Last updated: <time data-status-time>never</time></p>
+            </article>
+            <article class="status-card" data-status-card="app" data-state="idle">
+              <div class="status-header">
+                <h2>App</h2>
+                <span class="status-indicator" aria-hidden="true"></span>
+              </div>
+              <p class="status-message" data-status-message>The console will mark the app ready when scripts finish loading.</p>
+              <p class="status-meta">Last updated: <time data-status-time>never</time></p>
+            </article>
+          </div>
+          <section class="log-panel" id="logPanel" aria-live="polite">
+            <header class="log-header">
+              <h2>Recent Logs</h2>
+              <button type="button" class="text-button" data-action="clear-logs" title="Clear logs (L)" aria-label="Clear log entries">Clear</button>
+            </header>
+            <ol class="log-list" data-log-list>
+              <li class="log-empty">Logs will appear here.</li>
+            </ol>
+          </section>
+        </section>
+
+        <section id="logs" class="view" data-view="logs">
+          <h1>Logs</h1>
+          <p data-log-fallback>The live log stream is available in the dashboard when JavaScript is disabled.</p>
+          <div data-log-host></div>
+        </section>
+
+        <section id="about" class="view" data-view="about">
+          <h1>About</h1>
+          <p>The ScribeCat Dev Console provides quick status checks for connectivity, the bundled static server, and the desktop app shell.</p>
+          <p>Use the hotkeys below to streamline routine checks and theme adjustments:</p>
+          <ul class="about-shortcuts">
+            <li><kbd>T</kbd> toggle theme</li>
+            <li><kbd>R</kbd> rerun status checks</li>
+            <li><kbd>L</kbd> clear log entries</li>
+            <li><kbd>?</kbd> view shortcut help</li>
+          </ul>
+        </section>
+      </main>
     </div>
-    <div id="notes" class="body notes" contenteditable="true">
-      <p>• Welcome back. Shortcuts on: Cmd/Ctrl-Shift-8 bullets, Cmd/Ctrl-Shift-7 numbers, Cmd-Shift-- em dash —, Cmd-Shift-. arrow →, Cmd+M timestamp marker.</p>
+
+    <footer class="app-footer" role="contentinfo">
+      <span>Press <kbd>?</kbd> for shortcuts.</span>
+    </footer>
+  </div>
+
+  <div class="hotkey-overlay" id="hotkeyOverlay" hidden>
+    <div class="hotkey-dialog" role="dialog" aria-modal="true" aria-labelledby="hotkeyTitle">
+      <header class="hotkey-header">
+        <h2 id="hotkeyTitle">Keyboard shortcuts</h2>
+        <button type="button" class="header-button" data-action="close-hotkeys" aria-label="Close shortcut help">×</button>
+      </header>
+      <ul class="hotkey-list">
+        <li><kbd>?</kbd> Toggle this overlay</li>
+        <li><kbd>T</kbd> Toggle theme</li>
+        <li><kbd>R</kbd> Rerun status checks</li>
+        <li><kbd>L</kbd> Clear recent logs</li>
+      </ul>
+      <p class="hotkey-footnote">Shortcuts are ignored while typing in inputs or editable regions.</p>
     </div>
   </div>
-</div>
 
-<div id="drawer" class="drawer">
-  <div class="group">
-    <h4>Layout</h4>
-    <label><input type="checkbox" id="stackedToggle"> Stacked mode (instead of side-by-side)</label>
-  </div>
-
-  <div class="group">
-    <h4>Behaviors</h4>
-    <label><input type="checkbox" id="b_sentence" checked> Sentence mode by default</label><br/>
-    <label><input type="checkbox" id="b_autoretry" checked> Auto-retry live transcription</label><br/>
-    <label><input type="checkbox" id="b_markers" checked> Cmd+M inserts linked timestamp</label><br/>
-    <label><input type="checkbox" id="b_autoscroll" checked> Auto-scroll transcript</label><br/>
-    <label><input type="checkbox" id="b_timestamps" checked> Show timestamps in transcript</label><br/>
-    <label><input type="checkbox" id="b_autopolish" checked> Auto-polish every ~5s</label>
-  </div>
-
-  <div class="group">
-    <h4>Theme presets</h4>
-    <div class="sub">High-contrast palettes that recolor background, cards, text, and accents.</div>
-    <select id="themeSel" style="width:100%;margin:8px 0"></select>
-    <button id="applyTheme" class="btn">Apply</button>
-  </div>
-
-  <div class="group">
-    <h4>Canvas bookmarklet</h4>
-    <div class="sub" style="margin-bottom:8px">
-      1) Drag the button below to your bookmarks bar. 2) Go to your Canvas Dashboard (the page that shows all courses). 3) Click the bookmark—ScribeCat will open and import the course names automatically (we de-dupe and strip codes).
+  <noscript>
+    <div class="noscript">
+      JavaScript is disabled. Status checks and live logs require JavaScript, but static content remains available.
     </div>
-    <a class="btn" style="background:var(--accent);color:#fff;border-color:transparent"
-       href="javascript:(function(){try{const sel=(...qs)=>qs.flatMap(q=>[...document.querySelectorAll(q)]);const texts=sel('[data-automation=dashboardCard__link]','.ic-DashboardCard__header-title','a.ig-title','.context_list_context a').map(a=>a.textContent.trim()).filter(Boolean);const uniq=[...new Set(texts)];const cleaned=uniq.map(t=>t.replace(/\\b\\d{2}F-[A-Z]+\\d{3,}-\\d{3}\\d{4}\\b.*$/,'').replace(/\\b25F-[A-Z]+\\d{3,}-\\d{3}\\b.*$/,'').replace(/\\s*—\\s*/g,' — ').replace(/\\s{2,}/g,' ').trim()).filter(Boolean);const url=location.origin+location.pathname+'#classes='+encodeURIComponent(JSON.stringify(cleaned));window.open(url,'_blank');}catch(e){alert('ScribeCat bookmarklet error: '+e.message)}})()">Add courses to ScribeCat</a>
-  </div>
+  </noscript>
 
-  <div class="group">
-    <h4>Danger zone</h4>
-    <button id="quitBtn" class="btn" style="background:#ffe3e3;border-color:#ffb3b3">Quit ScribeCat</button>
-  </div>
-</div>
-
-<div class="ver">ScribeCat v1.9.9</div>
-<div class="footbar">
-  <button id="layoutBtn" class="footbtn" title="Toggle layout (stacked / side-by-side)">🧩</button>
-</div>
-<div id="contrastWarn" class="theme-warning">Adjusted for contrast</div>
-
-<script>
-(function(){
-  const API = "http://127.0.0.1:8787";
-  const $ = s => document.querySelector(s), byId = id => document.getElementById(id);
-  const stApi=byId("stApi"), stMic=byId("stMic"), stStream=byId("stStream");
-  const classSel=byId("classSel"), titleBox=byId("titleBox");
-  const micSel=byId("micSel"), vu=byId("vuBar");
-  const startBtn=byId("startBtn"), pauseBtn=byId("pauseBtn"), resumeBtn=byId("resumeBtn"), stopBtn=byId("stopBtn");
-  const saveBtn=byId("saveBtn"), summaryBtn=byId("summaryBtn");
-  const live=byId("live"), notes=byId("notes");
-  const autoScroll=byId("autoScrollChk"), tsChk=byId("tsChk"), sentenceChk=byId("sentenceChk");
-  const gearBtn=byId("gearBtn"), drawer=byId("drawer"), manageBtn=byId("manageBtn");
-  const quitDrawerBtn=byId("quitBtn"), quitTopBtn=byId("quitBtnTop");
-  const stackedToggle=byId("stackedToggle");
-  const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
-  const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
-
-  function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
-  fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
-  gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
-  manageBtn.onclick = ()=> drawer.style.display='block';
-  stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
-
-  /* ======== THEMES (with contrast-safe colors across UI) ======== */
-  const THEMES = {
-  "Clean":      {bg:'#f6f7fb',surface:'#fff',ink:'#101319',sub:'#6a7180',border:'#e3e7ef',brand:'#ffd200',accent:'#506fff',accent2:'#ff5c8a',btn:'#fff',btnText:'#111'},
-  "Dark Ink":   {bg:'#0f1115',surface:'#161a22',ink:'#f1f5f9',sub:'#93a4b3',border:'#232b3a',brand:'#ffd200',accent:'#8aa9ff',accent2:'#ff95b2',btn:'#1f2532',btnText:'#fff'},
-  "Slate Pop":  {bg:'#f2f5f7',surface:'#ffffff',ink:'#1c212b',sub:'#5f6e80',border:'#d7e0e9',brand:'#ffd200',accent:'#ff5c8a',accent2:'#2e6aff',btn:'#fff',btnText:'#111'},
-  "Ocean":      {bg:'#e9f1f7',surface:'#ffffff',ink:'#0b2239',sub:'#4d6174',border:'#d2e0eb',brand:'#ffd200',accent:'#2e6aff',accent2:'#0ea5e9',btn:'#fff',btnText:'#0b2239'},
-  "Paper":      {bg:'#fbfbf7',surface:'#fff',ink:'#111',sub:'#666',border:'#ecebe6',brand:'#ffd200',accent:'#2f6fff',accent2:'#c2410c',btn:'#fff',btnText:'#111'},
-  "Plum":       {bg:'#f7f4fa',surface:'#fff',ink:'#201226',sub:'#6c5a76',border:'#e8e1ee',brand:'#ffd200',accent:'#7b3eff',accent2:'#ff5ea8',btn:'#fff',btnText:'#201226'},
-  "Forest":     {bg:'#f2f7f4',surface:'#fff',ink:'#0c2116',sub:'#476453',border:'#d9e7df',brand:'#ffd200',accent:'#1f8a6f',accent2:'#3b82f6',btn:'#fff',btnText:'#0c2116'},
-  "Charcoal":   {bg:'#15181d',surface:'#1b2027',ink:'#f2f4f8',sub:'#97a3b0',border:'#28303a',brand:'#ffd200',accent:'#7aa2ff',accent2:'#ff8fb0',btn:'#242b35',btnText:'#f2f4f8'},
-  "Citrus":     {bg:'#fffdf6',surface:'#ffffff',ink:'#1f1407',sub:'#6b5a44',border:'#efe7d6',brand:'#ffd200',accent:'#ff7d26',accent2:'#0ea5e9',btn:'#fff',btnText:'#1f1407'},
-  "Neon Night": {bg:'#0b0e18',surface:'#101425',ink:'#eaf1ff',sub:'#9fb0c9',border:'#1a2140',brand:'#ffd200',accent:'#4be9b9',accent2:'#a78bfa',btn:'#16203a',btnText:'#eaf1ff'},
-  "Rose Slate": {bg:'#f9f4f6',surface:'#ffffff',ink:'#28151b',sub:'#6d545f',border:'#ecdbe1',brand:'#ffd200',accent:'#ff5c8a',accent2:'#7c3aed',btn:'#fff',btnText:'#28151b'},
-  "High Noon":  {bg:'#fff8e6',surface:'#ffffff',ink:'#2b1a00',sub:'#7a5a2b',border:'#f1e4c7',brand:'#ffd200',accent:'#d97706',accent2:'#2563eb',btn:'#fff',btnText:'#2b1a00'}
-};
-  themeSel.innerHTML = Object.keys(THEMES).map(n=>`<option>${n}</option>`).join("");
-  function applyThemeVars(t){
-    const r=document.documentElement.style;
-    const warn=$("#contrastWarn");
-    const pairs=[[t.surface,t.ink],[t.bg,t.ink],[t.btn,t.btnText]];
-    let needsWarn=false;
-    function ratio(hex1,hex2){
-      function lum(h){const c=parseInt(h.slice(1),16);const r=(c>>16)&255,g=(c>>8)&255,b=c&255;const a=[r,g,b].map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];}
-      const L1=lum(hex1),L2=lum(hex2); const R=(Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05); return R;
-    }
-    pairs.forEach(([bg,fg])=>{ try{ if(ratio(bg,fg)<4.5) needsWarn=true; }catch{} });
-    ["--bg","--surface","--ink","--sub","--border","--brand","--accent","--accent-2","--btn","--btn-text"]
-      .forEach(()=>{});
-    r.setProperty('--bg',t.bg); r.setProperty('--surface',t.surface); r.setProperty('--ink',t.ink);
-    r.setProperty('--sub',t.sub); r.setProperty('--border',t.border); r.setProperty('--brand',t.brand);
-    r.setProperty('--accent',t.accent); r.setProperty('--accent-2',t.accent2);
-    r.setProperty('--btn',t.btn); r.setProperty('--btn-text',t.btnText);
-    warn.style.display = needsWarn ? 'block' : 'none';
-  }
-  applyThemeVars(THEMES["Clean"]);
-  applyTheme.onclick = ()=> applyThemeVars(THEMES[themeSel.value]||THEMES["Clean"]);
-
-  /* ======== MIC/STREAM/TRANSCRIPT ======== */
-  let running=false, paused=false, startTs=null, ws=null;
-  let audioCtx, source, processor, mediaStream;
-  let userNearBottom=true, sentBuf="", transcriptText="";
-  let wavChunks=[], wavSampleRate=44100, audioBlob=null, lineCounter=0, lastLineId=null, currentLineEl=null;
-
-  function nearBottom(el,px=48){ return (el.scrollHeight - el.scrollTop - el.clientHeight) <= px; }
-  live.addEventListener("scroll",()=>{ userNearBottom = nearBottom(live); }, {passive:true});
-  function clock(){ const t=new Date(); return [t.getHours(),t.getMinutes(),t.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
-  function mmss(){ const tsec=((Date.now()-(startTs||Date.now()))/1000)|0; const mm=String((tsec/60)|0).padStart(2,"0"), ss=String(tsec%60).padStart(2,"0"); return `${mm}:${ss}`; }window.mmss = mmss;
-  function makeTimestampSpan(){
-  const tsOn = (tsChk.checked || b_timestamps.checked);
-  return tsOn ? `<span class="ts">[${mmss()}]</span> ` : '';
-}
-  function makeLine(html, isLive){
-    const id = `t-${mmss().replace(':','')}-${(++lineCounter)}`;
-    const div = document.createElement('div');
-    div.className = isLive ? 'line liveLine' : 'line';
-    div.id = id;
-    div.innerHTML = makeTimestampSpan() + html;
-    live.appendChild(div);
-    if (!isLive){
-      lastLineId = id;
-      window.lastLineId = id;
-    }
-    if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
-    return div;
-  }
-  function setCurrentLineText(html){
-    if (!currentLineEl){ currentLineEl = makeLine(html, true); return; }
-    currentLineEl.innerHTML = makeTimestampSpan() + html;
-    if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
-  }
-  function finalizeCurrentLine(finalText){
-    if (currentLineEl){
-      currentLineEl.classList.remove('liveLine');
-      currentLineEl.innerHTML = makeTimestampSpan() + finalText;
-      lastLineId = currentLineEl.id;
-      window.lastLineId = lastLineId;
-      currentLineEl = null;
-      if ((autoScroll.checked && b_autoscroll.checked) && userNearBottom) live.scrollTop = live.scrollHeight;
-      return;
-    }
-    // If we somehow didn't have a live line, append a fresh finalized one
-    makeLine(finalText, false);
-  }
-  function updateTailHTML(html){ setCurrentLineText(html); }
-
-  document.addEventListener('click',(e)=>{
-    const a=e.target.closest('a[href^="#t-"]');
-    if (!a) return;
-    e.preventDefault();
-    const id=a.getAttribute('href').slice(1);
-    const el=document.getElementById(id);
-    if (el){
-      live.scrollTop = el.offsetTop - 8;
-      el.style.outline='2px solid var(--accent)'; setTimeout(()=>el.style.outline='none',800);
-    }
-  });
-
-  function toPCM16(f32){ const out = new Int16Array(f32.length); for (let i=0;i<f32.length;i++){ let s=f32[i]; s=Math.max(-1,Math.min(1,s)); out[i]=s<0?s*0x8000:s*0x7FFF; } return out; }
-
-  async function openWS(){
-    try{
-      const tr = await fetch(API+"/api/aai-token?expires_in_seconds=300");
-      if (!tr.ok) throw new Error("token");
-      const {token} = await tr.json();
-      const s = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le&token=${token}`);
-      s.binaryType="arraybuffer";
-      s.onopen=()=>tag(stStream,"ok","Stream");
-      s.onclose=()=>tag(stStream,"warn","Stream");
-      s.onerror=()=>tag(stStream,"bad","Stream");
-      s.onmessage=(m)=>{ if(typeof m.data!=="string") return; try{
-        const j=JSON.parse(m.data);
-        const txt=j.formatted_transcript||j.transcript||(j.turn&&(j.turn.formatted_transcript||j.turn.transcript))||j.text;
-        if(!txt) return;
-        if (sentenceChk.checked || b_sentence.checked){
-          const trimmed = txt.trim();
-          const done = /[.!?]\s*$/.test(trimmed);
-          if (done){
-            transcriptText += (tsChk.checked||b_timestamps.checked ? (`[${mmss()}] `) : '') + trimmed + "\n";
-            finalizeCurrentLine(trimmed);
-            sentBuf = '';
-          } else {
-            sentBuf = txt + ' ';
-            setCurrentLineText(sentBuf);
-          }
-        } else {
-          setCurrentLineText(txt);
-        }
-      }catch(_){}};
-      return s;
-    }catch(e){ tag(stStream,"warn","Stream"); return null; }
-  }
-
-  async function listMics(){
-    try{
-      await navigator.mediaDevices.getUserMedia({audio:true});
-      const devs = await navigator.mediaDevices.enumerateDevices();
-      const auds = devs.filter(d=>d.kind==="audioinput");
-      micSel.innerHTML = auds.map(d=>`<option value="${d.deviceId}">${d.label||"(default)"}</option>`).join("") || `<option value="">(default)</option>`;
-      tag(stMic,"ok","Mic");
-    }catch(e){ tag(stMic,"bad","Mic"); }
-  }
-  navigator.mediaDevices?.addEventListener?.('devicechange', ()=>listMics());
-  listMics();
-
-  function sanitizeName(s){ return String(s||"Lecture").replace(/[\/\\:?*"<>|]/g,"_").slice(0,100); }
-  let audioUploadURL="";
-
-  async function start(){
-    if (running) return;
-    running=true; paused=false; startTs=Date.now(); transcriptText=""; sentBuf=""; audioBlob=null; wavChunks=[]; lineCounter=0; lastLineId=null;
-    try{
-      const deviceId = micSel.value || undefined;
-      mediaStream = await navigator.mediaDevices.getUserMedia({audio:{deviceId,channelCount:1},video:false});
-      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      wavSampleRate = audioCtx.sampleRate || 44100;
-      source = audioCtx.createMediaStreamSource(mediaStream);
-      processor = audioCtx.createScriptProcessor(4096,1,1);
-      ws = await openWS();
-      processor.onaudioprocess = (e)=>{
-        if (paused) return;
-        const ch=e.inputBuffer.getChannelData(0);
-        const pcm16 = toPCM16(ch);
-        wavChunks.push(pcm16);
-        let peak=0; for(let i=0;i<ch.length;i++) peak=Math.max(peak,Math.abs(ch[i])); vu.style.width=Math.min(100,(peak*200)|0)+"%";
-        if (ws && ws.readyState===1){
-          // Quick downsample to 16k for WebSocket
-          const sr=e.inputBuffer.sampleRate||wavSampleRate; const ratio=sr/16000;
-          const len=Math.floor(ch.length/ratio); const out=new Int16Array(len);
-          for(let o=0,i=0;o<len;o++,i+=ratio){ let s=ch[i|0]; s=Math.max(-1,Math.min(1,s)); out[o]=s<0?s*0x8000:s*0x7FFF; }
-          ws.send(out.buffer);
-        }
-      };
-      source.connect(processor); processor.connect(audioCtx.destination);
-      finalizeCurrentLine("Session started");
-    }catch(e){
-      appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
-      tag(stMic,"bad","Mic");
-      running=false;
-    }
-  }
-  function wavEncode(pcm16, sampleRate){
-    const numChannels=1, bytesPerSample=2, blockAlign=numChannels*bytesPerSample, byteRate=sampleRate*blockAlign;
-    const dataSize = pcm16.length*bytesPerSample; const buffer=new ArrayBuffer(44+dataSize); const v=new DataView(buffer); let o=0;
-    const w16=(x)=>{v.setUint16(o,x,true);o+=2}, w32=(x)=>{v.setUint32(o,x,true);o+=4};
-    w32(0x46464952); w32(36+dataSize); w32(0x45564157); w32(0x20746d66); w32(16); w16(1); w16(1); w32(sampleRate); w32(byteRate); w16(blockAlign); w16(16); w32(0x61746164); w32(dataSize);
-    new Int16Array(buffer,44,pcm16.length).set(pcm16); return new Blob([buffer],{type:"audio/wav"});
-  }
-  async function stop(){
-    paused=false;
-    if (processor){ processor.disconnect(); processor=null; }
-    if (source){ source.disconnect(); source=null; }
-    if (audioCtx){ try{ await audioCtx.close(); }catch(_){} audioCtx=null; }
-    if (mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
-    if (ws){ try{ ws.close(); }catch(_){} ws=null; }
-    vu.style.width="0%";
-    finalizeCurrentLine("Session stopped."); summaryBtn.style.display=''; tag(stStream,"warn","Stream"); running=false;
-
-    try{
-      const total = wavChunks.reduce((acc,a)=>acc + a.length, 0);
-      const pcm = new Int16Array(total); let off=0; for(const c of wavChunks){ pcm.set(c,off); off+=c.length; }
-      audioBlob = wavEncode(pcm, wavSampleRate);
-    }catch(_){ audioBlob=null; }
-  }
-  startBtn.onclick=()=>{ startBtn.style.display='none'; pauseBtn.style.display=''; stopBtn.style.display=''; resumeBtn.style.display='none'; summaryBtn.style.display='none'; start(); };
-  pauseBtn.onclick=()=>{ paused=true; pauseBtn.style.display='none'; resumeBtn.style.display=''; };
-  resumeBtn.onclick=()=>{ paused=false; pauseBtn.style.display=''; resumeBtn.style.display='none'; };
-  stopBtn.onclick=()=>{ stop(); pauseBtn.style.display='none'; resumeBtn.style.display='none'; stopBtn.style.display='none'; startBtn.style.display=''; };
-
-  /* ======== SHORTCUTS (Docs/Word-ish) ======== */
-  // Lists: Cmd/Ctrl-Shift-8 bullet, Cmd/Ctrl-Shift-7 numbered
-  document.addEventListener('keydown', (e)=>{
-    if (!notes.contains(document.activeElement)) return; // only when editing notes
-    // Tab indent/outdent
-    if (e.key==='Tab'){
-      e.preventDefault();
-      const block=window.getSelection()?.anchorNode?.parentElement;
-      if(block){ const cur=parseInt(block.style.marginLeft||'0',10); const delta=e.shiftKey?-24:24; block.style.marginLeft=Math.max(0,cur+delta)+'px'; }
-      return;
-    }
-    const cmd = (e.metaKey||e.ctrlKey) && e.shiftKey;
-    if (cmd && e.key==='8'){ e.preventDefault(); document.execCommand('insertUnorderedList'); return; }
-    if (cmd && e.key==='7'){ e.preventDefault(); document.execCommand('insertOrderedList'); return; }
-    // Em dash: Cmd-Shift-- (Mac-like). Arrow: Cmd-Shift-.
-    if ((e.metaKey||e.ctrlKey) && e.shiftKey && e.key === '_'){ e.preventDefault(); document.execCommand('insertText', false, '—'); return; }
-    if ((e.metaKey||e.ctrlKey) && e.shiftKey && e.key === '>'){ e.preventDefault(); document.execCommand('insertText', false, '→'); return; }
-  }, true);
-
-  // === Autoformat: Word/Google-like shortcuts for Notes ===
-(function(){
-  const notes = document.getElementById("notes");
-
-  function getBlockEl() {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return null;
-    let n = sel.getRangeAt(0).startContainer;
-    if (n.nodeType === 3) n = n.parentNode; // text → element
-    while (n && n !== notes && !/^(DIV|P|LI)$/i.test(n.tagName)) n = n.parentNode;
-    return (n === notes) ? null : n;
-  }
-
-  // Convert current block to UL/OL after removing typed marker
-  function toList(listType) {
-    const sel = window.getSelection();
-    const block = getBlockEl();
-    if (!block) return;
-    const text = block.textContent;
-    if (listType === "ul") {
-      block.textContent = text.replace(/^(\s*)-\s+/, "$1");
-    } else {
-      block.textContent = text.replace(/^(\s*)\d+\.\s+/, "$1");
-    }
-    const r = document.createRange();
-    r.selectNodeContents(block);
-    sel.removeAllRanges();
-    sel.addRange(r);
-    document.execCommand(listType === "ul" ? "insertUnorderedList" : "insertOrderedList");
-  }
-
-  // Replace symbols and detect list markers after each input
-  function autoformatInput() {
-    const block = getBlockEl();
-    if (!block) return;
-
-    // 1) Symbol replacements everywhere in the block
-    // "-->" → arrow,  "--" → em dash (only when used like punctuation)
-    block.innerHTML = block.innerHTML
-      .replace(/-->/g, "→")
-      .replace(/(^|[\s])--(?=[\s.,;!?)]|$)/g, "$1—");
-
-    // 2) List triggers only at line start
-    const text = block.textContent;                 // plain text of this block
-    const trimmedStart = text.replace(/^\s+/, "");  // ignore leading spaces
-
-    if (/^-\s$/.test(trimmedStart) || /^-\s+/.test(trimmedStart)) {
-      toList("ul");
-      return;
-    }
-    if (/^\d+\.\s/.test(trimmedStart)) {
-      toList("ol");
-      return;
-    }
-  }
-
-  notes.addEventListener("input", autoformatInput, { passive: true });
-
-  // Tab / Shift-Tab: indent/outdent (list-aware)
-  notes.addEventListener("keydown", (e) => {
-    if (e.key !== "Tab") return;
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    if (!notes.contains(sel.anchorNode)) return;
-
-    e.preventDefault();
-    // If inside a list item, change list nesting; otherwise indent margin
-    const li = (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement)?.closest("li");
-    if (li) {
-      document.execCommand(e.shiftKey ? "outdent" : "indent");
-      return;
-    }
-    const block = getBlockEl();
-    if (!block) return;
-    const cur = parseInt(block.style.marginLeft || "0", 10);
-    const delta = e.shiftKey ? -24 : 24;
-    block.style.marginLeft = Math.max(0, cur + delta) + "px";
-  }, true);
-
-  // Cmd/Ctrl+M = linked timestamp marker (kept)
-})();
-
-  // Cmd/Ctrl + M: insert linked timestamp to last transcript line
-  document.addEventListener('keydown', (e)=>{
-    if (!b_markers.checked) return;
-    const hot = (e.metaKey||e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase()==='m';
-    if (hot){
-      e.preventDefault();
-      const label = `[⏱ ${mmss()}]`;
-      const href = lastLineId ? `#${lastLineId}` : '#';
-      notes.focus();
-      document.execCommand('insertHTML', false, `<a href="${href}">${label}</a> `);
-    }
-  });
-
-  /* ======== NOTES TOOLBAR (font/highlighter colors + 30 fonts) ======== */
-  const sizeSel=byId("fontSizeSel"), sizeBox=byId("fontSizeBox"), famSel=byId("fontFamilySel");
-  for (let px=4; px<=60; px++){ const o=document.createElement('option'); o.value=px; o.textContent=px+'px'; if(px===16) o.selected=true; sizeSel.appendChild(o); }
-  const FONT_CHOICES = [
-    /* 5 classic serif */ "Times New Roman","Georgia","Libre Baskerville","Merriweather","Source Serif 4",
-    /* 10 classic sans */ "Arial","Helvetica","Inter","Roboto","Open Sans","Noto Sans","IBM Plex Sans","Source Sans 3","Manrope","Work Sans",
-    /* 5 quirky serif */ "Playfair Display","Cinzel","Alegreya","Bodoni Moda","Cormorant Garamond",
-    /* 10 quirky sans */ "Fira Sans","Montserrat","Poppins","Raleway","Outfit","Space Grotesk","Quicksand","Fira Sans","Exo 2","Work Sans"
-  ];
-  famSel.innerHTML = FONT_CHOICES.map(f=>`<option>${f}</option>`).join("");
-
-  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-  function applyStyleToSelection(style){
-    const sel=window.getSelection(); if(!sel||sel.rangeCount===0) return false;
-    const rng=sel.getRangeAt(0); if(rng.collapsed) return false;
-    try{ const span=document.createElement('span'); Object.assign(span.style, style); rng.surroundContents(span); return true; }catch(e){ return false; }
-  }
-  sizeSel.onchange=()=>{ const px=clamp(parseInt(sizeSel.value,10)||16,4,60); sizeBox.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
-  sizeBox.onchange=()=>{ const px=clamp(parseInt(sizeBox.value,10)||16,4,60); sizeSel.value=px; if(!applyStyleToSelection({fontSize:px+'px'})){ notes.style.fontSize=px+'px'; } };
-  famSel.onchange = ()=>{ const fam=famSel.value; if(!applyStyleToSelection({fontFamily:fam})){ notes.style.fontFamily=fam; } };
-
-  byId("boldBtn").onclick=()=>document.execCommand('bold');
-  byId("italicBtn").onclick=()=>document.execCommand('italic');
-  byId("undoBtn").onclick=()=>document.execCommand('undo');
-  byId("redoBtn").onclick=()=>document.execCommand('redo');
-  byId("unhlBtn").onclick=()=>document.execCommand('removeFormat');
-
-  const fontColorBtn=byId("fontColorBtn"), fontColor=byId("fontColor"), hlBtn=byId("hlBtn"), hlColor=byId("hlColor"), hexBox=byId("hexBox");
-  fontColorBtn.onclick=()=>fontColor.click();
-  hlBtn.onclick=()=>hlColor.click();
-  fontColor.oninput=()=>{ const c=fontColor.value; hexBox.value=c; if(!applyStyleToSelection({color:c})){ notes.style.color=c; } };
-  hlColor.oninput=()=>{ const c=hlColor.value; hexBox.value=c; applyStyleToSelection({backgroundColor:c}); };
-  hexBox.onchange=()=>{ const c=hexBox.value.trim(); if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)){ applyStyleToSelection({backgroundColor:c}); } };
-
-  /* ======== SUMMARY (unchanged) ======== */
-  function summarize(){
-    const transcript = Array.from(live.querySelectorAll('.line')).map(n=>n.textContent).join("\n");
-    const bullets = transcript.split(/[.;!?]/).map(s=>s.trim()).filter(Boolean).slice(0,8);
-    const h2=document.createElement('h2'); h2.textContent='Summary'; h2.style.margin='16px 0 6px'; h2.style.fontSize='20px';
-    const ul=document.createElement('ul'); bullets.forEach(b=>{ const li=document.createElement('li'); li.textContent=b; ul.appendChild(li); });
-    notes.appendChild(h2); notes.appendChild(ul);
-  }
-  summaryBtn.onclick=summarize;
-
-  /* ======== SAVE: download WAV + upload to server + Airtable/Make ======== */
-  function payload(audio_url){
-    return {
-      title: titleBox.value || (classSel.value?`${classSel.value} — ${new Date().toISOString().slice(0,10)}`:'Lecture'),
-      class_name: classSel.value || "",
-      duration_seconds: startTs ? Math.round((Date.now()-startTs)/1000) : 0,
-      notes_html: notes.innerHTML,
-      transcript_text: Array.from(live.querySelectorAll('.line')).map(n=>n.textContent).join("\n"),
-      audio_url: audio_url || ""
-    };
-  }
-  async function saveAll(){
-    // Download WAV locally
-    try{
-      const nameBase = sanitizeName(titleBox.value || classSel.value || "Lecture");
-      if (audioBlob){ const fname=`${new Date().toISOString().replace(/[:.]/g,'-')}—${nameBase}.wav`; const a=document.createElement("a"); a.href=URL.createObjectURL(audioBlob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1200); }
-    }catch(_){}
-    // Upload audio, then save to Airtable via server
-    let audioUrl="";
-    try{
-      if (audioBlob){
-        const fname = `${new Date().toISOString().replace(/[:.]/g,'-')}—${sanitizeName(titleBox.value||classSel.value||"Lecture")}.wav`;
-        const r = await fetch(`${API}/api/upload-audio?filename=${encodeURIComponent(fname)}`, { method:"POST", headers:{ "content-type":"application/octet-stream" }, body: await audioBlob.arrayBuffer() });
-        const j = await r.json(); if (r.ok && j?.url) audioUrl=j.url;
-      }
-    }catch(_){}
-    try{
-      const r=await fetch(API+"/api/save",{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(payload(audioUrl))});
-      await r.json();
-      tag(stApi,"ok","API");
-      alert("Saved: audio downloaded, Airtable updated, Make triggered (if configured).");
-    }catch(e){
-      tag(stApi,"warn","API");
-      alert("Server save failed. Your audio was downloaded locally.");
-    }
-  }
-  saveBtn.onclick=saveAll;
-
-  /* ======== Boot: classes + status ======== */
-  function renderClassOptions(list){ classSel.innerHTML='<option value="">Choose class…</option>'+list.map(n=>`<option>${n}</option>`).join("")+'<option value="__other__">Other…</option>'; }
-  (function bootClasses(){ const saved=JSON.parse(localStorage.getItem("lc_classes")||"[]"); renderClassOptions(saved);
-    if (location.hash.startsWith("#classes=")){ try{ const arr=JSON.parse(decodeURIComponent(location.hash.slice(9))); const cleaned=[...new Set(arr.map(x=>String(x).trim()).filter(Boolean))].sort(); const merged=[...new Set([...(saved||[]),...cleaned])].sort(); localStorage.setItem("lc_classes",JSON.stringify(merged)); renderClassOptions(merged); history.replaceState(null,"",location.pathname+location.search); alert('Imported '+cleaned.length+' classes from Canvas.'); }catch{} }
-  })();
-  classSel.onchange=()=>{ if (classSel.value==="__other__"){ const n=prompt("Enter class name:")||""; if(n.trim()){ classSel.insertAdjacentHTML('afterbegin', `<option>${n.trim()}</option>`); classSel.value=n.trim(); } } titleBox.value = classSel.value ? `${classSel.value} — ${new Date().toISOString().slice(0,10)}` : ""; };
-
-  function quitScribeCat(){
-    [quitDrawerBtn, quitTopBtn].forEach(btn=>{ if(btn){ btn.disabled=true; btn.textContent='Quitting…'; }});
-    fetch(API+'/api/quit',{method:'POST'}).catch(()=>{});
-    setTimeout(()=>{ window.close(); },200);
-    setTimeout(()=>{ window.location.href='about:blank'; },600);
-  }
-  [quitDrawerBtn, quitTopBtn].forEach(btn=>btn&&btn.addEventListener('click', quitScribeCat));
-})();
-</script>
+  <script src="./app.js" type="module" defer></script>
 </body>
 </html>
