@@ -1,4 +1,5 @@
 import { initHotkeysModal } from "./hotkeys.js";
+import { initStatusOverlay } from "./status.js";
 
 const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.1.0" };
 const THEME_STORAGE_KEY = "scribe-theme";
@@ -393,4 +394,8 @@ document.addEventListener("DOMContentLoaded", () => {
   runAllChecks("initial");
   markAppReady();
   loadVersion();
+
+  if (typeof initStatusOverlay === "function") {
+    initStatusOverlay({ rootId: "status-root" });
+  }
 });

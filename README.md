@@ -56,6 +56,11 @@ backups/                logs, plans, results
 5. Repeat 2–4
 6. End Session to push any local tweaks and open a final PR
 
+## Dev vs Prod
+- The status overlay appears in the lower-right corner to show product version, git branch/SHA, and health checks. Toggle it at any time with <kbd>Cmd/Ctrl</kbd> + <kbd>`</kbd>, force it on with `?status=1` in the URL, or persist your preference via `localStorage.setItem("scribecat:statusVisible", "true" | "false")`.
+- During development `SHOW_STATUS_OVERLAY` defaults to `1` (visible); set `SHOW_STATUS_OVERLAY=0` before running `scripts/start_static.sh` or the dev helper scripts to hide it by default in packaged builds.
+- Build the desktop bundle with `bash scripts/build_app.sh`. The script fetches assets, injects git metadata, and runs `npx tauri build`; outputs land in `dist/` and remain untracked in git.
+
 ## Assets Policy
 No binaries or build artifacts in git. If assets are required, add entries to `scripts/assets.manifest.json` and let `scripts/fetch_assets.mjs` download at runtime.
 
