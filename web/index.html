@@ -223,11 +223,76 @@
   const themeSel=byId("themeSel"), applyTheme=byId("applyTheme");
   const b_sentence=byId("b_sentence"), b_autoretry=byId("b_autoretry"), b_markers=byId("b_markers"), b_autoscroll=byId("b_autoscroll"), b_timestamps=byId("b_timestamps"), b_autopolish=byId("b_autopolish");
 
+  // Persist layout + behavior defaults without touching build scripts (Guardrail 2).
+  const PREF_STORAGE_KEY = 'sc_prefs';
+  const PREF_DEFAULTS = {
+    stacked: !!(stackedToggle && stackedToggle.defaultChecked),
+    sentence: !!(b_sentence && b_sentence.defaultChecked),
+    autoRetry: !!(b_autoretry && b_autoretry.defaultChecked),
+    markers: !!(b_markers && b_markers.defaultChecked),
+    autoScroll: !!(b_autoscroll && b_autoscroll.defaultChecked),
+    timestamps: !!(b_timestamps && b_timestamps.defaultChecked),
+    autoPolish: !!(b_autopolish && b_autopolish.defaultChecked)
+  };
+
+  function loadPrefs(){
+    const base = {...PREF_DEFAULTS};
+    if (typeof localStorage === 'undefined') return base;
+    try {
+      const raw = localStorage.getItem(PREF_STORAGE_KEY);
+      if (!raw) return base;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object'){
+        for (const [key, value] of Object.entries(parsed)){
+          if (key in base && typeof value === 'boolean') base[key] = value;
+        }
+      }
+    }catch(err){
+      console.warn('ScribeCat prefs reset (invalid JSON)', err);
+      try{ localStorage.removeItem(PREF_STORAGE_KEY); }catch(_){ }
+    }
+    return base;
+  }
+
+  let prefs = loadPrefs();
+
+  function persistPref(key, value){
+    if (!(key in PREF_DEFAULTS)) return;
+    prefs[key] = !!value;
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(PREF_STORAGE_KEY, JSON.stringify(prefs));
+    }catch(err){
+      console.warn('Unable to persist preference', err);
+    }
+  }
+
+  function initPref(key, el, options={}){
+    if (!el || !(key in prefs)) return;
+    const initial = !!prefs[key];
+    el.checked = initial;
+    if (options.mirror) options.mirror.checked = initial;
+    if (options.apply) options.apply(initial);
+    el.addEventListener('change', ()=>{
+      const next = !!el.checked;
+      if (options.mirror) options.mirror.checked = next;
+      if (options.apply) options.apply(next);
+      persistPref(key, next);
+    });
+  }
+
+  initPref('stacked', stackedToggle, { apply: checked => document.body.classList.toggle('stacked', checked) });
+  initPref('sentence', b_sentence, { mirror: sentenceChk });
+  initPref('autoRetry', b_autoretry);
+  initPref('markers', b_markers);
+  initPref('autoScroll', b_autoscroll, { mirror: autoScroll });
+  initPref('timestamps', b_timestamps, { mirror: tsChk });
+  initPref('autoPolish', b_autopolish);
+
   function tag(el, state, text){ el.classList.remove("ok","warn","bad"); el.classList.add(state); el.textContent=text; }
   fetch(API+"/").then(r=>tag(stApi, r.ok?"ok":"bad", r.ok?"API":"API")).catch(()=>tag(stApi,"bad","API"));
   gearBtn.onclick = ()=> drawer.style.display = (drawer.style.display==='none'||!drawer.style.display)?'block':'none';
   manageBtn.onclick = ()=> drawer.style.display='block';
-  stackedToggle.onchange = ()=> document.body.classList.toggle('stacked', stackedToggle.checked);
 
   /* ======== THEMES (with contrast-safe colors across UI) ======== */
   const THEMES = {
@@ -404,7 +469,7 @@
       source.connect(processor); processor.connect(audioCtx.destination);
       finalizeCurrentLine("Session started");
     }catch(e){
-      appendLineHTML("Mic denied/unavailable. Type notes while we sort it.");
+      makeLine("Mic denied/unavailable. Type notes while we sort it.");
       tag(stMic,"bad","Mic");
       running=false;
     }
