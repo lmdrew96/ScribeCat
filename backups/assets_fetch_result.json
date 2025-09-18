@@ -1,0 +1,10 @@
+[
+  {
+    "dest": "web/fonts/GalaxyCaterpillar.ttf",
+    "ok": true
+  },
+  {
+    "dest": "src-tauri/icons/icon.png",
+    "ok": true
+  }
+]
