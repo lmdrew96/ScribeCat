@@ -1,0 +1,129 @@
+:root {
+  color-scheme: light dark;
+  --dev-shell-font: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --dev-shell-bg: rgba(255, 255, 255, 0.82);
+  --dev-shell-border: rgba(15, 23, 42, 0.12);
+  --dev-shell-text: #111827;
+  --dev-shell-muted: #6b7280;
+  --dev-shell-chip-bg: rgba(148, 163, 184, 0.16);
+  --dev-shell-chip-border: rgba(148, 163, 184, 0.35);
+  --dev-shell-ok: #16a34a;
+  --dev-shell-warn: #f59e0b;
+  --dev-shell-bad: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --dev-shell-bg: rgba(15, 23, 42, 0.7);
+    --dev-shell-border: rgba(148, 163, 184, 0.3);
+    --dev-shell-text: #e2e8f0;
+    --dev-shell-muted: #94a3b8;
+    --dev-shell-chip-bg: rgba(51, 65, 85, 0.65);
+    --dev-shell-chip-border: rgba(148, 163, 184, 0.45);
+  }
+}
+
+.dev-shell-header {
+  background: var(--dev-shell-bg);
+  border-bottom: 1px solid var(--dev-shell-border);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0.65rem 1rem;
+  font-family: var(--dev-shell-font);
+  color: var(--dev-shell-text);
+}
+
+.dev-shell-inner {
+  margin: 0 auto;
+  max-width: 960px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dev-shell-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dev-shell-product {
+  letter-spacing: 0.01em;
+}
+
+.dev-shell-version {
+  color: var(--dev-shell-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dev-shell-status {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dev-shell-status-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--dev-shell-chip-border);
+  background: var(--dev-shell-chip-bg);
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+.dev-shell-status-label {
+  color: var(--dev-shell-muted);
+}
+
+.dev-shell-status-value {
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.dev-shell-status-value.is-ok {
+  color: var(--dev-shell-ok);
+}
+
+.dev-shell-status-value.is-warn {
+  color: var(--dev-shell-warn);
+}
+
+.dev-shell-status-value.is-bad {
+  color: var(--dev-shell-bad);
+}
+
+@supports not ((backdrop-filter: blur(6px))) {
+  .dev-shell-header {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.8) 70%,
+      rgba(255, 255, 255, 0.75) 100%
+    );
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dev-shell-header {
+      background: linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0.85) 0%,
+        rgba(15, 23, 42, 0.78) 70%,
+        rgba(15, 23, 42, 0.72) 100%
+      );
+    }
+  }
+}

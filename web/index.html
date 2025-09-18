@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>ScribeCat v1.9.9</title>
 
+<link rel="stylesheet" href="/style.css"/>
+
 <!-- Google Fonts: 30-note menu (5 classic serif, 10 classic sans, 5 quirky serif, 10 quirky sans) -->
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Merriweather:wght@400;700&family=Source+Serif+4:wght@400;700&family=IBM+Plex+Serif:wght@400;700&family=Crimson+Text:wght@400;700&family=Inter:wght@400;700&family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Noto+Sans:wght@400;700&family=IBM+Plex+Sans:wght@400;700&family=Source+Sans+3:wght@400;700&family=Manrope:wght@400;700&family=Work+Sans:wght@400;700&family=Fira+Sans:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Outfit:wght@400;700&family=Space+Grotesk:wght@400;700&family=Playfair+Display:wght@400;700&family=Cinzel:wght@400;700&family=Alegreya:wght@400;700&family=Bodoni+Moda:wght@400;700&family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -86,8 +88,31 @@
 .footbar{position:fixed;right:12px;bottom:8px;display:flex;gap:8px;align-items:center;z-index:25}
 .footbtn{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--chip);cursor:pointer;font-size:14px}
 </style>
+<script type="module" src="/app.js"></script>
 </head>
 <body>
+<header class="dev-shell-header" role="banner">
+  <div class="dev-shell-inner">
+    <div class="dev-shell-title" aria-live="polite">
+      <span id="devShellProduct" class="dev-shell-product">ScribeCat</span>
+      <span id="devShellVersion" class="dev-shell-version">0.1.0</span>
+    </div>
+    <ul class="dev-shell-status" aria-live="polite">
+      <li class="dev-shell-status-item">
+        <span class="dev-shell-status-label">Internet</span>
+        <span id="statusInternet" class="dev-shell-status-value is-warn">checking…</span>
+      </li>
+      <li class="dev-shell-status-item">
+        <span class="dev-shell-status-label">Static Server</span>
+        <span id="statusStatic" class="dev-shell-status-value is-warn">checking…</span>
+      </li>
+      <li class="dev-shell-status-item">
+        <span class="dev-shell-status-label">App</span>
+        <span id="statusApp" class="dev-shell-status-value is-warn">loading…</span>
+      </li>
+    </ul>
+  </div>
+</header>
 <div class="topbar">
   <div class="inner container">
     <div class="titlewrap">
