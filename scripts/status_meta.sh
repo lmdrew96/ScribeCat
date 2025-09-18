@@ -23,9 +23,7 @@ if [[ ! -f "$INDEX_FILE" ]]; then
 fi
 
 mkdir -p "$BACKUP_DIR"
-if [[ ! -f "$BACKUP_FILE" ]]; then
-  cp "$INDEX_FILE" "$BACKUP_FILE"
-fi
+cp "$INDEX_FILE" "$BACKUP_FILE"
 
 branch=$(git -C "$ROOT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 sha=$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")

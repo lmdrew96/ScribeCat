@@ -69,3 +69,10 @@ logs/
 *.dSYM/
 *.app
 *.app/
+
+# Release packaging outputs
+/target/
+/src-tauri/target/
+/dist/
+/backups/*.orig
+*.dSYM

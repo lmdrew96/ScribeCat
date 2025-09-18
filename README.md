@@ -57,9 +57,50 @@ backups/                logs, plans, results
 6. End Session to push any local tweaks and open a final PR
 
 ## Dev vs Prod
-- The status overlay appears in the lower-right corner to show product version, git branch/SHA, and health checks. Toggle it at any time with <kbd>Cmd/Ctrl</kbd> + <kbd>`</kbd>, force it on with `?status=1` in the URL, or persist your preference via `localStorage.setItem("scribecat:statusVisible", "true" | "false")`.
-- During development `SHOW_STATUS_OVERLAY` defaults to `1` (visible); set `SHOW_STATUS_OVERLAY=0` before running `scripts/start_static.sh` or the dev helper scripts to hide it by default in packaged builds.
-- Build the desktop bundle with `bash scripts/build_app.sh`. The script fetches assets, injects git metadata, and runs `npx tauri build`; outputs land in `dist/` and remain untracked in git.
+- Development serves the UI from `http://localhost:1420` through `scripts/start_static.sh` or the dev helpers in `scripts/dev.sh`; the static server should keep running while you iterate.
+- Packaged releases ship the same assets inside the `.app` bundle, so no static server is required when you launch the desktop app.
+- The status overlay is available in both environments. It is visible by default while developing on `localhost`, starts hidden in packaged builds, and can always be toggled with <kbd>Cmd/Ctrl</kbd> + <kbd>`</kbd> or forced on with `?status=1`. The preference persists via `localStorage.setItem("scribecat:statusVisible", "true" | "false")`.
+- Override the default during local testing by exporting `SHOW_STATUS_OVERLAY=0` before running `scripts/start_static.sh`.
+
+## Prod (Packaged) App
+1. **Build** – `bash scripts/release_build.sh`
+   - Fetches runtime assets (best effort), regenerates the icon, ensures `web/version.json`, injects git metadata, runs `npx tauri info`, and then `npx tauri build`. The script restores `web/index.html` on exit so the working tree stays clean and defaults the packaged overlay to hidden.
+2. **Stage** – `bash scripts/release_stage.sh`
+   - Copies `target/release/bundle/macos/ScribeCat.app` into `~/Applications/ScribeCat.app`. Use `--dry-run` to preview the paths without copying (helpful on non-macOS hosts or CI).
+3. **Open** – `bash scripts/release_open.sh`
+   - Launches the staged bundle, falling back to the freshly built output. `--dry-run` prints the path it would open.
+
+- Build outputs stay in `target/`/`dist/` and the staged app lives in `~/Applications`; `.gitignore` prevents committing bundles or backups.
+- In the packaged app the status overlay defaults to hidden until toggled via the hotkey or query flag; the visibility persists between launches.
+
+### Desktop shortcuts
+Create a macOS launcher on the Desktop so non-terminal users can reopen the packaged app quickly:
+
+```bash
+cat <<'EOF' > "$HOME/Desktop/ScribeCat Open Release.command"
+#!/usr/bin/env bash
+set -euo pipefail
+cd /path/to/your/ScribeCat/checkout
+bash scripts/release_open.sh
+EOF
+chmod +x "$HOME/Desktop/ScribeCat Open Release.command"
+```
+
+An optional builder shortcut can chain the scripts:
+
+```bash
+cat <<'EOF' > "$HOME/Desktop/ScribeCat Build Release.command"
+#!/usr/bin/env bash
+set -euo pipefail
+cd /path/to/your/ScribeCat/checkout
+bash scripts/release_build.sh
+bash scripts/release_stage.sh
+bash scripts/release_open.sh
+EOF
+chmod +x "$HOME/Desktop/ScribeCat Build Release.command"
+```
+
+Both commands keep binaries outside the repo—only the Desktop helpers are created locally.
 
 ## Assets Policy
 No binaries or build artifacts in git. If assets are required, add entries to `scripts/assets.manifest.json` and let `scripts/fetch_assets.mjs` download at runtime.

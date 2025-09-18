@@ -133,6 +133,22 @@ function determineHealthUrl() {
   }
 }
 
+function determineDefaultVisibility() {
+  try {
+    const { protocol, hostname, port } = window.location;
+    if (protocol === "http:" || protocol === "https:") {
+      const localHosts = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"];
+      if (localHosts.includes(hostname)) {
+        return true;
+      }
+      if (port && Number.parseInt(port, 10) === 1420) {
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
 function formatTimeString(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return { text: "—", iso: "" };
   return { text: date.toLocaleTimeString(), iso: date.toISOString() };
@@ -152,6 +168,7 @@ export function initStatusOverlay(options = {}) {
   let visible = false;
   let healthTimer = null;
   const healthUrl = determineHealthUrl();
+  const envDefaultVisible = determineDefaultVisibility();
 
   function updateVisibility(next, opts = {}) {
     const shouldPersist = opts.persist ?? true;
@@ -245,6 +262,8 @@ export function initStatusOverlay(options = {}) {
     updateVisibility(forced, { persist: true });
   } else if (stored !== null) {
     updateVisibility(stored, { persist: false });
+  } else {
+    updateVisibility(envDefaultVisible, { persist: false });
   }
 
   (async () => {
@@ -257,20 +276,20 @@ export function initStatusOverlay(options = {}) {
         const name = data.productName || data.name || DEFAULT_PRODUCT.name;
         const version = data.version || DEFAULT_PRODUCT.version;
         elements.productEl.textContent = `${name}@${version}`;
-        const defaultVisible = normalizeShowFlag(data.showStatusOverlay, true);
+        const defaultVisible = normalizeShowFlag(data.showStatusOverlay, envDefaultVisible);
         if (forced === null && stored === null) {
           updateVisibility(defaultVisible, { persist: false });
         }
       } else {
         elements.productEl.textContent = `${DEFAULT_PRODUCT.name}@${DEFAULT_PRODUCT.version}`;
         if (forced === null && stored === null) {
-          updateVisibility(true, { persist: false });
+          updateVisibility(envDefaultVisible, { persist: false });
         }
       }
     } catch {
       elements.productEl.textContent = `${DEFAULT_PRODUCT.name}@${DEFAULT_PRODUCT.version}`;
       if (forced === null && stored === null) {
-        updateVisibility(true, { persist: false });
+        updateVisibility(envDefaultVisible, { persist: false });
       }
     }
   })();
