@@ -605,3 +605,124 @@ kbd {
     scroll-behavior: auto !important;
   }
 }
+
+#status-root {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+#status-root[data-visible="true"] {
+  pointer-events: auto;
+}
+
+.status-overlay {
+  min-width: 220px;
+  max-width: 320px;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(17, 26, 48, 0.08);
+  background: rgba(17, 26, 48, 0.9);
+  color: #f5f7ff;
+  box-shadow: 0 20px 40px rgba(8, 12, 24, 0.35);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+[data-theme="light"] .status-overlay {
+  border-color: rgba(28, 35, 54, 0.18);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text);
+  box-shadow: var(--shadow-soft);
+}
+
+#status-root[data-visible="true"] .status-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-overlay {
+    transition: none;
+    transform: none;
+  }
+}
+
+.status-overlay__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+}
+
+.status-overlay__product {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.status-overlay__git {
+  font-size: 0.75rem;
+  color: rgba(245, 247, 255, 0.8);
+}
+
+[data-theme="light"] .status-overlay__git {
+  color: var(--color-muted);
+}
+
+.status-overlay__health {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.status-overlay__dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--status-checking);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="light"] .status-overlay__dot {
+  box-shadow: 0 0 0 2px rgba(17, 26, 48, 0.06);
+}
+
+.status-overlay__dot[data-state="ok"] {
+  background: var(--status-ok);
+}
+
+.status-overlay__dot[data-state="error"] {
+  background: var(--status-error);
+}
+
+.status-overlay__dot[data-state="checking"] {
+  background: var(--status-checking);
+}
+
+.status-overlay__label {
+  font-size: 0.85rem;
+}
+
+.status-overlay__time {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: rgba(245, 247, 255, 0.72);
+}
+
+[data-theme="light"] .status-overlay__time {
+  color: var(--color-muted);
+}
+
+.status-overlay__time-value {
+  font-variant-numeric: tabular-nums;
+}

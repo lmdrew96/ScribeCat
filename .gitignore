@@ -60,3 +60,12 @@ logs/
 /src-tauri/icons/
 .DS_Store
 logs/
+
+# Tauri build outputs
+/dist/
+/src-tauri/target/
+/src-tauri/gen/
+*.dSYM
+*.dSYM/
+*.app
+*.app/
