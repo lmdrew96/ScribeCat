@@ -24,6 +24,13 @@ bash scripts/dev_sync.sh
 bash scripts/dev_end.sh
 ```
 
+- Run `node scripts/env_inject.mjs` to expose `ASSEMBLYAI_API_KEY` to the web runtime, then launch the dev console at http://localhost:1420 and use the recording pill to capture audio notes.
+
+## Features
+- Status overlay that tracks connectivity, static server health, and bundle metadata.
+- Built-in audio recorder with VU meter, elapsed timer, and safe download links.
+- Optional AssemblyAI transcription when the `ASSEMBLYAI_API_KEY` environment variable is present.
+
 ## Environment
 Secrets are never committed. Provide through your platform’s secret manager or local env:
 - MAKE_WEBHOOK_URL

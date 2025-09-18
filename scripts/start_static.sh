@@ -21,7 +21,7 @@ const path = require("path");
 
 const CONFIG_PATH = path.join("src-tauri", "tauri.conf.json");
 let productName = "ScribeCat";
-let version = "0.1.0";
+let version = "0.2.0";
 
 try {
   const raw = fs.readFileSync(CONFIG_PATH, "utf8");

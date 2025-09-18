@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.1.0" };
+const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.2.0" };
 const STORAGE_KEY = "scribecat:statusVisible";
 const QUERY_KEY = "status";
 const HEALTH_INTERVAL_MS = 30000;
@@ -98,6 +98,17 @@ function createOverlay(root) {
 
   healthRow.append(dotEl, labelEl);
 
+  const micRow = document.createElement("div");
+  micRow.className = "status-overlay__mic";
+  const micDot = document.createElement("span");
+  micDot.className = "status-overlay__mic-dot";
+  micDot.dataset.state = "idle";
+  micDot.setAttribute("aria-hidden", "true");
+  const micLabel = document.createElement("span");
+  micLabel.className = "status-overlay__mic-label";
+  micLabel.textContent = "Mic idle";
+  micRow.append(micDot, micLabel);
+
   const timeRow = document.createElement("div");
   timeRow.className = "status-overlay__time";
   const timePrefix = document.createElement("span");
@@ -108,7 +119,7 @@ function createOverlay(root) {
   timeEl.textContent = "—";
   timeRow.append(timePrefix, document.createTextNode(" "), timeEl);
 
-  container.append(metaRow, healthRow, timeRow);
+  container.append(metaRow, healthRow, micRow, timeRow);
   root.appendChild(container);
 
   return {
@@ -117,6 +128,8 @@ function createOverlay(root) {
     gitEl,
     dotEl,
     labelEl,
+    micDot,
+    micLabel,
     timeEl,
   };
 }
@@ -169,6 +182,28 @@ export function initStatusOverlay(options = {}) {
   let healthTimer = null;
   const healthUrl = determineHealthUrl();
   const envDefaultVisible = determineDefaultVisibility();
+  const micLabels = {
+    idle: "Mic idle",
+    recording: "Recording…",
+    processing: "Transcribing…",
+    transcribed: "Transcript ready",
+    error: "Mic error",
+  };
+  const allowedMicStates = new Set(["idle", "recording", "processing", "transcribed", "error"]);
+  let micState = "idle";
+
+  function setMicState(state, message) {
+    const nextState = allowedMicStates.has(state) ? state : "idle";
+    micState = nextState;
+    if (elements.micDot) {
+      elements.micDot.dataset.state = nextState;
+    }
+    if (elements.micLabel) {
+      const fallback = micLabels[nextState] || micLabels.idle;
+      const text = typeof message === "string" && message.trim().length > 0 ? message : fallback;
+      elements.micLabel.textContent = text;
+    }
+  }
 
   function updateVisibility(next, opts = {}) {
     const shouldPersist = opts.persist ?? true;
@@ -295,4 +330,11 @@ export function initStatusOverlay(options = {}) {
   })();
 
   startHealthPolling();
+  setMicState("idle");
+
+  return {
+    setMicState,
+    updateVisibility,
+    getMicState: () => micState,
+  };
 }

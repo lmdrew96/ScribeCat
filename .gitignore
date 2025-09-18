@@ -76,3 +76,7 @@ logs/
 /dist/
 /backups/*.orig
 *.dSYM
+/web/.runtime/
+/tmp/*.wav
+/tmp/*.ogg
+/tmp/*.webm
