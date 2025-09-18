@@ -8,6 +8,10 @@
   --color-text: #1d2333;
   --color-muted: #5c657a;
   --color-accent: #365cff;
+  --badge-dev-start: #ff5f7a;
+  --badge-dev-end: #ff9b4e;
+  --badge-dev-text: #ffffff;
+  --badge-dev-shadow: rgba(255, 115, 102, 0.4);
   --status-ok: #1b9b63;
   --status-warn: #b8841d;
   --status-error: #c74242;
@@ -31,6 +35,10 @@
     --color-text: #e2e7ff;
     --color-muted: #9aa3bc;
     --color-accent: #6d8cff;
+    --badge-dev-start: #ff6f8d;
+    --badge-dev-end: #ffb46a;
+    --badge-dev-text: #201219;
+    --badge-dev-shadow: rgba(255, 127, 107, 0.35);
     --status-ok: #3ace90;
     --status-warn: #d6a03b;
     --status-error: #ff6a6a;
@@ -52,6 +60,10 @@
   --color-text: #e2e7ff;
   --color-muted: #9aa3bc;
   --color-accent: #7f99ff;
+  --badge-dev-start: #ff6f8d;
+  --badge-dev-end: #ffb46a;
+  --badge-dev-text: #201219;
+  --badge-dev-shadow: rgba(255, 127, 107, 0.35);
   --status-ok: #45d89d;
   --status-warn: #e0b259;
   --status-error: #ff7b7b;
@@ -125,16 +137,25 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
   padding: 0.75rem 1.5rem;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   box-shadow: 0 4px 12px rgba(12, 20, 38, 0.08);
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
 .brand-title {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .brand-name {
@@ -149,6 +170,24 @@ kbd {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface-subtle);
+}
+
+.badge-dev {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--badge-dev-text);
+  background-image: linear-gradient(135deg, var(--badge-dev-start), var(--badge-dev-end));
+  box-shadow: 0 12px 26px var(--badge-dev-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -521,6 +560,17 @@ kbd {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .brand {
+    width: 100%;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .badge-dev {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
   }
 
   .header-actions {
