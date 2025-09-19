@@ -1670,5 +1670,14 @@ setupNotesField();
 loadVersionMetadata();
 initRecorder();
 runChecks("initial").catch((e) => console.warn("Initial heartbeat failed", e));
+// --- ActionRegistry & delegated handlers -------------------------------
+const ActionRegistry={map:new Map(),register(name,fn){this.map.set(String(name),fn)},async run(name,el,ctx={}){const fn=this.map.get(String(name));if(!fn)throw new Error(`No handler for ${name}`);return await fn(el,ctx)}};
+document.addEventListener("click",async(ev)=>{const el=ev.target instanceof HTMLElement?ev.target.closest("[data-action]"):null;if(!el)return;const action=el.getAttribute("data-action");if(!action)return;try{await ActionRegistry.run(action,el,{ev})}catch(err){console.warn("Action failed:",action,err)}});
+ActionRegistry.register("status:toggle",()=>toggleDialog());
+ActionRegistry.register("status:refresh",()=>{setRefreshBusy(true);return Promise.resolve(runChecks("dialog")).catch((e)=>console.warn("Refresh request failed",e)).finally(()=>setRefreshBusy(false))});
+async function runButtonSelfTest(){const nodes=Array.from(document.querySelectorAll("[data-action]"));const results=[];document.body.dataset.selfTest="true";for(const el of nodes){const action=el.getAttribute("data-action")||"";try{await ActionRegistry.run(action,el,{selfTest:true});el.setAttribute("data-wired","ok");results.push({action,ok:true})}catch(err){el.setAttribute("data-wired","bad");results.push({action,ok:false,error:String((err&&err.message)||err)})}}document.body.dataset.selfTest="false";const panel=document.querySelector("[data-selftest-log]");if(panel){panel.innerHTML="";const okCount=results.filter(r=>r.ok).length;const ul=document.createElement("ul");ul.className="selftest__list";const h=document.createElement("div");h.className="selftest__header";h.textContent=`Button self-test: ${okCount}/${results.length} wired`;panel.appendChild(h);for(const r of results){const li=document.createElement("li");li.className=r.ok?"ok":"bad";li.textContent=r.ok?`✓ ${r.action}`:`✗ ${r.action} — ${r.error}`;ul.appendChild(li)}panel.appendChild(ul)}return results}
+ActionRegistry.register("qa:selftest",runButtonSelfTest);
+ActionRegistry.register("recorder:toggle",()=>{if(typeof recorderState==="undefined")return;if(recorderState==="starting"||recorderState==="stopping")return;if(recorderState==="recording")return stopRecording();if(recorderState!=="transcribing")return startRecording()});
+ActionRegistry.register("recorder:transcribe",()=>{if(!transcribeButton?.disabled&&recorderState!=="transcribing")return sendForTranscription()});
 
 export {};
