@@ -731,6 +731,16 @@ function initRecorderPanel() {
   const buttonsByAction = new Map();
   const actionsContainer = recorderRoot.querySelector(".recorder-actions");
   const TRANSCRIBE_DISABLED_MESSAGE = "Transcription unavailable in prod without proxy.";
+  const current = {
+    blob: null,
+    url: null,
+    extension: "ogg",
+    durationMs: 0,
+    size: 0,
+    mimeType: "",
+    autoSaved: false,
+  };
+  let transcribeAbort = null;
   let transcribeTooltipEl = null;
   let activeSettings = getSettingsSnapshot();
   let unsubscribeSettings = null;
@@ -778,18 +788,7 @@ function initRecorderPanel() {
   });
   unregisterRecorderCommands = registerCommandSource("recorder", buildRecorderCommands);
 
-  const current = {
-    blob: null,
-    url: null,
-    extension: "ogg",
-    durationMs: 0,
-    size: 0,
-    mimeType: "",
-    autoSaved: false,
-  };
-
   let isPlaying = false;
-  let transcribeAbort = null;
 
   if (audioEl) {
     audioEl.addEventListener("play", () => {
