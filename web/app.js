@@ -11,6 +11,7 @@ const dialogPanel = dialogRoot?.querySelector(".status-dialog__panel");
 const dialogClose = dialogRoot?.querySelector("[data-status-close]");
 const statusRefresh = dialogRoot?.querySelector("[data-status-refresh]");
 const notesField = document.getElementById("notesField");
+
 const recorderControls = document.querySelector("[data-recorder-controls]");
 const recordButton = document.querySelector("[data-recorder-record]");
 const transcribeButton = document.querySelector("[data-recorder-transcribe]");
@@ -28,11 +29,13 @@ const STATUS_MESSAGES = {
   static: { ok: "Running", bad: "Down" },
 };
 const pendingHeartbeatRequests = [];
+
 const RECORDER_MIME_TYPES = [
   "audio/webm;codecs=opus",
   "audio/ogg;codecs=opus",
   "audio/webm",
 ];
+
 const DEV_API_BASE = "http://localhost:8787";
 let recorderState = "idle";
 let mediaRecorder = null;
@@ -58,18 +61,14 @@ function buildStatusRegistry(keys) {
 }
 
 function applyProduct(name, version) {
-  if (productNameEl) {
-    productNameEl.textContent = name;
-  }
-  if (productVersionEl) {
-    productVersionEl.textContent = version;
-  }
+  if (productNameEl) productNameEl.textContent = name;
+  if (productVersionEl) productVersionEl.textContent = version;
 }
 
 function formatTimestamp(date) {
   try {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  } catch (error) {
+  } catch {
     return date.toLocaleTimeString();
   }
 }
@@ -77,30 +76,21 @@ function formatTimestamp(date) {
 function parseTimestamp(value) {
   if (!value) return new Date();
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return new Date();
-  }
+  if (Number.isNaN(parsed.getTime())) return new Date();
   return parsed;
 }
 
 function applyStatus(key, state, message, timestamp = null) {
   const entry = statusRegistry[key];
   if (!entry) return;
+  const resolvedTimestamp =
+    timestamp instanceof Date ? timestamp : timestamp ? parseTimestamp(timestamp) : null;
 
-  const resolvedTimestamp = timestamp instanceof Date ? timestamp : timestamp ? parseTimestamp(timestamp) : null;
+  if (entry.summary) entry.summary.dataset.state = state;
+  if (entry.detailRow) entry.detailRow.dataset.state = state;
+  if (entry.summaryMessage) entry.summaryMessage.textContent = message;
+  if (entry.detailMessage) entry.detailMessage.textContent = message;
 
-  if (entry.summary) {
-    entry.summary.dataset.state = state;
-  }
-  if (entry.detailRow) {
-    entry.detailRow.dataset.state = state;
-  }
-  if (entry.summaryMessage) {
-    entry.summaryMessage.textContent = message;
-  }
-  if (entry.detailMessage) {
-    entry.detailMessage.textContent = message;
-  }
   if (entry.timeEl) {
     if (resolvedTimestamp) {
       entry.timeEl.textContent = formatTimestamp(resolvedTimestamp);
@@ -110,6 +100,7 @@ function applyStatus(key, state, message, timestamp = null) {
       entry.timeEl.removeAttribute("datetime");
     }
   }
+
   statusState.set(key, {
     state,
     message,
@@ -168,9 +159,7 @@ function requestHeartbeat(reason = "manual") {
 
 function flushHeartbeatQueue() {
   const heartbeat = window.__scribecatHeartbeat;
-  if (!heartbeat || typeof heartbeat.tickNow !== "function") {
-    return;
-  }
+  if (!heartbeat || typeof heartbeat.tickNow !== "function") return;
   while (pendingHeartbeatRequests.length) {
     const request = pendingHeartbeatRequests.shift();
     if (!request) continue;
@@ -191,11 +180,7 @@ function flushHeartbeatQueue() {
 }
 
 function runChecks(reason = "manual") {
-  if (reason !== "interval") {
-    STATUS_KEYS.forEach((key) => {
-      markChecking(key);
-    });
-  }
+  if (reason !== "interval") STATUS_KEYS.forEach((key) => markChecking(key));
   return requestHeartbeat(reason);
 }
 
@@ -205,21 +190,15 @@ function openDialog() {
   lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   dialogRoot.hidden = false;
   document.body.dataset.dialogOpen = "true";
-  if (statusButton) {
-    statusButton.setAttribute("aria-expanded", "true");
-  }
+  if (statusButton) statusButton.setAttribute("aria-expanded", "true");
   dialogRoot.addEventListener("click", handleDialogRootClick);
   document.addEventListener("keydown", handleDialogKeydown);
   dialogPanel.addEventListener("keydown", trapDialogFocus);
-
   const focusTarget =
     dialogPanel.querySelector("[data-status-close]") ||
     dialogPanel.querySelector(FOCUSABLE_SELECTORS) ||
     dialogPanel;
-
-  requestAnimationFrame(() => {
-    focusTarget.focus({ preventScroll: true });
-  });
+  requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
 }
 
 function closeDialog() {
@@ -227,64 +206,47 @@ function closeDialog() {
   dialogOpen = false;
   dialogRoot.hidden = true;
   delete document.body.dataset.dialogOpen;
-  if (statusButton) {
-    statusButton.setAttribute("aria-expanded", "false");
-  }
+  if (statusButton) statusButton.setAttribute("aria-expanded", "false");
   dialogRoot.removeEventListener("click", handleDialogRootClick);
   document.removeEventListener("keydown", handleDialogKeydown);
   dialogPanel.removeEventListener("keydown", trapDialogFocus);
-
   const focusTarget = lastFocusedElement;
   lastFocusedElement = null;
   if (focusTarget && typeof focusTarget.focus === "function") {
-    requestAnimationFrame(() => {
-      focusTarget.focus({ preventScroll: true });
-    });
+    requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
   }
 }
 
 function setRefreshBusy(isBusy) {
-  if (!statusRefresh) return;
+  const el = statusRefresh;
+  if (!el) return;
   if (isBusy) {
-    if (!statusRefresh.dataset.originalLabel) {
-      statusRefresh.dataset.originalLabel = statusRefresh.textContent || "";
-    }
-    statusRefresh.disabled = true;
-    statusRefresh.textContent = "Checking…";
-    statusRefresh.setAttribute("aria-busy", "true");
-    const timeoutId = window.setTimeout(() => {
-      if (statusRefresh?.disabled) {
-        setRefreshBusy(false);
-      }
+    if (!el.dataset.originalLabel) el.dataset.originalLabel = el.textContent || "";
+    el.disabled = true;
+    el.textContent = "Checking…";
+    el.setAttribute("aria-busy", "true");
+    const id = window.setTimeout(() => {
+      if (el?.disabled) setRefreshBusy(false);
     }, 10000);
-    statusRefresh.dataset.refreshTimeoutId = String(timeoutId);
+    el.dataset.refreshTimeoutId = String(id);
   } else {
-    const original = statusRefresh.dataset.originalLabel || "Re-run checks";
-    statusRefresh.disabled = false;
-    statusRefresh.textContent = original;
-    statusRefresh.removeAttribute("aria-busy");
-    const timeoutId = statusRefresh.dataset.refreshTimeoutId;
-    if (timeoutId) {
-      window.clearTimeout(Number(timeoutId));
-      delete statusRefresh.dataset.refreshTimeoutId;
+    const original = el.dataset.originalLabel || "Re-run checks";
+    el.disabled = false;
+    el.textContent = original;
+    el.removeAttribute("aria-busy");
+    const id = el.dataset.refreshTimeoutId;
+    if (id) {
+      window.clearTimeout(Number(id));
+      delete el.dataset.refreshTimeoutId;
     }
   }
 }
 
 function toggleDialog(force) {
-  if (force === true) {
-    openDialog();
-    return;
-  }
-  if (force === false) {
-    closeDialog();
-    return;
-  }
-  if (dialogOpen) {
-    closeDialog();
-  } else {
-    openDialog();
-  }
+  if (force === true) return openDialog();
+  if (force === false) return closeDialog();
+  if (dialogOpen) closeDialog();
+  else openDialog();
 }
 
 function handleDialogRootClick(event) {
@@ -307,12 +269,11 @@ function handleDialogKeydown(event) {
 function trapDialogFocus(event) {
   if (!dialogOpen || event.key !== "Tab") return;
   const focusable = Array.from(dialogPanel.querySelectorAll(FOCUSABLE_SELECTORS)).filter(
-    (element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true"
+    (el) => !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true"
   );
   if (focusable.length === 0) return;
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
-
   if (!event.shiftKey && document.activeElement === last) {
     event.preventDefault();
     first.focus();
@@ -325,23 +286,17 @@ function trapDialogFocus(event) {
 function handleShortcut(event) {
   if (event.defaultPrevented || event.isComposing) return;
   if (!(event.metaKey || event.ctrlKey)) return;
-
   const key = event.key.toLowerCase();
-
   if (key === "enter" && !event.shiftKey && !event.altKey) {
     event.preventDefault();
     toggleDialog();
     return;
   }
-
   if ((key === "." || event.code === "Period") && !event.shiftKey && !event.altKey) {
     event.preventDefault();
-    runChecks("shortcut").catch((error) => {
-      console.warn("Shortcut heartbeat failed", error);
-    });
+    runChecks("shortcut").catch((e) => console.warn("Shortcut heartbeat failed", e));
     return;
   }
-
   if (key === "n" && event.shiftKey && !event.altKey) {
     event.preventDefault();
     focusNotes();
@@ -349,9 +304,7 @@ function handleShortcut(event) {
 }
 
 function focusNotes() {
-  if (notesField) {
-    notesField.focus({ preventScroll: false });
-  }
+  if (notesField) notesField.focus({ preventScroll: false });
 }
 
 function setupNotesField() {
@@ -362,7 +315,6 @@ function setupNotesField() {
     const start = notesField.selectionStart ?? 0;
     const end = notesField.selectionEnd ?? 0;
     const value = notesField.value;
-
     if (event.shiftKey) {
       if (start === end) {
         const { text, caret } = unindentAtCaret(value, start);
@@ -377,7 +329,6 @@ function setupNotesField() {
       }
       return;
     }
-
     if (start === end) {
       const tab = "\t";
       notesField.value = value.slice(0, start) + tab + value.slice(end);
@@ -394,22 +345,10 @@ function setupNotesField() {
 }
 
 function unindentAtCaret(value, caret) {
-  if (caret <= 0) {
-    return { text: value, caret };
-  }
+  if (caret <= 0) return { text: value, caret };
   const lookBehind = value.slice(Math.max(0, caret - 4), caret);
-  if (lookBehind.endsWith("\t")) {
-    return {
-      text: value.slice(0, caret - 1) + value.slice(caret),
-      caret: caret - 1,
-    };
-  }
-  if (lookBehind.endsWith("    ")) {
-    return {
-      text: value.slice(0, caret - 4) + value.slice(caret),
-      caret: caret - 4,
-    };
-  }
+  if (lookBehind.endsWith("\t")) return { text: value.slice(0, caret - 1) + value.slice(caret), caret: caret - 1 };
+  if (lookBehind.endsWith("    ")) return { text: value.slice(0, caret - 4) + value.slice(caret), caret: caret - 4 };
   return { text: value, caret };
 }
 
@@ -418,11 +357,7 @@ function indentSelection(value, start, end) {
   const lines = selected.split("\n");
   const indented = lines.map((line) => "\t" + line).join("\n");
   const text = value.slice(0, start) + indented + value.slice(end);
-  return {
-    text,
-    selectionStart: start,
-    selectionEnd: start + indented.length,
-  };
+  return { text, selectionStart: start, selectionEnd: start + indented.length };
 }
 
 function unindentSelection(value, start, end) {
@@ -452,12 +387,8 @@ function unindentSelection(value, start, end) {
 
 async function loadVersionMetadata() {
   try {
-    const response = await fetch(`/version.json?ts=${Date.now()}`, {
-      cache: "no-store",
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    const response = await fetch(`/version.json?ts=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     const name = data.productName || data.name || DEFAULT_PRODUCT.name;
     const version = data.version || DEFAULT_PRODUCT.version;
@@ -469,34 +400,23 @@ async function loadVersionMetadata() {
 }
 
 function selectRecorderMimeType() {
-  if (typeof window === "undefined" || typeof window.MediaRecorder === "undefined") {
-    return "";
-  }
-  if (typeof window.MediaRecorder.isTypeSupported !== "function") {
-    return RECORDER_MIME_TYPES[0] || "";
-  }
+  if (typeof window === "undefined" || typeof window.MediaRecorder === "undefined") return "";
+  if (typeof window.MediaRecorder.isTypeSupported !== "function") return RECORDER_MIME_TYPES[0] || "";
   for (const type of RECORDER_MIME_TYPES) {
     try {
-      if (window.MediaRecorder.isTypeSupported(type)) {
-        return type;
-      }
-    } catch (error) {
-      console.warn("Mime type probe failed", error);
-    }
+      if (window.MediaRecorder.isTypeSupported(type)) return type;
+    } catch {}
   }
   return "";
 }
 
 function setRecorderStatus(message) {
-  if (recorderStatus) {
-    recorderStatus.textContent = message;
-  }
+  if (recorderStatus) recorderStatus.textContent = message;
 }
 
 function updateTranscribeButton() {
   if (!transcribeButton) return;
-  const disabled =
-    !recordedBlob || recorderState === "recording" || recorderState === "transcribing";
+  const disabled = !recordedBlob || recorderState === "recording" || recorderState === "transcribing";
   transcribeButton.disabled = disabled;
   transcribeButton.textContent = recorderState === "transcribing" ? "Transcribing…" : "Transcribe";
 }
@@ -507,9 +427,7 @@ function releasePlayback() {
   if (url) {
     try {
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.warn("Failed to revoke audio URL", error);
-    }
+    } catch {}
     delete recorderAudio.dataset.url;
   }
   recorderAudio.pause();
@@ -521,10 +439,8 @@ function releasePlayback() {
 function clearMediaStream() {
   if (mediaStream) {
     try {
-      mediaStream.getTracks().forEach((track) => track.stop());
-    } catch (error) {
-      console.warn("Failed to stop media tracks", error);
-    }
+      mediaStream.getTracks().forEach((t) => t.stop());
+    } catch {}
     mediaStream = null;
   }
 }
@@ -552,9 +468,7 @@ async function startRecording() {
     const mimeType = selectRecorderMimeType();
     mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
     mediaRecorder.ondataavailable = (event) => {
-      if (event?.data && event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
+      if (event?.data && event.data.size > 0) recordedChunks.push(event.data);
     };
     mediaRecorder.onerror = (event) => {
       console.warn("Recorder error", event?.error || event);
@@ -657,9 +571,7 @@ async function pollTranscription(id) {
   const timeoutAt = Date.now() + 60000;
   while (Date.now() < timeoutAt) {
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    if (!activeTranscriptionId || activeTranscriptionId !== id) {
-      return;
-    }
+    if (!activeTranscriptionId || activeTranscriptionId !== id) return;
     try {
       const response = await fetch(`${DEV_API_BASE}/v1/transcribe/${encodeURIComponent(id)}`, {
         headers: { Accept: "application/json" },
@@ -670,12 +582,8 @@ async function pollTranscription(id) {
         throw new Error(text || `HTTP ${response.status}`);
       }
       const payload = await response.json();
-      if (!payload.ok) {
-        throw new Error(payload.error || "Transcription failed.");
-      }
-      if (!activeTranscriptionId || activeTranscriptionId !== id) {
-        return;
-      }
+      if (!payload.ok) throw new Error(payload.error || "Transcription failed.");
+      if (!activeTranscriptionId || activeTranscriptionId !== id) return;
       if (payload.status === "completed") {
         applyTranscriptText(payload.text || "");
         setRecorderStatus("Transcription completed.");
@@ -698,9 +606,7 @@ async function pollTranscription(id) {
       return;
     }
   }
-  if (activeTranscriptionId === id) {
-    setRecorderStatus("Still processing… check again shortly.");
-  }
+  if (activeTranscriptionId === id) setRecorderStatus("Still processing… check again shortly.");
   recorderState = "ready";
   updateTranscribeButton();
 }
@@ -712,16 +618,12 @@ async function sendForTranscription() {
   }
   recorderState = "transcribing";
   updateTranscribeButton();
-  if (recordButton) {
-    recordButton.disabled = true;
-  }
+  if (recordButton) recordButton.disabled = true;
   setRecorderStatus("Uploading for transcription…");
   try {
     const response = await fetch(`${DEV_API_BASE}/v1/transcribe`, {
       method: "POST",
-      headers: {
-        "Content-Type": recordedBlob.type || "audio/webm",
-      },
+      headers: { "Content-Type": recordedBlob.type || "audio/webm" },
       body: recordedBlob,
     });
     if (!response.ok) {
@@ -729,9 +631,7 @@ async function sendForTranscription() {
       throw new Error(text || `HTTP ${response.status}`);
     }
     const payload = await response.json();
-    if (!payload.ok) {
-      throw new Error(payload.error || "Transcription failed.");
-    }
+    if (!payload.ok) throw new Error(payload.error || "Transcription failed.");
     activeTranscriptionId = payload.id || null;
     if (payload.status === "completed") {
       applyTranscriptText(payload.text || "");
@@ -750,12 +650,8 @@ async function sendForTranscription() {
     console.warn("Transcription request failed", error);
     setRecorderStatus(error?.message || "Transcription failed.");
   } finally {
-    if (recordButton) {
-      recordButton.disabled = false;
-    }
-    if (recorderState === "transcribing") {
-      recorderState = "ready";
-    }
+    if (recordButton) recordButton.disabled = false;
+    if (recorderState === "transcribing") recorderState = "ready";
     updateTranscribeButton();
   }
 }
@@ -764,9 +660,7 @@ async function checkRecorderHealth() {
   if (!recorderStatus) return;
   try {
     const response = await fetch(`${DEV_API_BASE}/v1/health`, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
     if (recorderState === "idle") {
       if (payload.haveKey) {
@@ -775,7 +669,7 @@ async function checkRecorderHealth() {
         setRecorderStatus("Recorder ready. Add ASSEMBLYAI_API_KEY to enable transcription.");
       }
     }
-  } catch (error) {
+  } catch {
     if (recorderState === "idle") {
       setRecorderStatus("Recorder ready. Dev API unavailable.");
     }
@@ -783,9 +677,7 @@ async function checkRecorderHealth() {
 }
 
 function initRecorder() {
-  if (!recordButton || !transcribeButton || !recorderControls) {
-    return;
-  }
+  if (!recordButton || !transcribeButton || !recorderControls) return;
   if (!navigator?.mediaDevices?.getUserMedia || typeof window.MediaRecorder === "undefined") {
     recordButton.disabled = true;
     transcribeButton.disabled = true;
@@ -793,16 +685,12 @@ function initRecorder() {
     return;
   }
   recordButton.addEventListener("click", () => {
-    if (recorderState === "starting" || recorderState === "stopping") {
-      return;
-    }
+    if (recorderState === "starting" || recorderState === "stopping") return;
     if (recorderState === "recording") {
       stopRecording();
       return;
     }
-    if (recorderState !== "transcribing") {
-      startRecording();
-    }
+    if (recorderState !== "transcribing") startRecording();
   });
   transcribeButton.addEventListener("click", () => {
     if (!transcribeButton.disabled && recorderState !== "transcribing") {
@@ -818,22 +706,14 @@ function initRecorder() {
   checkRecorderHealth();
 }
 
-if (statusButton) {
-  statusButton.addEventListener("click", () => toggleDialog());
-}
-if (dialogClose) {
-  dialogClose.addEventListener("click", () => closeDialog());
-}
+if (statusButton) statusButton.addEventListener("click", () => toggleDialog());
+if (dialogClose) dialogClose.addEventListener("click", () => closeDialog());
 if (statusRefresh) {
   statusRefresh.addEventListener("click", () => {
     setRefreshBusy(true);
     Promise.resolve(runChecks("dialog"))
-      .catch((error) => {
-        console.warn("Refresh request failed", error);
-      })
-      .finally(() => {
-        setRefreshBusy(false);
-      });
+      .catch((e) => console.warn("Refresh request failed", e))
+      .finally(() => setRefreshBusy(false));
   });
 }
 
@@ -841,16 +721,13 @@ document.addEventListener("keydown", handleShortcut);
 window.addEventListener("scribecat:heartbeat", handleHeartbeat);
 window.addEventListener("scribecat:heartbeat-ready", () => {
   const snapshot = window.__scribecatHeartbeat?.getSnapshot?.();
-  if (snapshot && snapshot.statuses) {
-    handleHeartbeat({ detail: snapshot });
-  }
+  if (snapshot && snapshot.statuses) handleHeartbeat({ detail: snapshot });
   flushHeartbeatQueue();
 });
+
 setupNotesField();
 loadVersionMetadata();
 initRecorder();
-runChecks("initial").catch((error) => {
-  console.warn("Initial heartbeat failed", error);
-});
+runChecks("initial").catch((e) => console.warn("Initial heartbeat failed", e));
 
 export {};
