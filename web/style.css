@@ -458,6 +458,11 @@ body[data-dialog-open="true"] {
   font-weight: 600;
 }
 
+.status-refresh[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 .status-refresh:hover {
   background: rgba(54, 92, 255, 0.08);
 }
