@@ -24,6 +24,22 @@ bash scripts/dev_sync.sh
 bash scripts/dev_end.sh
 ```
 
+### Quick run (terminal)
+
+For a manual smoke run without the desktop helpers:
+
+```bash
+node scripts/fetch_assets.mjs
+bash scripts/start_static.sh
+npx tauri dev
+```
+
+`start_static.sh` keeps `web/` served on http://localhost:1420 while `npx tauri dev` launches the Tauri shell defined in `src-tauri/tauri.conf.json`.
+
+### Preview
+
+Latest UI capture: `backups/organized-20250919T063124Z/preview.png` (status dialog open with connectivity states). Regenerate by starting the static server and capturing the page headless at 1280×800.
+
 - Run `node scripts/env_inject.mjs` to expose `ASSEMBLYAI_API_KEY` to the web runtime, then launch the dev console at http://localhost:1420 and use the recording pill to capture audio notes.
 
 ## Features
