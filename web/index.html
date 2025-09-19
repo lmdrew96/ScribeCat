@@ -146,6 +146,13 @@
           </button>
         </header>
         <div class="settings-drawer__content">
+          <div
+            class="settings-feedback"
+            data-settings-feedback
+            role="status"
+            aria-live="polite"
+            hidden
+          ></div>
           <section class="settings-group" aria-labelledby="settingsThemeHeading">
             <div class="settings-group__heading">
               <h3 id="settingsThemeHeading">Theme</h3>
@@ -176,9 +183,104 @@
               Organize your students into cohorts for faster note sharing.
             </p>
             <div class="settings-actions">
-              <button type="button">Add class</button>
-              <button type="button">Manage rosters</button>
+              <button
+                type="button"
+                data-settings-action="add-class"
+                aria-expanded="false"
+                aria-controls="addClassForm"
+              >
+                Add class
+              </button>
+              <button
+                type="button"
+                data-settings-action="manage-rosters"
+                aria-expanded="false"
+                aria-controls="rosterManager"
+              >
+                Manage rosters
+              </button>
             </div>
+            <div class="settings-collection">
+              <ul
+                class="settings-collection__list"
+                data-settings-class-list
+                role="list"
+                hidden
+              ></ul>
+              <p class="settings-collection__empty" data-settings-class-empty>
+                No classes yet. Add your first class to start organizing rosters.
+              </p>
+            </div>
+            <form class="settings-inline-form" id="addClassForm" data-class-form hidden>
+              <label class="settings-inline-label" for="classNameInput">Class name</label>
+              <input
+                id="classNameInput"
+                name="className"
+                class="settings-inline-input"
+                type="text"
+                required
+                maxlength="80"
+                placeholder="e.g., Period 3 or 10th Grade Honors"
+                data-class-input
+              />
+              <p class="settings-inline-hint">
+                Use a name that helps you recognize the roster quickly during class.
+              </p>
+              <div class="settings-inline-actions">
+                <button type="submit" class="button button--primary">Save class</button>
+                <button type="button" class="button" data-class-cancel>Cancel</button>
+              </div>
+              <p class="settings-inline-error" data-class-error hidden></p>
+            </form>
+            <section
+              class="roster-manager"
+              id="rosterManager"
+              data-roster-manager
+              hidden
+              tabindex="-1"
+              aria-labelledby="rosterManagerHeading"
+            >
+              <header class="roster-manager__header">
+                <h4 class="roster-manager__title" id="rosterManagerHeading">Class rosters</h4>
+                <button type="button" class="button button--ghost" data-roster-close>
+                  Close
+                </button>
+              </header>
+              <form class="roster-manager__form" data-roster-form>
+                <label class="settings-inline-label" for="rosterClassSelect">Choose class</label>
+                <select
+                  id="rosterClassSelect"
+                  class="settings-inline-input"
+                  data-roster-class
+                  required
+                ></select>
+                <label class="settings-inline-label" for="rosterTextarea">Students</label>
+                <textarea
+                  id="rosterTextarea"
+                  class="settings-inline-textarea"
+                  data-roster-text
+                  rows="6"
+                  placeholder="Add one student per line"
+                ></textarea>
+                <p class="settings-inline-hint">
+                  Rosters stay on this device only. Use them to merge notes or share summaries faster.
+                </p>
+                <div class="settings-inline-actions">
+                  <button type="submit" class="button button--primary" data-roster-save>
+                    Save roster
+                  </button>
+                  <button type="button" class="button" data-roster-close>Done</button>
+                </div>
+                <p class="settings-inline-error" data-roster-error hidden></p>
+                <p
+                  class="settings-inline-status"
+                  data-roster-message
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></p>
+              </form>
+            </section>
           </section>
           <section class="settings-group" aria-labelledby="settingsLayoutHeading">
             <div class="settings-group__heading">
@@ -220,8 +322,54 @@
               </label>
             </div>
             <div class="settings-actions">
-              <button type="button">Open recorder preferences</button>
+              <button
+                type="button"
+                data-settings-action="open-recorder-preferences"
+                aria-expanded="false"
+                aria-controls="recorderPreferences"
+              >
+                Open recorder preferences
+              </button>
             </div>
+            <section
+              class="recorder-preferences"
+              id="recorderPreferences"
+              data-recorder-preferences
+              hidden
+              tabindex="-1"
+              aria-labelledby="recorderPreferencesHeading"
+            >
+              <header class="recorder-preferences__header">
+                <h4 id="recorderPreferencesHeading">Recorder preferences</h4>
+                <button type="button" class="button button--ghost" data-recorder-cancel>
+                  Close
+                </button>
+              </header>
+              <form class="recorder-preferences__form" data-recorder-form>
+                <label class="settings-inline-label" for="recorderInputSelect">Preferred microphone</label>
+                <select
+                  id="recorderInputSelect"
+                  class="settings-inline-input"
+                  data-recorder-input
+                ></select>
+                <p class="settings-inline-hint">
+                  We fall back to the system default microphone if the selected device is unavailable.
+                </p>
+                <div class="settings-inline-actions">
+                  <button type="submit" class="button button--primary" data-recorder-save>
+                    Save preferences
+                  </button>
+                  <button type="button" class="button" data-recorder-cancel>Done</button>
+                </div>
+                <p
+                  class="settings-inline-status"
+                  data-recorder-message
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></p>
+              </form>
+            </section>
           </section>
         </div>
       </aside>
