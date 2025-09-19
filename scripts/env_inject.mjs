@@ -10,12 +10,9 @@ const runtimeDir = path.join(rootDir, "web", ".runtime");
 
 const apiKey = (process.env.ASSEMBLYAI_API_KEY || "").trim();
 
-const envObject = {};
-if (apiKey) {
-  envObject.AAI = apiKey;
-}
-
-const contents = `window.SC_ENV = Object.assign({}, window.SC_ENV || {}, ${JSON.stringify(envObject)});\n`;
+const contents = apiKey
+  ? `window.SC_ENV = Object.assign({}, window.SC_ENV || {}, { AAI: ${JSON.stringify(apiKey)} });\n`
+  : "window.SC_ENV = window.SC_ENV || {};\n";
 
 async function main() {
   await mkdir(runtimeDir, { recursive: true });
