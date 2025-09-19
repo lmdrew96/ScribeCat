@@ -47,7 +47,7 @@
             aria-haspopup="dialog"
             aria-expanded="false"
             aria-controls="statusDialog"
-          >
+           data-action="status:toggle">
             Status &amp; Shortcuts
           </button>
         </div>
@@ -76,8 +76,8 @@
           </header>
           <div class="card__body">
             <div class="recorder-controls" data-recorder-controls>
-              <button type="button" class="recorder-button" data-recorder-record>Record</button>
-              <button type="button" class="recorder-button" data-recorder-transcribe disabled>Transcribe</button>
+              <button type="button" class="recorder-button" data-recorder-record data-action="recorder:toggle">Record</button>
+              <button type="button" class="recorder-button" data-recorder-transcribe disabled data-action="recorder:transcribe">Transcribe</button>
               <span class="recorder-controls__status" data-recorder-status>Recorder idle.</span>
             </div>
             <audio class="recorder-audio" data-recorder-audio controls hidden></audio>
@@ -407,7 +407,11 @@
                 </dd>
               </div>
             </dl>
-            <button type="button" class="status-refresh" data-status-refresh>Re-run checks</button>
+            <button type="button" class="status-refresh" data-status-refresh data-action="status:refresh">Re-run checks</button>
+            <div class="selftest">
+              <button type="button" class="status-refresh" data-action="qa:selftest">Run Button Self-Test</button>
+              <div class="selftest__log" data-selftest-log></div>
+            </div>
           </section>
           <section class="status-section" aria-label="Keyboard shortcuts">
             <h3>Shortcuts</h3>

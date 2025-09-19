@@ -1016,3 +1016,12 @@ body[data-settings-open="true"] {
     background: rgba(21, 28, 48, 0.6);
   }
 }
+
+/* ----- Self-test diagnostics ----- */
+[data-action][data-wired="ok"]{outline:2px solid #28c972;outline-offset:2px}
+[data-action][data-wired="bad"]{outline:2px solid #ff3b30;outline-offset:2px}
+.selftest{margin-top:.75rem}
+.selftest__header{font-weight:700;margin:.5rem 0}
+.selftest__list{margin:0;padding-left:1rem}
+.selftest__list .ok{color:#28c972}
+.selftest__list .bad{color:#ff3b30}
