@@ -1,0 +1,6 @@
+html,body{margin:0;background:#0f0f12;color:#e8e8ef;font:16px/1.4 system-ui}
+main{max-width:720px;margin:3rem auto;padding:0 1rem}
+button{background:#ffd200;color:#1b1400;font-weight:700;border:0;border-radius:10px;padding:.6rem 1rem;cursor:pointer}
+#overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.35);backdrop-filter:blur(2px)}
+#overlay[hidden]{display:none}
+.panel{width:min(520px,90vw);background:#121318;border:1px solid #232632;border-radius:12px;padding:1rem}
