@@ -1344,8 +1344,8 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  transform: translateX(18px);
-  transition: transform 200ms ease;
+  transform: translateX(calc(100% + 24px));
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
 }
 
@@ -1613,8 +1613,8 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  transform: translateX(18px);
-  transition: transform 200ms ease;
+  transform: translateX(calc(100% + 24px));
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
 }
 
