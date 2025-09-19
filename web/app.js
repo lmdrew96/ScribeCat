@@ -11,7 +11,6 @@ const dialogPanel = dialogRoot?.querySelector(".status-dialog__panel");
 const dialogClose = dialogRoot?.querySelector("[data-status-close]");
 const statusRefresh = dialogRoot?.querySelector("[data-status-refresh]");
 const notesField = document.getElementById("notesField");
-
 const recorderControls = document.querySelector("[data-recorder-controls]");
 const recordButton = document.querySelector("[data-recorder-record]");
 const transcribeButton = document.querySelector("[data-recorder-transcribe]");

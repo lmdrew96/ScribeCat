@@ -22,7 +22,9 @@ if pgrep -f "scripts/dev_api.mjs" >/dev/null 2>&1; then
   exit 0
 fi
 
-bash scripts/secrets_export.sh >/dev/null 2>&1 || true
+# Load secrets into this shell so nohup inherits them
+# shellcheck disable=SC1091
+source scripts/secrets_export.sh >/dev/null 2>&1 || true
 
 nohup node scripts/dev_api.mjs >>"$LOG_FILE" 2>&1 &
 api_pid=$!
