@@ -1,3 +1,5 @@
+import { createTranscriber } from "./transcribe.js";
+
 const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.3.1" };
 const FOCUSABLE_SELECTORS =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -69,6 +71,14 @@ const RECORDER_MIME_TYPES = [
   "audio/webm",
 ];
 
+const TRANSCRIBER_STAGE_MESSAGES = {
+  starting: "Preparing transcription…",
+  uploading: "Uploading audio…",
+  queued: "Waiting for AssemblyAI…",
+  processing: "Transcribing audio…",
+  completed: "Transcription completed.",
+};
+
 const DEV_API_BASE = "http://localhost:8787";
 let recorderState = "idle";
 let mediaRecorder = null;
@@ -76,6 +86,10 @@ let mediaStream = null;
 let recordedChunks = [];
 let recordedBlob = null;
 let activeTranscriptionId = null;
+
+let directTranscriberInstance = null;
+let directTranscriberKey = "";
+let activeTranscriptionAbortController = null;
 
 let dialogOpen = false;
 let lastFocusedElement = null;
@@ -136,6 +150,69 @@ function cloneDefaultSettings() {
     classes: [],
     transcription: { ...DEFAULT_SETTINGS.transcription },
   };
+}
+
+function extractAssemblyApiKey(candidate) {
+  if (typeof candidate === "string") {
+    const trimmed = candidate.trim();
+    if (trimmed) return trimmed;
+  }
+  if (candidate && typeof candidate === "object") {
+    if (typeof candidate.apiKey === "string" && candidate.apiKey.trim()) {
+      return candidate.apiKey.trim();
+    }
+    if (typeof candidate.key === "string" && candidate.key.trim()) {
+      return candidate.key.trim();
+    }
+  }
+  return "";
+}
+
+function resolveAssemblyApiKey() {
+  if (typeof window === "undefined") return "";
+  const env = window.SC_ENV || {};
+  const candidates = [
+    env.AAI,
+    env.ASSEMBLYAI_API_KEY,
+    env.assemblyAiKey,
+    env.assemblyaiKey,
+    env.assemblyAi,
+  ];
+  for (const candidate of candidates) {
+    const value = extractAssemblyApiKey(candidate);
+    if (value) return value;
+  }
+  return "";
+}
+
+function getDirectTranscriber() {
+  const key = resolveAssemblyApiKey();
+  if (!key) {
+    directTranscriberKey = "";
+    directTranscriberInstance = null;
+    return null;
+  }
+  if (directTranscriberInstance && directTranscriberKey === key) {
+    return directTranscriberInstance;
+  }
+  directTranscriberKey = key;
+  directTranscriberInstance = createTranscriber({ apiKey: key });
+  return directTranscriberInstance;
+}
+
+function directTranscriptionAvailable() {
+  const transcriber = getDirectTranscriber();
+  return Boolean(transcriber?.hasApiKey);
+}
+
+function applyDirectTranscriberStatus(update) {
+  if (!update || recorderState !== "transcribing") return;
+  const stage = update.stage;
+  const fallback = stage && TRANSCRIBER_STAGE_MESSAGES[stage]
+    ? TRANSCRIBER_STAGE_MESSAGES[stage]
+    : "Transcribing…";
+  const message = update.message || fallback;
+  setRecorderStatus(message);
 }
 
 function normalizeClassEntry(entry, index) {
@@ -921,6 +998,7 @@ function openSettingsDrawer() {
   lastSettingsFocusedElement =
     document.activeElement instanceof HTMLElement ? document.activeElement : null;
   settingsRoot.hidden = false;
+  settingsRoot.removeAttribute("hidden");
   document.body.dataset.settingsOpen = "true";
   if (settingsButton) settingsButton.setAttribute("aria-expanded", "true");
   settingsRoot.addEventListener("click", handleSettingsRootClick);
@@ -941,6 +1019,7 @@ function closeSettingsDrawer() {
   closeRecorderPreferences();
   setSettingsFeedbackMessage("");
   settingsRoot.hidden = true;
+  settingsRoot.setAttribute("hidden", "");
   delete document.body.dataset.settingsOpen;
   if (settingsButton) settingsButton.setAttribute("aria-expanded", "false");
   settingsRoot.removeEventListener("click", handleSettingsRootClick);
@@ -1028,6 +1107,11 @@ function handleShortcut(event) {
   if (key === "enter" && !event.shiftKey && !event.altKey) {
     event.preventDefault();
     toggleDialog();
+    return;
+  }
+  if (key === "," && !event.shiftKey && !event.altKey) {
+    event.preventDefault();
+    toggleSettingsDrawer();
     return;
   }
   if ((key === "." || event.code === "Period") && !event.shiftKey && !event.altKey) {
@@ -1223,6 +1307,12 @@ async function startRecording() {
     return;
   }
   try {
+    if (activeTranscriptionAbortController) {
+      try {
+        activeTranscriptionAbortController.abort();
+      } catch {}
+      activeTranscriptionAbortController = null;
+    }
     recorderState = "starting";
     updateTranscribeButton();
     activeTranscriptionId = null;
@@ -1426,6 +1516,37 @@ async function sendForTranscription() {
   recorderState = "transcribing";
   updateTranscribeButton();
   if (recordButton) recordButton.disabled = true;
+  const transcriber = getDirectTranscriber();
+  if (transcriber?.hasApiKey) {
+    const controller = new AbortController();
+    activeTranscriptionAbortController = controller;
+    activeTranscriptionId = "direct";
+    setRecorderStatus("Uploading for transcription…");
+    try {
+      const result = await transcriber.transcribe(recordedBlob, {
+        signal: controller.signal,
+        onStatus: applyDirectTranscriberStatus,
+      });
+      applyTranscriptText(result?.text || "");
+      setRecorderStatus("Transcription completed.");
+      recorderState = "ready";
+      cleanupAfterTranscription();
+    } catch (error) {
+      if (controller.signal.aborted) {
+        setRecorderStatus("Transcription cancelled.");
+      } else {
+        console.warn("Transcription request failed", error);
+        setRecorderStatus(error?.message || "Transcription failed.");
+      }
+    } finally {
+      activeTranscriptionAbortController = null;
+      activeTranscriptionId = null;
+      if (recordButton) recordButton.disabled = false;
+      if (recorderState === "transcribing") recorderState = "ready";
+      updateTranscribeButton();
+    }
+    return;
+  }
   setRecorderStatus("Uploading for transcription…");
   try {
     const response = await fetch(`${DEV_API_BASE}/v1/transcribe`, {
@@ -1457,6 +1578,7 @@ async function sendForTranscription() {
   } catch (error) {
     console.warn("Transcription request failed", error);
     setRecorderStatus(error?.message || "Transcription failed.");
+    activeTranscriptionId = null;
   } finally {
     if (recordButton) recordButton.disabled = false;
     if (recorderState === "transcribing") recorderState = "ready";
@@ -1466,6 +1588,12 @@ async function sendForTranscription() {
 
 async function checkRecorderHealth() {
   if (!recorderStatus) return;
+  if (directTranscriptionAvailable()) {
+    if (recorderState === "idle") {
+      setRecorderStatus("Recorder ready. AssemblyAI transcription available. Click Record to begin.");
+    }
+    return;
+  }
   try {
     const response = await fetch(`${DEV_API_BASE}/v1/health`, { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1479,7 +1607,9 @@ async function checkRecorderHealth() {
     }
   } catch {
     if (recorderState === "idle") {
-      setRecorderStatus("Recorder ready. Dev API unavailable.");
+      setRecorderStatus(
+        "Recorder ready. Transcription unavailable (start dev API or inject ASSEMBLYAI_API_KEY)."
+      );
     }
   }
 }
