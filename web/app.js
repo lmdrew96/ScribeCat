@@ -393,6 +393,9 @@ function initRecorderPanel() {
   const transcriptOutputEl = transcriptRoot?.querySelector("[data-transcript-output]") || null;
 
   const buttonsByAction = new Map();
+  const actionsContainer = recorderRoot.querySelector(".recorder-actions");
+  const TRANSCRIBE_DISABLED_MESSAGE = "Transcription unavailable in prod without proxy.";
+  let transcribeTooltipEl = null;
   recorderRoot.querySelectorAll("[data-recorder-action]").forEach((button) => {
     const action = button.getAttribute("data-recorder-action");
     if (!buttonsByAction.has(action)) {
@@ -455,17 +458,57 @@ function initRecorderPanel() {
     });
   }
 
-  function updateOverlayMic(state) {
+  function updateOverlayMic(state, message, timestamp) {
     if (!overlayController || typeof overlayController.setMicState !== "function") return;
     try {
-      overlayController.setMicState(state);
+      overlayController.setMicState(state, message, timestamp);
     } catch (err) {
       console.warn("Failed to sync microphone state", err);
     }
   }
 
+  function ensureTranscribeTooltip() {
+    if (!actionsContainer) return null;
+    if (!transcribeTooltipEl) {
+      transcribeTooltipEl = document.createElement("span");
+      transcribeTooltipEl.className = "recorder-transcribe-tooltip";
+      transcribeTooltipEl.textContent = "Transcribe";
+      transcribeTooltipEl.title = TRANSCRIBE_DISABLED_MESSAGE;
+      transcribeTooltipEl.setAttribute("role", "note");
+      transcribeTooltipEl.setAttribute("aria-label", TRANSCRIBE_DISABLED_MESSAGE);
+      transcribeTooltipEl.tabIndex = 0;
+    }
+    if (!actionsContainer.contains(transcribeTooltipEl)) {
+      actionsContainer.appendChild(transcribeTooltipEl);
+    }
+    return transcribeTooltipEl;
+  }
+
+  function removeTranscribeTooltip() {
+    if (transcribeTooltipEl?.parentElement) {
+      transcribeTooltipEl.parentElement.removeChild(transcribeTooltipEl);
+    }
+  }
+
+  function updateTranscribeVisibility() {
+    const transcribeButtons = buttonsByAction.get("transcribe") || [];
+    if (transcriber.hasApiKey) {
+      removeTranscribeTooltip();
+      transcribeButtons.forEach((button) => {
+        button.hidden = false;
+        button.removeAttribute("aria-hidden");
+      });
+    } else {
+      transcribeButtons.forEach((button) => {
+        button.hidden = true;
+        button.setAttribute("aria-hidden", "true");
+      });
+      ensureTranscribeTooltip();
+    }
+  }
+
   function setRecorderUiState(state, options = {}) {
-    const { message, overlayState } = options;
+    const { message, overlayState, overlayMessage, timestamp } = options;
     recorderRoot.dataset.recorderState = state;
     if (captionEl && typeof message === "string") {
       captionEl.textContent = message;
@@ -484,7 +527,14 @@ function initRecorderPanel() {
     if (dotEl) {
       dotEl.dataset.state = dotState;
     }
-    updateOverlayMic(dotState);
+    const micMessage =
+      typeof overlayMessage === "string" && overlayMessage.trim().length > 0
+        ? overlayMessage
+        : typeof message === "string"
+          ? message
+          : undefined;
+    const micTimestamp = timestamp instanceof Date ? timestamp : new Date();
+    updateOverlayMic(dotState, micMessage, micTimestamp);
   }
 
   function updateMeter(level) {
@@ -604,7 +654,7 @@ function initRecorderPanel() {
     if (transcriptStatusEl) {
       transcriptStatusEl.textContent = transcriber.hasApiKey
         ? "Set up a recording to transcribe."
-        : "Set ASSEMBLYAI_API_KEY to enable transcription.";
+        : TRANSCRIBE_DISABLED_MESSAGE;
     }
     setRecorderUiState("idle", { message: "Ready to capture audio.", overlayState: "idle" });
     setButtonDisabled("record", false);
@@ -680,7 +730,7 @@ function initRecorderPanel() {
             ? "Ready to transcribe."
             : transcriber.hasApiKey
               ? "Record audio to enable transcription."
-              : "Set ASSEMBLYAI_API_KEY to enable transcription.";
+              : TRANSCRIBE_DISABLED_MESSAGE;
         }
         setRecorderUiState("active", { message: "Recording ready." });
         setButtonDisabled("record", false);
@@ -780,7 +830,7 @@ function initRecorderPanel() {
 
   async function runTranscription() {
     if (!transcriber.hasApiKey) {
-      showError("AssemblyAI API key is not configured.");
+      showError(TRANSCRIBE_DISABLED_MESSAGE);
       return;
     }
     if (!current.blob) {
@@ -860,10 +910,13 @@ function initRecorderPanel() {
   });
 
   if (!transcriber.hasApiKey) {
+    updateTranscribeVisibility();
     setButtonDisabled("transcribe", true);
     if (transcriptStatusEl) {
-      transcriptStatusEl.textContent = "Set ASSEMBLYAI_API_KEY to enable transcription.";
+      transcriptStatusEl.textContent = TRANSCRIBE_DISABLED_MESSAGE;
     }
+  } else {
+    updateTranscribeVisibility();
   }
 
   resetState();

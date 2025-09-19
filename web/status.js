@@ -1,5 +1,6 @@
 const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.2.0" };
 const STORAGE_KEY = "scribecat:statusVisible";
+const COLLAPSE_STORAGE_KEY = "scribecat:statusCollapsed";
 const QUERY_KEY = "status";
 const HEALTH_INTERVAL_MS = 30000;
 
@@ -70,6 +71,10 @@ function createOverlay(root) {
   container.setAttribute("role", "status");
   container.setAttribute("aria-live", "polite");
   container.setAttribute("aria-hidden", "true");
+  container.dataset.collapsed = "false";
+
+  const contentEl = document.createElement("div");
+  contentEl.className = "status-overlay__content";
 
   const metaRow = document.createElement("div");
   metaRow.className = "status-overlay__meta";
@@ -107,7 +112,11 @@ function createOverlay(root) {
   const micLabel = document.createElement("span");
   micLabel.className = "status-overlay__mic-label";
   micLabel.textContent = "Mic idle";
-  micRow.append(micDot, micLabel);
+  const micTime = document.createElement("time");
+  micTime.className = "status-overlay__mic-time";
+  micTime.textContent = "—";
+  micTime.dataset.empty = "true";
+  micRow.append(micDot, micLabel, micTime);
 
   const timeRow = document.createElement("div");
   timeRow.className = "status-overlay__time";
@@ -119,17 +128,47 @@ function createOverlay(root) {
   timeEl.textContent = "—";
   timeRow.append(timePrefix, document.createTextNode(" "), timeEl);
 
-  container.append(metaRow, healthRow, micRow, timeRow);
+  contentEl.append(metaRow, healthRow, micRow, timeRow);
+
+  const collapsedEl = document.createElement("div");
+  collapsedEl.className = "status-overlay__collapsed";
+  collapsedEl.hidden = true;
+  const collapsedDot = document.createElement("span");
+  collapsedDot.className = "status-overlay__collapsed-dot";
+  collapsedDot.dataset.state = "checking";
+  collapsedDot.setAttribute("aria-hidden", "true");
+  const collapsedLabel = document.createElement("span");
+  collapsedLabel.className = "status-overlay__collapsed-label visually-hidden";
+  collapsedLabel.textContent = "Checking health…";
+  collapsedEl.append(collapsedDot, collapsedLabel);
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "status-overlay__toggle";
+  toggleBtn.setAttribute("aria-label", "Toggle status panel");
+  toggleBtn.setAttribute("aria-pressed", "false");
+  const toggleIcon = document.createElement("span");
+  toggleIcon.className = "status-overlay__toggle-icon";
+  toggleIcon.setAttribute("aria-hidden", "true");
+  toggleBtn.append(toggleIcon);
+
+  container.append(contentEl, collapsedEl, toggleBtn);
   root.appendChild(container);
 
   return {
     container,
+    contentEl,
+    collapsedEl,
+    collapsedDot,
+    collapsedLabel,
+    toggleBtn,
     productEl,
     gitEl,
     dotEl,
     labelEl,
     micDot,
     micLabel,
+    micTimeEl: micTime,
     timeEl,
   };
 }
@@ -167,6 +206,21 @@ function formatTimeString(date) {
   return { text: date.toLocaleTimeString(), iso: date.toISOString() };
 }
 
+function getStoredCollapsed() {
+  try {
+    const value = window.localStorage.getItem(COLLAPSE_STORAGE_KEY);
+    if (value === "1") return true;
+    if (value === "0") return false;
+  } catch {}
+  return null;
+}
+
+function setStoredCollapsed(collapsed) {
+  try {
+    window.localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
+  } catch {}
+}
+
 export function initStatusOverlay(options = {}) {
   const rootId = options.rootId || "status-root";
   const root = document.getElementById(rootId);
@@ -179,6 +233,7 @@ export function initStatusOverlay(options = {}) {
   elements.gitEl.textContent = `${git.branch}@${git.sha}`;
 
   let visible = false;
+  let collapsed = false;
   let healthTimer = null;
   const healthUrl = determineHealthUrl();
   const envDefaultVisible = determineDefaultVisibility();
@@ -192,7 +247,7 @@ export function initStatusOverlay(options = {}) {
   const allowedMicStates = new Set(["idle", "recording", "processing", "transcribed", "error"]);
   let micState = "idle";
 
-  function setMicState(state, message) {
+  function setMicState(state, message, eventTime) {
     const nextState = allowedMicStates.has(state) ? state : "idle";
     micState = nextState;
     if (elements.micDot) {
@@ -200,8 +255,28 @@ export function initStatusOverlay(options = {}) {
     }
     if (elements.micLabel) {
       const fallback = micLabels[nextState] || micLabels.idle;
-      const text = typeof message === "string" && message.trim().length > 0 ? message : fallback;
-      elements.micLabel.textContent = text;
+      let labelText = fallback;
+      let providedMessage = message;
+      let timestamp = eventTime;
+      if (providedMessage instanceof Date && typeof timestamp === "undefined") {
+        timestamp = providedMessage;
+        providedMessage = undefined;
+      }
+      if (typeof providedMessage === "string" && providedMessage.trim().length > 0) {
+        labelText = providedMessage.trim();
+      }
+      const validTime = timestamp instanceof Date && !Number.isNaN(timestamp.getTime()) ? timestamp : new Date();
+      elements.micLabel.textContent = labelText;
+      if (elements.micTimeEl) {
+        const { text, iso } = formatTimeString(validTime);
+        elements.micTimeEl.textContent = text;
+        elements.micTimeEl.dataset.empty = iso ? "false" : "true";
+        if (iso) {
+          elements.micTimeEl.dateTime = iso;
+        } else {
+          elements.micTimeEl.removeAttribute("datetime");
+        }
+      }
     }
   }
 
@@ -239,12 +314,42 @@ export function initStatusOverlay(options = {}) {
   function setHealthState(state, label, checkedAt = null) {
     elements.dotEl.dataset.state = state;
     elements.labelEl.textContent = label;
+    if (elements.collapsedDot) {
+      elements.collapsedDot.dataset.state = state;
+    }
+    if (elements.collapsedLabel) {
+      elements.collapsedLabel.textContent = label;
+    }
     const { text, iso } = formatTimeString(checkedAt);
     elements.timeEl.textContent = text;
     if (iso) {
       elements.timeEl.dateTime = iso;
     } else {
       elements.timeEl.removeAttribute("datetime");
+    }
+  }
+
+  function applyCollapsed(next, opts = {}) {
+    const shouldPersist = opts.persist ?? true;
+    const nextValue = Boolean(next);
+    if (collapsed !== nextValue) {
+      collapsed = nextValue;
+    }
+    if (elements.container) {
+      elements.container.dataset.collapsed = collapsed ? "true" : "false";
+      elements.container.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+    if (elements.contentEl) {
+      elements.contentEl.hidden = collapsed;
+    }
+    if (elements.collapsedEl) {
+      elements.collapsedEl.hidden = !collapsed;
+    }
+    if (elements.toggleBtn) {
+      elements.toggleBtn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+    }
+    if (shouldPersist) {
+      setStoredCollapsed(collapsed);
     }
   }
 
@@ -291,14 +396,27 @@ export function initStatusOverlay(options = {}) {
 
   document.addEventListener("keydown", handleToggle);
 
+  if (elements.toggleBtn) {
+    elements.toggleBtn.addEventListener("click", () => {
+      applyCollapsed(!collapsed);
+    });
+  }
+
   const forced = getForcedVisibility();
   const stored = forced === null ? getStoredVisibility() : null;
+  const storedCollapsed = getStoredCollapsed();
   if (forced !== null) {
     updateVisibility(forced, { persist: true });
   } else if (stored !== null) {
     updateVisibility(stored, { persist: false });
   } else {
     updateVisibility(envDefaultVisible, { persist: false });
+  }
+
+  if (storedCollapsed !== null) {
+    applyCollapsed(storedCollapsed, { persist: false });
+  } else {
+    applyCollapsed(false, { persist: false });
   }
 
   (async () => {
@@ -336,5 +454,7 @@ export function initStatusOverlay(options = {}) {
     setMicState,
     updateVisibility,
     getMicState: () => micState,
+    setCollapsed: (next, opts) => applyCollapsed(next, opts),
+    isCollapsed: () => collapsed,
   };
 }

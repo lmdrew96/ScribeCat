@@ -27,7 +27,7 @@ function delay(ms, signal) {
 function emitStatus(callback, stage, message) {
   if (typeof callback === "function") {
     try {
-      callback({ stage, message });
+      callback({ stage, message, timestamp: new Date() });
     } catch (error) {
       console.warn("Transcription status listener failed", error);
     }
