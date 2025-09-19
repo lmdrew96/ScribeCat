@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+: ${ASSEMBLYAI_API_KEY:=}
+: ${OPENAI_API_KEY:=}
+: ${AIRTABLE_PAT:=}
+: ${MAKE_WEBHOOK_URL:=}
+export ASSEMBLYAI_API_KEY OPENAI_API_KEY AIRTABLE_PAT MAKE_WEBHOOK_URL

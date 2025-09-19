@@ -1,56 +1,6 @@
-import http from "http";
-import { promises as fs } from "fs";
-import path from "path";
-import url from "url";
-
-const root = path.resolve("web");
-const port = 1420;
-const mime = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "application/javascript",
-  ".css": "text/css",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".txt": "text/plain; charset=utf-8",
-};
-
-http
-  .createServer(async (req, res) => {
-    try {
-      const pathname = url.parse(req.url).pathname || "/";
-      if (pathname === "/health") {
-        const payload = JSON.stringify({ ok: true, ts: new Date().toISOString() });
-        res.writeHead(200, {
-          "content-type": "application/json",
-          "cache-control": "no-store",
-          pragma: "no-cache",
-        });
-        return res.end(payload);
-      }
-
-      let filePath = path.normalize(path.join(root, pathname));
-      if (!filePath.startsWith(root)) {
-        res.writeHead(403);
-        return res.end("forbidden");
-      }
-
-      try {
-        const stat = await fs.stat(filePath);
-        if (stat.isDirectory()) {
-          filePath = path.join(filePath, "index.html");
-        }
-      } catch {}
-
-      const data = await fs.readFile(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      res.writeHead(200, {
-        "content-type": mime[ext] || "application/octet-stream",
-      });
-      res.end(data);
-    } catch {
-      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-      res.end("not found");
-    }
-  })
-  .listen(port);
+import http from "http"; import fs from "fs"; import path from "path"; import url from "url";
+const port=parseInt(process.env.PORT||"1420",10);
+const root=path.resolve("web");
+const mime={".html":"text/html",".css":"text/css",".js":"application/javascript",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".svg":"image/svg+xml",".ico":"image/x-icon",".ttf":"font/ttf",".otf":"font/otf",".woff":"font/woff",".woff2":"font/woff2",".txt":"text/plain"};
+const server=http.createServer((req,res)=>{try{const u=url.parse(req.url).pathname||"/";let p=path.join(root,u.replace(/^\/+/,""));if(u==="/"||fs.existsSync(p)&&fs.statSync(p).isDirectory())p=path.join(root,"index.html");if(!fs.existsSync(p)){res.writeHead(404);res.end("not found");return}const ext=path.extname(p).toLowerCase();res.writeHead(200,{"Content-Type":mime[ext]||"application/octet-stream","Cache-Control":"no-store"});fs.createReadStream(p).pipe(res)}catch(e){res.writeHead(500);res.end("err")}});
+server.listen(port,()=>console.log(`static web at http://localhost:${port}`));
