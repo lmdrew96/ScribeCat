@@ -28,7 +28,7 @@
       <header class="top-bar" role="banner">
         <div class="top-bar__title">
           <span class="top-bar__name" id="productName">ScribeCat</span>
-          <span class="top-bar__version" id="productVersion">0.2.0</span>
+          <span class="top-bar__version" id="productVersion">0.3.0</span>
         </div>
         <div class="top-bar__status" aria-live="polite">
           <div class="status-chip" data-status="internet" data-state="checking">
@@ -84,7 +84,19 @@
             <p class="card__subtitle">AssemblyAI output appears here when available.</p>
           </header>
           <div class="card__body">
-            <div class="transcript__feed" data-transcript aria-live="polite" aria-atomic="false">
+            <div class="recorder-controls" data-recorder-controls>
+              <button type="button" class="recorder-button" data-recorder-record>Record</button>
+              <button type="button" class="recorder-button" data-recorder-transcribe disabled>Transcribe</button>
+              <span class="recorder-controls__status" data-recorder-status>Recorder idle.</span>
+            </div>
+            <audio class="recorder-audio" data-recorder-audio controls hidden></audio>
+            <div
+              class="transcript__feed transcript-area"
+              id="transcript"
+              data-transcript
+              aria-live="polite"
+              aria-atomic="false"
+            >
               <p class="transcript__placeholder">Waiting for microphone input…</p>
             </div>
           </div>
