@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.2.0" };
+const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.3.0" };
 const FOCUSABLE_SELECTORS =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 const STATUS_KEYS = ["internet", "static"];
@@ -11,9 +11,35 @@ const dialogPanel = dialogRoot?.querySelector(".status-dialog__panel");
 const dialogClose = dialogRoot?.querySelector("[data-status-close]");
 const statusRefresh = dialogRoot?.querySelector("[data-status-refresh]");
 const notesField = document.getElementById("notesField");
+const recorderControls = document.querySelector("[data-recorder-controls]");
+const recordButton = document.querySelector("[data-recorder-record]");
+const transcribeButton = document.querySelector("[data-recorder-transcribe]");
+const recorderStatus = document.querySelector("[data-recorder-status]");
+const recorderAudio = document.querySelector("[data-recorder-audio]");
+const transcriptTarget =
+  document.getElementById("transcript") ||
+  document.querySelector(".transcript-area") ||
+  document.querySelector("[data-transcript]");
 
 const statusRegistry = buildStatusRegistry(STATUS_KEYS);
 const statusState = new Map();
+const STATUS_MESSAGES = {
+  internet: { ok: "Online", bad: "Offline" },
+  static: { ok: "Running", bad: "Down" },
+};
+const pendingHeartbeatRequests = [];
+const RECORDER_MIME_TYPES = [
+  "audio/webm;codecs=opus",
+  "audio/ogg;codecs=opus",
+  "audio/webm",
+];
+const DEV_API_BASE = "http://localhost:8787";
+let recorderState = "idle";
+let mediaRecorder = null;
+let mediaStream = null;
+let recordedChunks = [];
+let recordedBlob = null;
+let activeTranscriptionId = null;
 
 let dialogOpen = false;
 let lastFocusedElement = null;
@@ -99,45 +125,78 @@ function setStatus(key, state, message, timestamp = new Date()) {
   applyStatus(key, state, message, timestamp);
 }
 
-async function checkInternet() {
-  markChecking("internet");
-  try {
-    await fetch("https://example.com/", { mode: "no-cors" });
-    setStatus("internet", "online", "Online");
-  } catch (error) {
-    console.warn("Internet check failed", error);
-    setStatus("internet", "offline", "Offline");
+function applyHeartbeatStatus(key, payload) {
+  if (!payload) return;
+  if (payload.state === "checking") {
+    markChecking(key);
+    return;
+  }
+  const ok = Boolean(payload.ok);
+  const messages = STATUS_MESSAGES[key] || STATUS_MESSAGES.internet;
+  const message = payload.message || (ok ? messages.ok : messages.bad);
+  const timestamp = payload.checkedAt ? parseTimestamp(payload.checkedAt) : new Date();
+  setStatus(key, ok ? "online" : "offline", message, timestamp);
+}
+
+function handleHeartbeat(event) {
+  const detail = event?.detail;
+  if (!detail || !detail.statuses) return;
+  for (const key of STATUS_KEYS) {
+    if (detail.statuses[key]) {
+      applyHeartbeatStatus(key, detail.statuses[key]);
+    }
   }
 }
 
-async function checkStatic() {
-  markChecking("static");
-  try {
-    const response = await fetch(`/health?ts=${Date.now()}`, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+function requestHeartbeat(reason = "manual") {
+  const heartbeat = window.__scribecatHeartbeat;
+  if (heartbeat && typeof heartbeat.tickNow === "function") {
+    try {
+      return Promise.resolve(heartbeat.tickNow(reason));
+    } catch (error) {
+      console.warn("Heartbeat request failed", error);
+      return Promise.reject(error);
     }
-    const payload = await response.json();
-    if (payload && payload.ok) {
-      const timestamp = payload.ts ? parseTimestamp(payload.ts) : new Date();
-      setStatus("static", "online", "Online", timestamp);
-      return;
+  }
+  return new Promise((resolve, reject) => {
+    pendingHeartbeatRequests.push({ reason, resolve, reject });
+    window.dispatchEvent(
+      new CustomEvent("scribecat:heartbeat-request", { detail: { reason } })
+    );
+  });
+}
+
+function flushHeartbeatQueue() {
+  const heartbeat = window.__scribecatHeartbeat;
+  if (!heartbeat || typeof heartbeat.tickNow !== "function") {
+    return;
+  }
+  while (pendingHeartbeatRequests.length) {
+    const request = pendingHeartbeatRequests.shift();
+    if (!request) continue;
+    const { reason, resolve, reject } = request;
+    try {
+      const result = heartbeat.tickNow(reason);
+      Promise.resolve(result)
+        .then((value) => resolve?.(value))
+        .catch((error) => {
+          console.warn("Heartbeat request failed", error);
+          reject?.(error);
+        });
+    } catch (error) {
+      console.warn("Heartbeat request failed", error);
+      reject?.(error);
     }
-    throw new Error("Invalid health payload");
-  } catch (error) {
-    console.warn("Static server check failed", error);
-    setStatus("static", "offline", "Offline");
   }
 }
 
 function runChecks(reason = "manual") {
-  if (reason !== "initial") {
-    console.info("Running status checks (%s)", reason);
+  if (reason !== "interval") {
+    STATUS_KEYS.forEach((key) => {
+      markChecking(key);
+    });
   }
-  return Promise.allSettled([checkInternet(), checkStatic()]);
+  return requestHeartbeat(reason);
 }
 
 function openDialog() {
@@ -181,6 +240,34 @@ function closeDialog() {
     requestAnimationFrame(() => {
       focusTarget.focus({ preventScroll: true });
     });
+  }
+}
+
+function setRefreshBusy(isBusy) {
+  if (!statusRefresh) return;
+  if (isBusy) {
+    if (!statusRefresh.dataset.originalLabel) {
+      statusRefresh.dataset.originalLabel = statusRefresh.textContent || "";
+    }
+    statusRefresh.disabled = true;
+    statusRefresh.textContent = "Checking…";
+    statusRefresh.setAttribute("aria-busy", "true");
+    const timeoutId = window.setTimeout(() => {
+      if (statusRefresh?.disabled) {
+        setRefreshBusy(false);
+      }
+    }, 10000);
+    statusRefresh.dataset.refreshTimeoutId = String(timeoutId);
+  } else {
+    const original = statusRefresh.dataset.originalLabel || "Re-run checks";
+    statusRefresh.disabled = false;
+    statusRefresh.textContent = original;
+    statusRefresh.removeAttribute("aria-busy");
+    const timeoutId = statusRefresh.dataset.refreshTimeoutId;
+    if (timeoutId) {
+      window.clearTimeout(Number(timeoutId));
+      delete statusRefresh.dataset.refreshTimeoutId;
+    }
   }
 }
 
@@ -249,7 +336,9 @@ function handleShortcut(event) {
 
   if ((key === "." || event.code === "Period") && !event.shiftKey && !event.altKey) {
     event.preventDefault();
-    runChecks("shortcut");
+    runChecks("shortcut").catch((error) => {
+      console.warn("Shortcut heartbeat failed", error);
+    });
     return;
   }
 
@@ -379,6 +468,356 @@ async function loadVersionMetadata() {
   }
 }
 
+function selectRecorderMimeType() {
+  if (typeof window === "undefined" || typeof window.MediaRecorder === "undefined") {
+    return "";
+  }
+  if (typeof window.MediaRecorder.isTypeSupported !== "function") {
+    return RECORDER_MIME_TYPES[0] || "";
+  }
+  for (const type of RECORDER_MIME_TYPES) {
+    try {
+      if (window.MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    } catch (error) {
+      console.warn("Mime type probe failed", error);
+    }
+  }
+  return "";
+}
+
+function setRecorderStatus(message) {
+  if (recorderStatus) {
+    recorderStatus.textContent = message;
+  }
+}
+
+function updateTranscribeButton() {
+  if (!transcribeButton) return;
+  const disabled =
+    !recordedBlob || recorderState === "recording" || recorderState === "transcribing";
+  transcribeButton.disabled = disabled;
+  transcribeButton.textContent = recorderState === "transcribing" ? "Transcribing…" : "Transcribe";
+}
+
+function releasePlayback() {
+  if (!recorderAudio) return;
+  const url = recorderAudio.dataset.url;
+  if (url) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.warn("Failed to revoke audio URL", error);
+    }
+    delete recorderAudio.dataset.url;
+  }
+  recorderAudio.pause();
+  recorderAudio.removeAttribute("src");
+  recorderAudio.load();
+  recorderAudio.hidden = true;
+}
+
+function clearMediaStream() {
+  if (mediaStream) {
+    try {
+      mediaStream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      console.warn("Failed to stop media tracks", error);
+    }
+    mediaStream = null;
+  }
+}
+
+async function startRecording() {
+  if (!navigator?.mediaDevices?.getUserMedia || typeof window.MediaRecorder === "undefined") {
+    setRecorderStatus("Recording is not supported in this browser.");
+    return;
+  }
+  try {
+    recorderState = "starting";
+    updateTranscribeButton();
+    activeTranscriptionId = null;
+    recordedBlob = null;
+    recordedChunks = [];
+    releasePlayback();
+    clearMediaStream();
+    setRecorderStatus("Requesting microphone…");
+    if (recordButton) {
+      recordButton.disabled = true;
+      recordButton.textContent = "Starting…";
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaStream = stream;
+    const mimeType = selectRecorderMimeType();
+    mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (event) => {
+      if (event?.data && event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+    mediaRecorder.onerror = (event) => {
+      console.warn("Recorder error", event?.error || event);
+      recorderState = "idle";
+      recordedChunks = [];
+      recordedBlob = null;
+      setRecorderStatus("Recording error. Please try again.");
+      updateTranscribeButton();
+      if (recordButton) {
+        recordButton.disabled = false;
+        recordButton.textContent = "Record";
+      }
+    };
+    mediaRecorder.onstop = () => {
+      clearMediaStream();
+      if (recordButton) {
+        recordButton.disabled = false;
+        recordButton.textContent = "Record";
+      }
+      if (!recordedChunks.length) {
+        setRecorderStatus("No audio captured. Try recording again.");
+        recorderState = "idle";
+        updateTranscribeButton();
+        return;
+      }
+      const mime = mediaRecorder?.mimeType || mimeType || "audio/webm";
+      recordedBlob = new Blob(recordedChunks, { type: mime });
+      recordedChunks = [];
+      recorderState = "ready";
+      if (recorderAudio) {
+        releasePlayback();
+        const objectUrl = URL.createObjectURL(recordedBlob);
+        recorderAudio.src = objectUrl;
+        recorderAudio.hidden = false;
+        recorderAudio.dataset.url = objectUrl;
+      }
+      setRecorderStatus("Recording ready. Click Transcribe to send it for transcription.");
+      updateTranscribeButton();
+    };
+    mediaRecorder.start();
+    recorderState = "recording";
+    if (recordButton) {
+      recordButton.disabled = false;
+      recordButton.textContent = "Stop";
+    }
+    setRecorderStatus("Recording…");
+    updateTranscribeButton();
+  } catch (error) {
+    console.warn("Failed to start recording", error);
+    setRecorderStatus(error?.message || "Microphone access failed.");
+    recorderState = "idle";
+    recordedChunks = [];
+    recordedBlob = null;
+    clearMediaStream();
+    if (recordButton) {
+      recordButton.disabled = false;
+      recordButton.textContent = "Record";
+    }
+    updateTranscribeButton();
+  }
+}
+
+function stopRecording() {
+  if (!mediaRecorder) return;
+  if (mediaRecorder.state === "inactive") return;
+  recorderState = "stopping";
+  setRecorderStatus("Finishing recording…");
+  if (recordButton) {
+    recordButton.disabled = true;
+    recordButton.textContent = "Stopping…";
+  }
+  try {
+    mediaRecorder.stop();
+  } catch (error) {
+    console.warn("Failed to stop recorder", error);
+    recorderState = "idle";
+    updateTranscribeButton();
+    if (recordButton) {
+      recordButton.disabled = false;
+      recordButton.textContent = "Record";
+    }
+  }
+}
+
+function applyTranscriptText(text) {
+  if (!transcriptTarget) return;
+  const display = text && text.trim() ? text : "No transcript returned yet.";
+  transcriptTarget.innerHTML = "";
+  const paragraph = document.createElement("p");
+  paragraph.textContent = display;
+  transcriptTarget.appendChild(paragraph);
+}
+
+async function pollTranscription(id) {
+  if (!id) {
+    recorderState = "ready";
+    updateTranscribeButton();
+    return;
+  }
+  const timeoutAt = Date.now() + 60000;
+  while (Date.now() < timeoutAt) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (!activeTranscriptionId || activeTranscriptionId !== id) {
+      return;
+    }
+    try {
+      const response = await fetch(`${DEV_API_BASE}/v1/transcribe/${encodeURIComponent(id)}`, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      const payload = await response.json();
+      if (!payload.ok) {
+        throw new Error(payload.error || "Transcription failed.");
+      }
+      if (!activeTranscriptionId || activeTranscriptionId !== id) {
+        return;
+      }
+      if (payload.status === "completed") {
+        applyTranscriptText(payload.text || "");
+        setRecorderStatus("Transcription completed.");
+        recorderState = "ready";
+        updateTranscribeButton();
+        return;
+      }
+      if (payload.status === "error") {
+        setRecorderStatus(payload.error || "Transcription failed.");
+        recorderState = "ready";
+        updateTranscribeButton();
+        return;
+      }
+      setRecorderStatus("Waiting for AssemblyAI…");
+    } catch (error) {
+      console.warn("Transcription poll failed", error);
+      setRecorderStatus(error?.message || "Transcription polling failed.");
+      recorderState = "ready";
+      updateTranscribeButton();
+      return;
+    }
+  }
+  if (activeTranscriptionId === id) {
+    setRecorderStatus("Still processing… check again shortly.");
+  }
+  recorderState = "ready";
+  updateTranscribeButton();
+}
+
+async function sendForTranscription() {
+  if (!recordedBlob) {
+    setRecorderStatus("Record audio before requesting a transcript.");
+    return;
+  }
+  recorderState = "transcribing";
+  updateTranscribeButton();
+  if (recordButton) {
+    recordButton.disabled = true;
+  }
+  setRecorderStatus("Uploading for transcription…");
+  try {
+    const response = await fetch(`${DEV_API_BASE}/v1/transcribe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": recordedBlob.type || "audio/webm",
+      },
+      body: recordedBlob,
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || `HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    if (!payload.ok) {
+      throw new Error(payload.error || "Transcription failed.");
+    }
+    activeTranscriptionId = payload.id || null;
+    if (payload.status === "completed") {
+      applyTranscriptText(payload.text || "");
+      setRecorderStatus("Transcription completed.");
+      recorderState = "ready";
+      return;
+    }
+    if (payload.status === "error") {
+      setRecorderStatus(payload.error || "Transcription failed.");
+      recorderState = "ready";
+      return;
+    }
+    setRecorderStatus("Transcription in progress…");
+    await pollTranscription(activeTranscriptionId);
+  } catch (error) {
+    console.warn("Transcription request failed", error);
+    setRecorderStatus(error?.message || "Transcription failed.");
+  } finally {
+    if (recordButton) {
+      recordButton.disabled = false;
+    }
+    if (recorderState === "transcribing") {
+      recorderState = "ready";
+    }
+    updateTranscribeButton();
+  }
+}
+
+async function checkRecorderHealth() {
+  if (!recorderStatus) return;
+  try {
+    const response = await fetch(`${DEV_API_BASE}/v1/health`, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    if (recorderState === "idle") {
+      if (payload.haveKey) {
+        setRecorderStatus("Recorder ready. Click Record to begin.");
+      } else {
+        setRecorderStatus("Recorder ready. Add ASSEMBLYAI_API_KEY to enable transcription.");
+      }
+    }
+  } catch (error) {
+    if (recorderState === "idle") {
+      setRecorderStatus("Recorder ready. Dev API unavailable.");
+    }
+  }
+}
+
+function initRecorder() {
+  if (!recordButton || !transcribeButton || !recorderControls) {
+    return;
+  }
+  if (!navigator?.mediaDevices?.getUserMedia || typeof window.MediaRecorder === "undefined") {
+    recordButton.disabled = true;
+    transcribeButton.disabled = true;
+    setRecorderStatus("Recording is not supported in this browser.");
+    return;
+  }
+  recordButton.addEventListener("click", () => {
+    if (recorderState === "starting" || recorderState === "stopping") {
+      return;
+    }
+    if (recorderState === "recording") {
+      stopRecording();
+      return;
+    }
+    if (recorderState !== "transcribing") {
+      startRecording();
+    }
+  });
+  transcribeButton.addEventListener("click", () => {
+    if (!transcribeButton.disabled && recorderState !== "transcribing") {
+      sendForTranscription();
+    }
+  });
+  window.addEventListener("beforeunload", () => {
+    clearMediaStream();
+    releasePlayback();
+  });
+  setRecorderStatus("Recorder ready. Click Record to begin.");
+  updateTranscribeButton();
+  checkRecorderHealth();
+}
+
 if (statusButton) {
   statusButton.addEventListener("click", () => toggleDialog());
 }
@@ -386,15 +825,32 @@ if (dialogClose) {
   dialogClose.addEventListener("click", () => closeDialog());
 }
 if (statusRefresh) {
-  statusRefresh.addEventListener("click", () => runChecks("dialog"));
+  statusRefresh.addEventListener("click", () => {
+    setRefreshBusy(true);
+    Promise.resolve(runChecks("dialog"))
+      .catch((error) => {
+        console.warn("Refresh request failed", error);
+      })
+      .finally(() => {
+        setRefreshBusy(false);
+      });
+  });
 }
 
 document.addEventListener("keydown", handleShortcut);
+window.addEventListener("scribecat:heartbeat", handleHeartbeat);
+window.addEventListener("scribecat:heartbeat-ready", () => {
+  const snapshot = window.__scribecatHeartbeat?.getSnapshot?.();
+  if (snapshot && snapshot.statuses) {
+    handleHeartbeat({ detail: snapshot });
+  }
+  flushHeartbeatQueue();
+});
 setupNotesField();
 loadVersionMetadata();
-runChecks("initial");
-setInterval(() => {
-  runChecks("interval");
-}, 60000);
+initRecorder();
+runChecks("initial").catch((error) => {
+  console.warn("Initial heartbeat failed", error);
+});
 
 export {};
