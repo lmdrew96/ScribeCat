@@ -35,6 +35,8 @@ bash scripts/dev_end.sh
 - **Inject the dev key** – export `ASSEMBLYAI_API_KEY` in your shell and run `node scripts/env_inject.mjs`. The script writes `web/.runtime/env.js`, which is ignored by git, and merges the key into `window.SC_ENV.AAI` for the browser runtime.
 - **Privacy** – recordings stay local until you click **Transcribe**. When the key is present the clip uploads directly to AssemblyAI’s `/v2/upload` endpoint; keep that in mind before sending sensitive audio.
 - **Recorder workflow** – Record ⟶ Stop ⟶ optionally Play/Save the `.webm`/`.ogg` output ⟶ Transcribe when the button is visible. Without a key the button is hidden and the action bar shows a tooltip (`Transcription unavailable in prod without proxy.`) as a reminder that the dev adapter is disabled.
+- **Recorder settings drawer** – Click the gear in the header (or press <kbd>Cmd/Ctrl</kbd> + <kbd>,</kbd>) to toggle preferences. Auto-open transcript is enabled by default; auto-save downloads the clip automatically to your browser’s default Downloads folder and stays disabled until you opt in.
+- **Command palette** – Press <kbd>Cmd/Ctrl</kbd> + <kbd>K</kbd> or use the ⌘K button to search for recorder actions, open settings, rerun checks, or jump to the shortcut reference without leaving the keyboard.
 - **Status overlay** – Toggle visibility with <kbd>Cmd/Ctrl</kbd> + <kbd>`</kbd>. Click the bottom-right chevron to collapse into a pill that only shows the health dot. The collapsed state persists via `localStorage.setItem("scribecat:statusCollapsed", "1" | "0")`.
 
 ### Troubleshooting

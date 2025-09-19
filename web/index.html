@@ -38,6 +38,26 @@
         <button type="button" class="header-button" id="themeToggle" title="Toggle theme (T)" aria-pressed="false" aria-label="Toggle theme">
           ☀︎
         </button>
+        <button
+          type="button"
+          class="header-button"
+          data-command-open
+          title="Command palette (Cmd/Ctrl+K)"
+          aria-label="Open command palette"
+        >
+          ⌘K
+        </button>
+        <button
+          type="button"
+          class="header-button"
+          id="settingsButton"
+          title="Recorder settings (Cmd/Ctrl+,)"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Recorder settings"
+        >
+          ⚙
+        </button>
       </div>
     </header>
 
@@ -120,7 +140,7 @@
               <h2>Transcript</h2>
               <span class="transcript-status" data-transcript-status>Transcription requires ASSEMBLYAI_API_KEY.</span>
             </header>
-            <div class="transcript-body" data-transcript-output aria-live="polite"></div>
+            <div class="transcript-body" data-transcript-output aria-live="polite" tabindex="-1"></div>
           </section>
           <section class="log-panel" id="logPanel" aria-live="polite">
             <header class="log-header">
@@ -156,6 +176,92 @@
     <footer class="app-footer" role="contentinfo">
       <span>Press <kbd>?</kbd> for shortcuts.</span>
     </footer>
+  </div>
+
+  <div class="command-palette" data-command-palette hidden aria-hidden="true">
+    <div class="command-palette__backdrop"></div>
+    <section
+      class="command-palette__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="commandPaletteTitle"
+    >
+      <header class="command-palette__header">
+        <h2 id="commandPaletteTitle">Command palette</h2>
+        <button type="button" class="header-button" data-command-close aria-label="Close command palette">×</button>
+      </header>
+      <div class="command-palette__search">
+        <label class="visually-hidden" for="commandPaletteInput">Search commands</label>
+        <input
+          type="search"
+          id="commandPaletteInput"
+          data-command-input
+          placeholder="Search commands…"
+          autocomplete="off"
+          spellcheck="false"
+          role="combobox"
+          aria-controls="commandPaletteList"
+          aria-expanded="false"
+        />
+      </div>
+      <div class="command-palette__results">
+        <div
+          class="command-palette__list"
+          id="commandPaletteList"
+          data-command-list
+          role="listbox"
+          aria-label="Available commands"
+        ></div>
+        <p class="command-palette__empty" data-command-empty hidden>No matching commands.</p>
+      </div>
+      <footer class="command-palette__footer">
+        <span>Use ↑↓ to browse • Enter to run • Esc to close</span>
+      </footer>
+    </section>
+  </div>
+
+  <div class="settings-drawer" data-settings-drawer hidden aria-hidden="true">
+    <div class="settings-drawer__backdrop" data-settings-dismiss></div>
+    <section
+      class="settings-drawer__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settingsTitle"
+    >
+      <header class="settings-drawer__header">
+        <h2 id="settingsTitle">Recorder settings</h2>
+        <button type="button" class="header-button" data-settings-close aria-label="Close settings">×</button>
+      </header>
+      <div class="settings-drawer__content">
+        <label class="settings-option">
+          <div class="settings-option__details">
+            <span class="settings-option__title">Auto-open transcript</span>
+            <span class="settings-option__description" data-setting-description>
+              Scrolls the transcript pane into view after AssemblyAI returns text.
+            </span>
+          </div>
+          <span class="settings-option__control">
+            <input type="checkbox" data-setting-toggle data-setting-key="autoOpenTranscript" />
+            <span class="settings-option__switch" aria-hidden="true"></span>
+          </span>
+        </label>
+        <label class="settings-option">
+          <div class="settings-option__details">
+            <span class="settings-option__title">Auto-save recording</span>
+            <span class="settings-option__description" data-setting-description>
+              Automatically downloads the clip after you stop recording.
+            </span>
+          </div>
+          <span class="settings-option__control">
+            <input type="checkbox" data-setting-toggle data-setting-key="autoSaveRecording" />
+            <span class="settings-option__switch" aria-hidden="true"></span>
+          </span>
+        </label>
+        <p class="settings-drawer__footnote">
+          Auto-save stores files in your browser&apos;s default downloads folder.
+        </p>
+      </div>
+    </section>
   </div>
 
   <div class="hotkey-overlay" data-modal="hotkeys" data-modal-overlay hidden aria-hidden="true">

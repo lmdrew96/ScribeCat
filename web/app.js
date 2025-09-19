@@ -2,12 +2,138 @@ import { initHotkeysModal } from "./hotkeys.js";
 import { initStatusOverlay } from "./status.js";
 import { createAudioRecorder } from "./recorder.js";
 import { createTranscriber } from "./transcribe.js";
+import { initCommandPalette } from "./commands.js";
 
 const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.2.0" };
 const env = (window.SC_ENV = window.SC_ENV || {});
 const THEME_STORAGE_KEY = "scribe-theme";
 const LOG_LIMIT = 60;
 const ROUTES = new Set(["dashboard", "logs", "about"]);
+
+const SETTINGS_STORAGE_KEY = "scribecat:recorderSettings";
+const DEFAULT_SETTINGS = {
+  autoOpenTranscript: true,
+  autoSaveRecording: false,
+};
+
+const settingsListeners = new Set();
+const commandSources = new Map();
+
+function normalizeSettings(value = {}) {
+  return {
+    autoOpenTranscript: value.autoOpenTranscript !== false,
+    autoSaveRecording: Boolean(value.autoSaveRecording),
+  };
+}
+
+function readStoredSettings() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) {
+      return null;
+    }
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    return normalizeSettings({ ...DEFAULT_SETTINGS, ...parsed });
+  } catch (error) {
+    console.warn("Failed to read recorder settings", error);
+    return null;
+  }
+}
+
+let settingsState = normalizeSettings({ ...DEFAULT_SETTINGS, ...(readStoredSettings() || {}) });
+
+function getSettingsSnapshot() {
+  return { ...settingsState };
+}
+
+function persistSettingsState(next) {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+    }
+  } catch (error) {
+    console.warn("Failed to persist recorder settings", error);
+  }
+}
+
+function notifySettingsListeners() {
+  const snapshot = getSettingsSnapshot();
+  settingsListeners.forEach((listener) => {
+    try {
+      listener(snapshot);
+    } catch (error) {
+      console.warn("Recorder settings listener failed", error);
+    }
+  });
+}
+
+function setSetting(key, value) {
+  if (!(key in DEFAULT_SETTINGS)) return;
+  const normalized = key === "autoOpenTranscript" ? value !== false : Boolean(value);
+  if (settingsState[key] === normalized) return;
+  settingsState = { ...settingsState, [key]: normalized };
+  persistSettingsState(settingsState);
+  notifySettingsListeners();
+}
+
+function subscribeSettings(listener) {
+  if (typeof listener !== "function") {
+    return () => {};
+  }
+  settingsListeners.add(listener);
+  try {
+    listener(getSettingsSnapshot());
+  } catch (error) {
+    console.warn("Recorder settings listener failed", error);
+  }
+  return () => {
+    settingsListeners.delete(listener);
+  };
+}
+
+function getSettingValue(key) {
+  return settingsState[key];
+}
+
+function registerCommandSource(key, supplier) {
+  if (!key || typeof supplier !== "function") {
+    return () => {};
+  }
+  commandSources.set(key, supplier);
+  refreshCommandPalette();
+  return () => {
+    if (commandSources.get(key) === supplier) {
+      commandSources.delete(key);
+      refreshCommandPalette();
+    }
+  };
+}
+
+function collectCommandsFromSources() {
+  const commands = [];
+  commandSources.forEach((supplier) => {
+    try {
+      const result = supplier();
+      if (Array.isArray(result)) {
+        commands.push(...result);
+      }
+    } catch (error) {
+      console.warn("Command palette source failed", error);
+    }
+  });
+  return commands;
+}
+
+function refreshCommandPalette() {
+  if (!commandPaletteController || typeof commandPaletteController.setCommands !== "function") {
+    return;
+  }
+  const commands = collectCommandsFromSources();
+  commandPaletteController.setCommands(commands);
+}
 
 const logEntries = [];
 const statusTargets = new Map();
@@ -20,6 +146,8 @@ let logFallbackEl = null;
 let appShellEl = null;
 let themeToggleBtn = null;
 let hotkeysController = null;
+let commandPaletteController = null;
+let settingsDrawerController = null;
 let hasExplicitTheme = false;
 let currentTheme = "light";
 let currentProduct = { ...DEFAULT_PRODUCT };
@@ -112,6 +240,7 @@ function addLogEntry(level, message) {
     logEntries.splice(0, logEntries.length - LOG_LIMIT);
   }
   renderLogs();
+  refreshCommandPalette();
 }
 
 function clearLogs() {
@@ -318,6 +447,184 @@ function toggleTheme() {
   hasExplicitTheme = true;
   localStorage.setItem(THEME_STORAGE_KEY, next);
   applyTheme(next);
+  refreshCommandPalette();
+}
+
+function initSettingsDrawer(root = document) {
+  const drawer = root.querySelector("[data-settings-drawer]");
+  const trigger = root.getElementById("settingsButton");
+  if (!drawer) {
+    if (trigger) {
+      trigger.setAttribute("hidden", "hidden");
+      trigger.setAttribute("aria-hidden", "true");
+    }
+    return null;
+  }
+
+  const doc = drawer.ownerDocument || root;
+  const panel = drawer.querySelector(".settings-drawer__panel");
+  const backdrop = drawer.querySelector(".settings-drawer__backdrop");
+  const closeButtons = Array.from(drawer.querySelectorAll("[data-settings-close]"));
+  const toggles = Array.from(drawer.querySelectorAll("[data-setting-toggle]"));
+
+  if (panel && !panel.hasAttribute("tabindex")) {
+    panel.setAttribute("tabindex", "-1");
+  }
+
+  drawer.hidden = true;
+  drawer.classList.remove("is-open");
+  drawer.setAttribute("aria-hidden", "true");
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.setAttribute("aria-haspopup", "dialog");
+  }
+
+  let isOpen = false;
+  let lastFocused = null;
+  let previousBodyOverflow = null;
+
+  function focusElement(element) {
+    if (!element || typeof element.focus !== "function") return;
+    try {
+      element.focus({ preventScroll: true });
+    } catch (error) {
+      element.focus();
+    }
+  }
+
+  function lockScroll() {
+    if (!doc?.body) return;
+    previousBodyOverflow = doc.body.style.overflow;
+    doc.body.style.overflow = "hidden";
+  }
+
+  function unlockScroll() {
+    if (!doc?.body) return;
+    if (previousBodyOverflow != null) {
+      doc.body.style.overflow = previousBodyOverflow;
+    } else {
+      doc.body.style.removeProperty("overflow");
+    }
+    previousBodyOverflow = null;
+  }
+
+  function openDrawer(triggerElement) {
+    if (isOpen) return;
+    const active = doc.activeElement;
+    if (triggerElement instanceof HTMLElement) {
+      lastFocused = triggerElement;
+    } else if (active instanceof HTMLElement) {
+      lastFocused = active;
+    } else {
+      lastFocused = null;
+    }
+    isOpen = true;
+    drawer.hidden = false;
+    drawer.classList.add("is-open");
+    drawer.setAttribute("aria-hidden", "false");
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", "true");
+    }
+    lockScroll();
+    requestAnimationFrame(() => {
+      focusElement(panel || drawer);
+    });
+  }
+
+  function closeDrawer() {
+    if (!isOpen) return;
+    isOpen = false;
+    drawer.classList.remove("is-open");
+    drawer.hidden = true;
+    drawer.setAttribute("aria-hidden", "true");
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", "false");
+    }
+    unlockScroll();
+    const target = lastFocused;
+    lastFocused = null;
+    focusElement(target);
+  }
+
+  function toggleDrawer(force, triggerElement) {
+    if (typeof force === "boolean") {
+      if (force) {
+        openDrawer(triggerElement);
+      } else {
+        closeDrawer();
+      }
+      return isOpen;
+    }
+    if (isOpen) {
+      closeDrawer();
+    } else {
+      openDrawer(triggerElement);
+    }
+    return isOpen;
+  }
+
+  function syncSettings(state = getSettingsSnapshot()) {
+    toggles.forEach((toggle) => {
+      const key = toggle.dataset.settingKey;
+      if (!key) return;
+      const value = state[key];
+      if (key === "autoOpenTranscript") {
+        toggle.checked = value !== false;
+      } else {
+        toggle.checked = Boolean(value);
+      }
+    });
+  }
+
+  const unsubscribe = subscribeSettings(syncSettings);
+
+  toggles.forEach((toggle) => {
+    toggle.addEventListener("change", () => {
+      const key = toggle.dataset.settingKey;
+      if (!key) return;
+      const next = toggle.checked;
+      setSetting(key, next);
+    });
+  });
+
+  if (trigger) {
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      toggleDrawer(true, trigger);
+    });
+  }
+
+  closeButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      closeDrawer();
+    });
+  });
+
+  if (backdrop) {
+    backdrop.addEventListener("click", () => {
+      closeDrawer();
+    });
+  }
+
+  drawer.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDrawer();
+    }
+  });
+
+  syncSettings();
+
+  return {
+    open: openDrawer,
+    close: closeDrawer,
+    toggle: toggleDrawer,
+    isOpen: () => isOpen,
+    destroy() {
+      unsubscribe();
+    },
+  };
 }
 
 function isTypingTarget(target) {
@@ -331,6 +638,35 @@ function handleKeydown(event) {
   if (event.defaultPrevented) return;
   const key = event.key;
   const target = event.target;
+  const isModKey = event.metaKey || event.ctrlKey;
+
+  if (commandPaletteController?.isOpen()) {
+    if (key === "Escape") {
+      event.preventDefault();
+      commandPaletteController.close();
+    }
+    return;
+  }
+
+  if (settingsDrawerController?.isOpen() && key === "Escape") {
+    event.preventDefault();
+    settingsDrawerController.close();
+    return;
+  }
+
+  if (isModKey && !event.altKey && !event.shiftKey) {
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === "k" && !isTypingTarget(target)) {
+      event.preventDefault();
+      commandPaletteController?.toggle(true, target instanceof HTMLElement ? target : null);
+      return;
+    }
+    if (key === "," && !isTypingTarget(target)) {
+      event.preventDefault();
+      settingsDrawerController?.toggle(true, target instanceof HTMLElement ? target : null);
+      return;
+    }
+  }
 
   if (key === "?" && !event.repeat && !isTypingTarget(target)) {
     event.preventDefault();
@@ -396,6 +732,9 @@ function initRecorderPanel() {
   const actionsContainer = recorderRoot.querySelector(".recorder-actions");
   const TRANSCRIBE_DISABLED_MESSAGE = "Transcription unavailable in prod without proxy.";
   let transcribeTooltipEl = null;
+  let activeSettings = getSettingsSnapshot();
+  let unsubscribeSettings = null;
+  let unregisterRecorderCommands = () => {};
   recorderRoot.querySelectorAll("[data-recorder-action]").forEach((button) => {
     const action = button.getAttribute("data-recorder-action");
     if (!buttonsByAction.has(action)) {
@@ -431,6 +770,14 @@ function initRecorderPanel() {
     return;
   }
 
+  unsubscribeSettings = subscribeSettings((next) => {
+    activeSettings = next;
+    if (next.autoSaveRecording && current.blob && !current.autoSaved) {
+      maybeAutoSaveRecording();
+    }
+  });
+  unregisterRecorderCommands = registerCommandSource("recorder", buildRecorderCommands);
+
   const current = {
     blob: null,
     url: null,
@@ -438,6 +785,7 @@ function initRecorderPanel() {
     durationMs: 0,
     size: 0,
     mimeType: "",
+    autoSaved: false,
   };
 
   let isPlaying = false;
@@ -455,6 +803,45 @@ function initRecorderPanel() {
     audioEl.addEventListener("ended", () => {
       isPlaying = false;
       updatePlayButtons();
+    });
+  }
+
+  function settingEnabled(key) {
+    const value = activeSettings?.[key];
+    if (key === "autoOpenTranscript") {
+      return value !== false;
+    }
+    return Boolean(value);
+  }
+
+  function refreshRecorderCommands() {
+    refreshCommandPalette();
+  }
+
+  function maybeAutoSaveRecording() {
+    if (!settingEnabled("autoSaveRecording")) return;
+    if (current.autoSaved) return;
+    const saved = performSave({ manual: false });
+    if (saved) {
+      current.autoSaved = true;
+    }
+  }
+
+  function revealTranscriptPanel() {
+    if (!settingEnabled("autoOpenTranscript")) return;
+    const target = transcriptOutputEl || transcriptRoot;
+    if (!target) return;
+    requestAnimationFrame(() => {
+      try {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch {}
+      if (typeof target.focus === "function") {
+        try {
+          target.focus({ preventScroll: true });
+        } catch (error) {
+          target.focus();
+        }
+      }
     });
   }
 
@@ -632,6 +1019,7 @@ function initRecorderPanel() {
       if (transcriptStatusEl && message) {
         transcriptStatusEl.textContent = message;
       }
+      refreshRecorderCommands();
     }
   }
 
@@ -644,6 +1032,7 @@ function initRecorderPanel() {
     current.size = 0;
     current.mimeType = "";
     current.extension = "ogg";
+    current.autoSaved = false;
     timerEl.textContent = "00:00";
     sizeEl.textContent = "0.00 MB";
     updateMeter(0);
@@ -663,6 +1052,7 @@ function initRecorderPanel() {
     setButtonDisabled("save", true);
     setButtonDisabled("clear", true);
     setButtonDisabled("transcribe", true);
+    refreshRecorderCommands();
   }
 
   function handleRecorderState(details) {
@@ -709,6 +1099,7 @@ function initRecorderPanel() {
         current.durationMs = details.duration ?? current.durationMs;
         current.mimeType = details.mimeType || (current.blob ? current.blob.type : "");
         current.extension = details.extension || inferExtension(current.mimeType);
+        current.autoSaved = false;
         timerEl.textContent = formatDuration(current.durationMs);
         sizeEl.textContent = formatSize(current.size);
         updateMeter(0);
@@ -740,6 +1131,7 @@ function initRecorderPanel() {
         setButtonDisabled("clear", !current.blob);
         setButtonDisabled("transcribe", !canTranscribe);
         addLogEntry("info", "Recording ready.");
+        maybeAutoSaveRecording();
         break;
       }
       case "idle": {
@@ -753,6 +1145,7 @@ function initRecorderPanel() {
       default:
         break;
     }
+    refreshRecorderCommands();
   }
 
   function ensureRecordingStopped() {
@@ -800,15 +1193,24 @@ function initRecorderPanel() {
     }
   }
 
-  function saveRecording() {
-    if (!current.blob || !current.url || !downloadEl) return;
+  function performSave(options = {}) {
+    if (!current.blob || !current.url || !downloadEl) return false;
+    const manual = options?.manual !== false;
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const extension = current.extension || inferExtension(current.mimeType);
     const filename = `scribecat-${timestamp}.${extension}`;
     downloadEl.href = current.url;
     downloadEl.download = filename;
     downloadEl.click();
-    addLogEntry("info", `Recording saved (${filename}).`);
+    addLogEntry("info", manual ? `Recording saved (${filename}).` : `Recording auto-saved (${filename}).`);
+    return true;
+  }
+
+  function handleSaveClick(event) {
+    if (event instanceof Event) {
+      event.preventDefault();
+    }
+    performSave({ manual: true });
   }
 
   function clearRecordingAction() {
@@ -826,6 +1228,7 @@ function initRecorderPanel() {
     });
     setButtonDisabled("record", active);
     setButtonDisabled("stop", true);
+    refreshRecorderCommands();
   }
 
   async function runTranscription() {
@@ -866,6 +1269,7 @@ function initRecorderPanel() {
       if (transcriptStatusEl) {
         transcriptStatusEl.textContent = "Transcription completed.";
       }
+      revealTranscriptPanel();
       setRecorderUiState("transcribed", { message: "Transcript ready.", overlayState: "transcribed" });
       addLogEntry("info", "Transcription completed.");
     } catch (error) {
@@ -890,6 +1294,101 @@ function initRecorderPanel() {
     }
   }
 
+  function buildRecorderCommands() {
+    const clipReady = Boolean(current.blob);
+    const recording = recorder.isRecording();
+    const transcribing = Boolean(transcribeAbort);
+    const playbackReady = clipReady && audioEl;
+    const playbackPaused = !audioEl || audioEl.paused;
+
+    const commands = [
+      {
+        id: "recorder-start",
+        label: "Start recording",
+        description: "Begin a new clip from the microphone.",
+        keywords: ["record", "start", "microphone"],
+        shortcut: "Record",
+        run: startRecording,
+        isVisible: () => !recording && !transcribing,
+        isEnabled: () => !recording && !transcribing,
+      },
+      {
+        id: "recorder-stop",
+        label: "Stop recording",
+        description: "Finalize the current recording.",
+        keywords: ["stop", "record"],
+        shortcut: "Stop",
+        run: stopRecording,
+        isVisible: () => recording,
+        isEnabled: () => recording,
+      },
+      {
+        id: "recorder-play",
+        label: "Play recording",
+        description: "Listen to the latest clip.",
+        keywords: ["play", "audio", "preview"],
+        shortcut: "Play",
+        run: togglePlayback,
+        isVisible: () => playbackReady && playbackPaused,
+        isEnabled: () => playbackReady,
+      },
+      {
+        id: "recorder-pause",
+        label: "Pause playback",
+        description: "Pause the current playback.",
+        keywords: ["pause", "audio"],
+        shortcut: "Pause",
+        run: togglePlayback,
+        isVisible: () => playbackReady && !playbackPaused,
+        isEnabled: () => playbackReady,
+      },
+      {
+        id: "recorder-save",
+        label: "Save recording",
+        description: "Download the audio file to your device.",
+        keywords: ["save", "download"],
+        shortcut: "Save",
+        run: () => performSave({ manual: true }),
+        isVisible: () => clipReady,
+        isEnabled: () => clipReady,
+      },
+      {
+        id: "recorder-clear",
+        label: "Clear recording",
+        description: "Reset the recorder and remove the current clip.",
+        keywords: ["clear", "reset", "remove"],
+        shortcut: "Clear",
+        run: clearRecordingAction,
+        isVisible: () => clipReady || recording || transcribing,
+        isEnabled: () => !recording && !transcribing,
+      },
+      {
+        id: "recorder-transcribe",
+        label: "Transcribe recording",
+        description: "Send the clip to AssemblyAI for transcription.",
+        keywords: ["transcribe", "assemblyai", "text"],
+        shortcut: "Transcribe",
+        run: runTranscription,
+        isVisible: () => clipReady && transcriber.hasApiKey,
+        isEnabled: () => clipReady && transcriber.hasApiKey && !transcribing,
+      },
+      {
+        id: "recorder-cancel-transcription",
+        label: "Cancel transcription",
+        description: "Abort the active transcription request.",
+        keywords: ["cancel", "abort", "transcribe"],
+        shortcut: "Cancel",
+        run: () => {
+          cancelTranscription("Transcription canceled.");
+        },
+        isVisible: () => transcribing,
+        isEnabled: () => transcribing,
+      },
+    ];
+
+    return commands;
+  }
+
   (buttonsByAction.get("record") || []).forEach((button) => {
     button.addEventListener("click", startRecording);
   });
@@ -900,7 +1399,7 @@ function initRecorderPanel() {
     button.addEventListener("click", togglePlayback);
   });
   (buttonsByAction.get("save") || []).forEach((button) => {
-    button.addEventListener("click", saveRecording);
+    button.addEventListener("click", handleSaveClick);
   });
   (buttonsByAction.get("clear") || []).forEach((button) => {
     button.addEventListener("click", clearRecordingAction);
@@ -926,6 +1425,14 @@ function initRecorderPanel() {
     ensureRecordingStopped();
     recorder.reset();
     revokeObjectUrl();
+    if (typeof unsubscribeSettings === "function") {
+      unsubscribeSettings();
+      unsubscribeSettings = null;
+    }
+    if (typeof unregisterRecorderCommands === "function") {
+      unregisterRecorderCommands();
+      unregisterRecorderCommands = () => {};
+    }
   });
 }
 
@@ -966,6 +1473,71 @@ document.addEventListener("DOMContentLoaded", () => {
     clearBtn.addEventListener("click", clearLogs);
   }
   hotkeysController = initHotkeysModal(document);
+  settingsDrawerController = initSettingsDrawer(document);
+  commandPaletteController = initCommandPalette(document);
+
+  registerCommandSource("core", () => {
+    const settingsButton = document.getElementById("settingsButton");
+    return [
+      {
+        id: "core-open-settings",
+        label: "Open recorder settings",
+        description: "Adjust auto-save and transcript preferences.",
+        keywords: ["settings", "preferences", "drawer"],
+        shortcut: "Cmd/Ctrl+,",
+        run: () => {
+          settingsDrawerController?.toggle(true, settingsButton || null);
+        },
+        isVisible: () => Boolean(settingsDrawerController),
+        isEnabled: () => Boolean(settingsDrawerController),
+      },
+      {
+        id: "core-toggle-theme",
+        label: () => (currentTheme === "dark" ? "Switch to light theme" : "Switch to dark theme"),
+        description: "Toggle between light and dark modes.",
+        keywords: ["theme", "appearance", "light", "dark"],
+        shortcut: "T",
+        run: toggleTheme,
+        isVisible: () => true,
+        isEnabled: () => true,
+      },
+      {
+        id: "core-rerun-checks",
+        label: "Rerun status checks",
+        description: "Ping internet and static server health endpoints.",
+        keywords: ["status", "check", "refresh"],
+        shortcut: "R",
+        run: () => runAllChecks(),
+        isVisible: () => true,
+        isEnabled: () => true,
+      },
+      {
+        id: "core-clear-logs",
+        label: "Clear logs",
+        description: "Remove all entries from the log panel.",
+        keywords: ["logs", "clear"],
+        shortcut: "L",
+        run: clearLogs,
+        isVisible: () => true,
+        isEnabled: () => logEntries.length > 0,
+      },
+      {
+        id: "core-show-hotkeys",
+        label: "Show keyboard shortcuts",
+        description: "Display the shortcut reference overlay.",
+        keywords: ["shortcuts", "help", "keyboard"],
+        shortcut: "?",
+        run: () => {
+          if (hotkeysController) {
+            hotkeysController.open(document.body);
+          }
+        },
+        isVisible: () => Boolean(hotkeysController),
+        isEnabled: () => Boolean(hotkeysController),
+      },
+    ];
+  });
+  refreshCommandPalette();
 
   applyRoute(window.location.hash);
   window.addEventListener("hashchange", () => applyRoute(window.location.hash));
