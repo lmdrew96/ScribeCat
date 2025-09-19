@@ -1,6 +1,5 @@
-#!/usr/bin/env bash
 set -euo pipefail
-port="${PORT:-1420}"
-node scripts/static_web.mjs >/dev/null 2>&1 &
-echo $! > web/.runtime/static.pid
+pgrep -f "scripts/static_web.mjs" >/dev/null 2>&1 && exit 0
+nohup node scripts/static_web.mjs >/dev/null 2>&1 &
 sleep 1
+curl -sfI http://localhost:1420/ >/dev/null
