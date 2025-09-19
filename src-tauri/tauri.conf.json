@@ -4,7 +4,7 @@
   "version": "0.3.0",
   "build": {
     "beforeDevCommand": "node scripts/fetch_assets.mjs && bash scripts/start_static.sh",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1420/",
     "frontendDist": "../web"
   }
 }
