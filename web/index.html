@@ -28,27 +28,18 @@
       <header class="top-bar" role="banner">
         <div class="top-bar__title">
           <span class="top-bar__name" id="productName">ScribeCat</span>
-          <span class="top-bar__version" id="productVersion">0.3.0</span>
         </div>
-        <div class="top-bar__status" aria-live="polite">
-          <div class="status-chip" data-status="internet" data-state="checking">
-            <span class="status-chip__dot" aria-hidden="true"></span>
-            <span class="status-chip__text">
-              <span class="status-chip__label">Internet</span>
-              <span class="status-chip__message" data-status-summary role="status" aria-live="polite">
-                Checking…
-              </span>
-            </span>
-          </div>
-          <div class="status-chip" data-status="static" data-state="checking">
-            <span class="status-chip__dot" aria-hidden="true"></span>
-            <span class="status-chip__text">
-              <span class="status-chip__label">Static</span>
-              <span class="status-chip__message" data-status-summary role="status" aria-live="polite">
-                Checking…
-              </span>
-            </span>
-          </div>
+        <div class="top-bar__actions">
+          <button
+            type="button"
+            class="settings-button"
+            data-settings-button
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="settingsDrawer"
+          >
+            Settings
+          </button>
           <button
             type="button"
             class="status-button"
@@ -104,8 +95,136 @@
       </main>
 
       <footer class="app-footer" role="contentinfo">
-        <p>Use the status dialog for quick shortcuts and connectivity checks.</p>
+        <div class="app-footer__meta">
+          <span class="app-footer__label">Version</span>
+          <span class="app-footer__version" id="productVersion">0.3.1</span>
+        </div>
+        <div class="app-footer__status" aria-live="polite">
+          <span class="app-footer__status-label">Live status</span>
+          <div class="app-footer__status-chips">
+            <div class="status-chip" data-status="internet" data-state="checking">
+              <span class="status-chip__dot" aria-hidden="true"></span>
+              <span class="status-chip__text">
+                <span class="status-chip__label">Internet</span>
+                <span class="status-chip__message" data-status-summary role="status" aria-live="polite">
+                  Checking…
+                </span>
+              </span>
+            </div>
+            <div class="status-chip" data-status="static" data-state="checking">
+              <span class="status-chip__dot" aria-hidden="true"></span>
+              <span class="status-chip__text">
+                <span class="status-chip__label">Static</span>
+                <span class="status-chip__message" data-status-summary role="status" aria-live="polite">
+                  Checking…
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
       </footer>
+    </div>
+
+    <div class="settings-drawer" id="settingsDrawer" data-settings-drawer hidden>
+      <div class="settings-drawer__backdrop" data-settings-dismiss></div>
+      <aside
+        class="settings-drawer__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settingsDrawerTitle"
+        tabindex="-1"
+      >
+        <header class="settings-drawer__header">
+          <h2 class="settings-drawer__title" id="settingsDrawerTitle">Workspace settings</h2>
+          <button
+            type="button"
+            class="settings-close"
+            data-settings-close
+            aria-label="Close settings drawer"
+          >
+            ×
+          </button>
+        </header>
+        <div class="settings-drawer__content">
+          <section class="settings-group" aria-labelledby="settingsThemeHeading">
+            <div class="settings-group__heading">
+              <h3 id="settingsThemeHeading">Theme</h3>
+            </div>
+            <p class="settings-group__description">
+              Tune the console appearance to match your classroom lighting.
+            </p>
+            <div class="settings-options" role="radiogroup" aria-labelledby="settingsThemeHeading">
+              <label>
+                <input type="radio" name="settingsTheme" value="system" checked />
+                Match system
+              </label>
+              <label>
+                <input type="radio" name="settingsTheme" value="light" />
+                Light mode
+              </label>
+              <label>
+                <input type="radio" name="settingsTheme" value="dark" />
+                Dark mode
+              </label>
+            </div>
+          </section>
+          <section class="settings-group" aria-labelledby="settingsClassHeading">
+            <div class="settings-group__heading">
+              <h3 id="settingsClassHeading">Classes &amp; groups</h3>
+            </div>
+            <p class="settings-group__description">
+              Organize your students into cohorts for faster note sharing.
+            </p>
+            <div class="settings-actions">
+              <button type="button">Add class</button>
+              <button type="button">Manage rosters</button>
+            </div>
+          </section>
+          <section class="settings-group" aria-labelledby="settingsLayoutHeading">
+            <div class="settings-group__heading">
+              <h3 id="settingsLayoutHeading">Layout</h3>
+            </div>
+            <p class="settings-group__description">
+              Control how the notes and transcript panels behave.
+            </p>
+            <div class="settings-options" role="group" aria-labelledby="settingsLayoutHeading">
+              <label>
+                <input type="checkbox" name="settingsLayoutCompact" />
+                Compact mode for smaller displays
+              </label>
+              <label>
+                <input type="checkbox" name="settingsLayoutMirror" />
+                Mirror transcript beside notes
+              </label>
+              <label>
+                <input type="checkbox" name="settingsLayoutWordCount" checked />
+                Show running word count
+              </label>
+            </div>
+          </section>
+          <section class="settings-group" aria-labelledby="settingsTranscriptionHeading">
+            <div class="settings-group__heading">
+              <h3 id="settingsTranscriptionHeading">Transcription &amp; recording</h3>
+            </div>
+            <p class="settings-group__description">
+              Decide how ScribeCat handles microphone input during class.
+            </p>
+            <div class="settings-options" role="group" aria-labelledby="settingsTranscriptionHeading">
+              <label>
+                <input type="checkbox" name="settingsAutoUpload" checked />
+                Automatically queue transcripts after each recording
+              </label>
+              <label>
+                <input type="checkbox" name="settingsRetainAudio" />
+                Keep raw audio locally after transcription
+              </label>
+            </div>
+            <div class="settings-actions">
+              <button type="button">Open recorder preferences</button>
+            </div>
+          </section>
+        </div>
+      </aside>
     </div>
 
     <div class="status-dialog" id="statusDialog" data-status-dialog hidden>

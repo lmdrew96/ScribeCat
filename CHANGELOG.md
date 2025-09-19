@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 - 2025-09-20
+### Added
+- Header settings drawer with dedicated panels for theme, classroom groups, layout, and transcription preferences.
+
+### Changed
+- Promoted the GalaxyCaterpillar typeface for the ScribeCat title and moved version/status indicators into a compact footer.
+
 ## 0.3.0 - 2025-09-19
 ### Added
 - Status heartbeat now updates the existing UI chips and injects a fallback badge when chips are missing.

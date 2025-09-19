@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.3.0" };
+const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.3.1" };
 const FOCUSABLE_SELECTORS =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 const STATUS_KEYS = ["internet", "static"];
@@ -6,10 +6,14 @@ const STATUS_KEYS = ["internet", "static"];
 const productNameEl = document.getElementById("productName");
 const productVersionEl = document.getElementById("productVersion");
 const statusButton = document.querySelector("[data-status-button]");
+const settingsButton = document.querySelector("[data-settings-button]");
 const dialogRoot = document.querySelector("[data-status-dialog]");
 const dialogPanel = dialogRoot?.querySelector(".status-dialog__panel");
 const dialogClose = dialogRoot?.querySelector("[data-status-close]");
 const statusRefresh = dialogRoot?.querySelector("[data-status-refresh]");
+const settingsRoot = document.querySelector("[data-settings-drawer]");
+const settingsPanel = settingsRoot?.querySelector(".settings-drawer__panel");
+const settingsClose = settingsRoot?.querySelector("[data-settings-close]");
 const notesField = document.getElementById("notesField");
 const recorderControls = document.querySelector("[data-recorder-controls]");
 const recordButton = document.querySelector("[data-recorder-record]");
@@ -45,6 +49,8 @@ let activeTranscriptionId = null;
 
 let dialogOpen = false;
 let lastFocusedElement = null;
+let settingsOpen = false;
+let lastSettingsFocusedElement = null;
 
 function buildStatusRegistry(keys) {
   const registry = {};
@@ -185,6 +191,7 @@ function runChecks(reason = "manual") {
 
 function openDialog() {
   if (!dialogRoot || !dialogPanel || dialogOpen) return;
+  if (settingsOpen) closeSettingsDrawer();
   dialogOpen = true;
   lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   dialogRoot.hidden = false;
@@ -192,7 +199,7 @@ function openDialog() {
   if (statusButton) statusButton.setAttribute("aria-expanded", "true");
   dialogRoot.addEventListener("click", handleDialogRootClick);
   document.addEventListener("keydown", handleDialogKeydown);
-  dialogPanel.addEventListener("keydown", trapDialogFocus);
+  dialogPanel.addEventListener("keydown", handleStatusFocusTrap);
   const focusTarget =
     dialogPanel.querySelector("[data-status-close]") ||
     dialogPanel.querySelector(FOCUSABLE_SELECTORS) ||
@@ -208,7 +215,7 @@ function closeDialog() {
   if (statusButton) statusButton.setAttribute("aria-expanded", "false");
   dialogRoot.removeEventListener("click", handleDialogRootClick);
   document.removeEventListener("keydown", handleDialogKeydown);
-  dialogPanel.removeEventListener("keydown", trapDialogFocus);
+  dialogPanel.removeEventListener("keydown", handleStatusFocusTrap);
   const focusTarget = lastFocusedElement;
   lastFocusedElement = null;
   if (focusTarget && typeof focusTarget.focus === "function") {
@@ -248,6 +255,48 @@ function toggleDialog(force) {
   else openDialog();
 }
 
+function openSettingsDrawer() {
+  if (!settingsRoot || !settingsPanel || settingsOpen) return;
+  if (dialogOpen) closeDialog();
+  settingsOpen = true;
+  lastSettingsFocusedElement =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  settingsRoot.hidden = false;
+  document.body.dataset.settingsOpen = "true";
+  if (settingsButton) settingsButton.setAttribute("aria-expanded", "true");
+  settingsRoot.addEventListener("click", handleSettingsRootClick);
+  document.addEventListener("keydown", handleSettingsKeydown);
+  settingsPanel.addEventListener("keydown", handleSettingsFocusTrap);
+  const focusTarget =
+    settingsPanel.querySelector("[data-settings-close]") ||
+    settingsPanel.querySelector(FOCUSABLE_SELECTORS) ||
+    settingsPanel;
+  requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
+}
+
+function closeSettingsDrawer() {
+  if (!settingsRoot || !settingsPanel || !settingsOpen) return;
+  settingsOpen = false;
+  settingsRoot.hidden = true;
+  delete document.body.dataset.settingsOpen;
+  if (settingsButton) settingsButton.setAttribute("aria-expanded", "false");
+  settingsRoot.removeEventListener("click", handleSettingsRootClick);
+  document.removeEventListener("keydown", handleSettingsKeydown);
+  settingsPanel.removeEventListener("keydown", handleSettingsFocusTrap);
+  const focusTarget = lastSettingsFocusedElement;
+  lastSettingsFocusedElement = null;
+  if (focusTarget && typeof focusTarget.focus === "function") {
+    requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
+  }
+}
+
+function toggleSettingsDrawer(force) {
+  if (force === true) return openSettingsDrawer();
+  if (force === false) return closeSettingsDrawer();
+  if (settingsOpen) closeSettingsDrawer();
+  else openSettingsDrawer();
+}
+
 function handleDialogRootClick(event) {
   if (!dialogOpen) return;
   const target = event.target;
@@ -265,9 +314,26 @@ function handleDialogKeydown(event) {
   }
 }
 
-function trapDialogFocus(event) {
-  if (!dialogOpen || event.key !== "Tab") return;
-  const focusable = Array.from(dialogPanel.querySelectorAll(FOCUSABLE_SELECTORS)).filter(
+function handleSettingsRootClick(event) {
+  if (!settingsOpen) return;
+  const target = event.target;
+  if (target instanceof HTMLElement && target.dataset.settingsDismiss !== undefined) {
+    event.preventDefault();
+    closeSettingsDrawer();
+  }
+}
+
+function handleSettingsKeydown(event) {
+  if (!settingsOpen) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeSettingsDrawer();
+  }
+}
+
+function trapFocusWithin(event, container) {
+  if (event.key !== "Tab" || !container) return;
+  const focusable = Array.from(container.querySelectorAll(FOCUSABLE_SELECTORS)).filter(
     (el) => !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true"
   );
   if (focusable.length === 0) return;
@@ -280,6 +346,16 @@ function trapDialogFocus(event) {
     event.preventDefault();
     last.focus();
   }
+}
+
+function handleStatusFocusTrap(event) {
+  if (!dialogOpen) return;
+  trapFocusWithin(event, dialogPanel);
+}
+
+function handleSettingsFocusTrap(event) {
+  if (!settingsOpen) return;
+  trapFocusWithin(event, settingsPanel);
 }
 
 function handleShortcut(event) {
@@ -705,6 +781,8 @@ function initRecorder() {
   checkRecorderHealth();
 }
 
+if (settingsButton) settingsButton.addEventListener("click", () => toggleSettingsDrawer());
+if (settingsClose) settingsClose.addEventListener("click", () => closeSettingsDrawer());
 if (statusButton) statusButton.addEventListener("click", () => toggleDialog());
 if (dialogClose) dialogClose.addEventListener("click", () => closeDialog());
 if (statusRefresh) {
