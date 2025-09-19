@@ -1,31 +1,300 @@
-<!doctype html>
-<meta charset="utf-8">
-<title>ScribeCat</title>
-<link rel="stylesheet" href="style.css">
-<div class="topbar">
-  <img class="logo" src="assets/nugget.png" alt="Nugget">
-  <div class="title">ScribeCat — Dev UI</div>
-  <div class="right"><span id="net">checking…</span></div>
-</div>
-<main>
-  <section class="card">
-    <h1>It’s alive.</h1>
-    <p>This is the dev UI served from <code>http://localhost:1420/</code>.</p>
-    <p id="hint">Hotkeys: H toggles the status dialog</p>
-    <button id="demo">Open status</button>
-  </section>
-</main>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="git" content="branch=nae/notes-transcribed;sha=86b8022" />
+  <title>ScribeCat Dev Console</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script>
+    window.SC_ENV = window.SC_ENV || {};
+    try {
+      const script = document.createElement("script");
+      script.src = "./.runtime/env.js";
+      script.defer = true;
+      script.onerror = () => {
+        console.info("No runtime env file found; transcription will remain disabled until the key is provided.");
+      };
+      document.head.appendChild(script);
+    } catch (error) {
+      console.info("Failed to prime runtime env", error);
+    }
+  </script>
+</head>
+<body>
+  <div class="app-shell" data-route="dashboard">
+    <header class="app-header" role="banner">
+      <div class="brand">
+        <div class="brand-title">
+          <span class="brand-name" id="productName">ScribeCat</span>
+          <span class="brand-version" id="productVersion">0.2.0</span>
+        </div>
+        <span class="badge-dev" role="status" aria-live="polite">DEV BUILD</span>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="header-button" id="rerunChecks" title="Rerun status checks (R)" aria-label="Rerun status checks">
+          ↻
+        </button>
+        <button type="button" class="header-button" id="themeToggle" title="Toggle theme (T)" aria-pressed="false" aria-label="Toggle theme">
+          ☀︎
+        </button>
+        <button
+          type="button"
+          class="header-button"
+          data-command-open
+          title="Command palette (Cmd/Ctrl+K)"
+          aria-label="Open command palette"
+        >
+          ⌘K
+        </button>
+        <button
+          type="button"
+          class="header-button"
+          id="settingsButton"
+          title="Recorder settings (Cmd/Ctrl+,)"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Recorder settings"
+        >
+          ⚙
+        </button>
+      </div>
+    </header>
 
-<div id="overlay" data-modal role="dialog" aria-modal="true" aria-labelledby="overlay-title" hidden>
-  <div class="panel" tabindex="-1">
-    <h2 id="overlay-title">Status</h2>
-    <ul>
-      <li>Static server <span id="static">checking…</span></li>
-      <li>Internet <span id="internet">checking…</span></li>
-      <li>Build <span id="build">dev</span></li>
-    </ul>
-    <button id="close" data-close>Close</button>
+    <div class="app-body">
+      <nav class="sidebar" aria-label="Sections">
+        <a class="nav-link is-active" href="#dashboard" data-nav="dashboard" aria-current="page">Dashboard</a>
+        <a class="nav-link" href="#logs" data-nav="logs">Logs</a>
+        <a class="nav-link" href="#about" data-nav="about">About</a>
+      </nav>
+
+      <main class="app-main" id="mainContent">
+        <section id="dashboard" class="view" data-view="dashboard">
+          <h1 class="visually-hidden">Dashboard</h1>
+          <p class="view-description">Monitor connectivity, server status, and application readiness at a glance.</p>
+          <div class="status-grid">
+            <article class="status-card" data-status-card="internet" data-state="idle">
+              <div class="status-header">
+                <h2>Internet</h2>
+                <span class="status-indicator" aria-hidden="true"></span>
+              </div>
+              <p class="status-message" data-status-message>Requires JavaScript to run connectivity checks.</p>
+              <p class="status-meta">Last updated: <time data-status-time>never</time></p>
+            </article>
+            <article class="status-card" data-status-card="static" data-state="idle">
+              <div class="status-header">
+                <h2>Static Server</h2>
+                <span class="status-indicator" aria-hidden="true"></span>
+              </div>
+              <p class="status-message" data-status-message>Requires JavaScript to contact the local static server.</p>
+              <p class="status-meta">Last updated: <time data-status-time>never</time></p>
+            </article>
+            <article class="status-card" data-status-card="app" data-state="idle">
+              <div class="status-header">
+                <h2>App</h2>
+                <span class="status-indicator" aria-hidden="true"></span>
+              </div>
+              <p class="status-message" data-status-message>The console will mark the app ready when scripts finish loading.</p>
+              <p class="status-meta">Last updated: <time data-status-time>never</time></p>
+            </article>
+          </div>
+          <section class="recorder-panel" data-recorder data-recorder-state="idle">
+            <div class="recorder-summary">
+              <span class="recorder-dot" data-recorder-dot aria-hidden="true"></span>
+              <div class="recorder-summary-text">
+                <span class="recorder-summary-title">Recorder</span>
+                <span class="recorder-summary-caption" data-recorder-caption>Ready to capture audio.</span>
+              </div>
+              <button type="button" class="recorder-button recorder-button--primary" data-recorder-action="record">Record</button>
+            </div>
+            <div class="recorder-body">
+              <div class="recorder-display">
+                <span class="recorder-timer" data-recorder-timer>00:00</span>
+                <span class="recorder-size" data-recorder-size>0.00 MB</span>
+                <div class="recorder-meter" aria-hidden="true">
+                  <div class="recorder-meter-bar" data-recorder-meter></div>
+                </div>
+              </div>
+              <div class="recorder-actions">
+                <button type="button" class="recorder-button" data-recorder-action="stop" disabled>Stop</button>
+                <button type="button" class="recorder-button" data-recorder-action="play" disabled>Play</button>
+                <button type="button" class="recorder-button" data-recorder-action="save" disabled>Save</button>
+                <button type="button" class="recorder-button" data-recorder-action="clear" disabled>Clear</button>
+                <button
+                  type="button"
+                  class="recorder-button"
+                  data-recorder-action="transcribe"
+                  data-recorder-transcribe
+                  disabled
+                >
+                  Transcribe
+                </button>
+              </div>
+              <div class="recorder-error" data-recorder-error role="status" aria-live="polite"></div>
+              <audio data-recorder-audio hidden controls></audio>
+              <a data-recorder-download hidden download></a>
+            </div>
+          </section>
+          <section class="transcript-panel" data-transcript>
+            <header class="transcript-header">
+              <h2>Transcript</h2>
+              <span class="transcript-status" data-transcript-status>Transcription requires ASSEMBLYAI_API_KEY.</span>
+            </header>
+            <div class="transcript-body" data-transcript-output aria-live="polite" tabindex="-1"></div>
+          </section>
+          <section class="log-panel" id="logPanel" aria-live="polite">
+            <header class="log-header">
+              <h2>Recent Logs</h2>
+              <button type="button" class="text-button" data-action="clear-logs" title="Clear logs (L)" aria-label="Clear log entries">Clear</button>
+            </header>
+            <ol class="log-list" data-log-list>
+              <li class="log-empty">Logs will appear here.</li>
+            </ol>
+          </section>
+        </section>
+
+        <section id="logs" class="view" data-view="logs">
+          <h1>Logs</h1>
+          <p data-log-fallback>The live log stream is available in the dashboard when JavaScript is disabled.</p>
+          <div data-log-host></div>
+        </section>
+
+        <section id="about" class="view" data-view="about">
+          <h1>About</h1>
+          <p>The ScribeCat Dev Console provides quick status checks for connectivity, the bundled static server, and the desktop app shell.</p>
+          <p>Use the hotkeys below to streamline routine checks and theme adjustments:</p>
+          <ul class="about-shortcuts">
+            <li><kbd>T</kbd> toggle theme</li>
+            <li><kbd>R</kbd> rerun status checks</li>
+            <li><kbd>L</kbd> clear log entries</li>
+            <li><kbd>?</kbd> view shortcut help</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <footer class="app-footer" role="contentinfo">
+      <span>Press <kbd>?</kbd> for shortcuts.</span>
+    </footer>
   </div>
-</div>
 
-<script src="app.js"></script>
+  <div class="command-palette" data-command-palette hidden aria-hidden="true">
+    <div class="command-palette__backdrop"></div>
+    <section
+      class="command-palette__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="commandPaletteTitle"
+    >
+      <header class="command-palette__header">
+        <h2 id="commandPaletteTitle">Command palette</h2>
+        <button type="button" class="header-button" data-command-close aria-label="Close command palette">×</button>
+      </header>
+      <div class="command-palette__search">
+        <label class="visually-hidden" for="commandPaletteInput">Search commands</label>
+        <input
+          type="search"
+          id="commandPaletteInput"
+          data-command-input
+          placeholder="Search commands…"
+          autocomplete="off"
+          spellcheck="false"
+          role="combobox"
+          aria-controls="commandPaletteList"
+          aria-expanded="false"
+        />
+      </div>
+      <div class="command-palette__results">
+        <div
+          class="command-palette__list"
+          id="commandPaletteList"
+          data-command-list
+          role="listbox"
+          aria-label="Available commands"
+        ></div>
+        <p class="command-palette__empty" data-command-empty hidden>No matching commands.</p>
+      </div>
+      <footer class="command-palette__footer">
+        <span>Use ↑↓ to browse • Enter to run • Esc to close</span>
+      </footer>
+    </section>
+  </div>
+
+  <div class="settings-drawer" data-settings-drawer hidden aria-hidden="true">
+    <div class="settings-drawer__backdrop" data-settings-dismiss></div>
+    <section
+      class="settings-drawer__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settingsTitle"
+    >
+      <header class="settings-drawer__header">
+        <h2 id="settingsTitle">Recorder settings</h2>
+        <button type="button" class="header-button" data-settings-close aria-label="Close settings">×</button>
+      </header>
+      <div class="settings-drawer__content">
+        <label class="settings-option">
+          <div class="settings-option__details">
+            <span class="settings-option__title">Auto-open transcript</span>
+            <span class="settings-option__description" data-setting-description>
+              Scrolls the transcript pane into view after AssemblyAI returns text.
+            </span>
+          </div>
+          <span class="settings-option__control">
+            <input type="checkbox" data-setting-toggle data-setting-key="autoOpenTranscript" />
+            <span class="settings-option__switch" aria-hidden="true"></span>
+          </span>
+        </label>
+        <label class="settings-option">
+          <div class="settings-option__details">
+            <span class="settings-option__title">Auto-save recording</span>
+            <span class="settings-option__description" data-setting-description>
+              Automatically downloads the clip after you stop recording.
+            </span>
+          </div>
+          <span class="settings-option__control">
+            <input type="checkbox" data-setting-toggle data-setting-key="autoSaveRecording" />
+            <span class="settings-option__switch" aria-hidden="true"></span>
+          </span>
+        </label>
+        <p class="settings-drawer__footnote">
+          Auto-save stores files in your browser&apos;s default downloads folder.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <div class="hotkey-overlay" data-modal="hotkeys" data-modal-overlay hidden aria-hidden="true">
+    <div
+      class="hotkey-dialog"
+      data-modal-dialog
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hotkeyTitle"
+      aria-describedby="hotkeyDescription"
+      tabindex="-1"
+    >
+      <header class="hotkey-header">
+        <h2 id="hotkeyTitle">Keyboard shortcuts</h2>
+        <button type="button" class="header-button" data-modal-close aria-label="Close shortcut help">×</button>
+      </header>
+      <ul class="hotkey-list">
+        <li><kbd>?</kbd> Toggle this overlay</li>
+        <li><kbd>T</kbd> Toggle theme</li>
+        <li><kbd>R</kbd> Rerun status checks</li>
+        <li><kbd>L</kbd> Clear recent logs</li>
+      </ul>
+      <p class="hotkey-footnote" id="hotkeyDescription">Shortcuts are ignored while typing in inputs or editable regions.</p>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="noscript">
+      JavaScript is disabled. Status checks and live logs require JavaScript, but static content remains available.
+    </div>
+  </noscript>
+  <div id="status-root" aria-live="polite"></div>
+  <script src="./app.js" type="module" defer></script>
+  <script src="/log_overlay.js"></script>
+</body>
+</html>
