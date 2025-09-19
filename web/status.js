@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.2.0" };
+const DEFAULT_PRODUCT = { name: "ScribeCat", version: "0.3.0" };
 const STORAGE_KEY = "scribecat:statusVisible";
 const COLLAPSE_STORAGE_KEY = "scribecat:statusCollapsed";
 const QUERY_KEY = "status";
