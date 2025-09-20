@@ -1726,3 +1726,35 @@ if (typeof __sc_handleGlobalClick === "function") {
 }
 
 export {};
+(() => {
+  if (window.__scDelegationInstalled) return;
+  window.__scDelegationInstalled = true;
+  const logEl = document.querySelector('[data-selftest-log]');
+  const log = (m) => { if (!logEl) return; const d=document.createElement('div'); d.textContent = new Date().toLocaleTimeString()+" "+m; logEl.appendChild(d); };
+  document.addEventListener('click', (ev) => {
+    const el = ev.target && ev.target.closest && ev.target.closest('[data-action]');
+    if (!el) return;
+    const action = el.dataset.action || "";
+    if (action === "status:toggle") { ev.preventDefault(); typeof toggleDialog==="function" && toggleDialog(); log("status:toggle"); return; }
+    if (action === "status:refresh") { ev.preventDefault(); Promise.resolve(typeof runChecks==="function" && runChecks("dialog")).catch(e=>console.warn("refresh failed",e)); log("status:refresh"); return; }
+    if (action === "recorder:toggle") {
+      ev.preventDefault();
+      if (typeof recorderState!=="undefined") {
+        if (recorderState==="recording" && typeof stopRecording==="function") stopRecording();
+        else if (recorderState!=="transcribing" && typeof startRecording==="function") startRecording();
+      }
+      log("recorder:toggle");
+      return;
+    }
+    if (action === "recorder:transcribe") { ev.preventDefault(); if (!document.querySelector('[data-recorder-transcribe]')?.disabled && typeof sendForTranscription==="function") sendForTranscription(); log("recorder:transcribe"); return; }
+    if (action === "qa:selftest") {
+      ev.preventDefault();
+      log("selftest start");
+      const b = document.querySelector('[data-status-button]'); if (b) { b.click(); log("status open"); setTimeout(()=>{ b.click(); log("status close"); }, 300); }
+      const r = document.querySelector('[data-recorder-record]'); if (r) { r.dispatchEvent(new MouseEvent('click',{bubbles:true})); log("record click dispatched"); }
+      log("selftest done");
+      return;
+    }
+  });
+  window.addEventListener('error', (e) => { console.warn("app error", e.error || e.message); if (logEl){ const d=document.createElement('div'); d.textContent="Error: "+(e.message||"unknown"); logEl.appendChild(d); } });
+})();
