@@ -1680,4 +1680,49 @@ ActionRegistry.register("qa:selftest",runButtonSelfTest);
 ActionRegistry.register("recorder:toggle",()=>{if(typeof recorderState==="undefined")return;if(recorderState==="starting"||recorderState==="stopping")return;if(recorderState==="recording")return stopRecording();if(recorderState!=="transcribing")return startRecording()});
 ActionRegistry.register("recorder:transcribe",()=>{if(!transcribeButton?.disabled&&recorderState!=="transcribing")return sendForTranscription()});
 
+// ---- DevTools wiring (works in Tauri dev) ----
+function __sc_openDevtools() {
+  try {
+    // v2: webviewWindow; v1: window
+    const api = window.__TAURI__?.webviewWindow || window.__TAURI__?.window;
+    const get = api?.getCurrentWebviewWindow || api?.getCurrent;
+    const win = get?.();
+    if (win?.openDevtools) win.openDevtools();
+  } catch (e) {
+    console.warn("DevTools not available", e);
+  }
+}
+
+function __sc_toggleDevtools() {
+  // Many platforms don’t expose an ‘isOpen’, so just try to open each time.
+  __sc_openDevtools();
+}
+
+// Keyboard shortcuts: Cmd+Alt+I / Ctrl+Shift+I / F12
+document.addEventListener("keydown", (e) => {
+  const key = e.key?.toLowerCase?.() || "";
+  const macCombo = e.metaKey && e.altKey && key === "i";
+  const winCombo = e.ctrlKey && e.shiftKey && key === "i";
+  if (macCombo || winCombo || key === "f12") {
+    e.preventDefault();
+    __sc_toggleDevtools();
+  }
+});
+
+// If you’re using the centralized click delegation I added earlier,
+// this lets you wire any element with data-action="devtools:open".
+if (typeof __sc_handleGlobalClick === "function") {
+  const oldHandler = __sc_handleGlobalClick;
+  window.__sc_handleGlobalClick = function (event) {
+    const el = event.target instanceof Element ? event.target.closest("[data-action]") : null;
+    const action = el?.getAttribute("data-action") || "";
+    if (action === "devtools:open") {
+      event.preventDefault();
+      __sc_openDevtools();
+      return;
+    }
+    return oldHandler.call(this, event);
+  };
+}
+
 export {};
