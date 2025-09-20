@@ -1,0 +1,18 @@
+DRY RUN SUMMARY
+===============
+Context: Preparing to reorganize HTML backups into a curated Markdown knowledge base without touching runtime assets.
+
+Key Risks
+- Mislabeling HTML snapshots could mislead release notes.
+- Forgetting `.gitignore` rules may hide newly added backup documents.
+- Skipping validation could allow broken asset references to slip by.
+
+Validation Commands
+1. node scripts/fetch_assets.mjs && bash scripts/ensure_icon.sh
+2. bash scripts/start_static.sh && curl -sI http://localhost:1420/ | head -n 1
+3. npx tauri info
+4. npx tauri dev
+
+Next Steps
+- Draft Markdown note under docs/notes/ summarizing backup inventory.
+- Schedule follow-up to convert priority HTML snapshots into portable Markdown entries.
