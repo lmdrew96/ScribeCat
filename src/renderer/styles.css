@@ -192,19 +192,46 @@ body {
   overflow: hidden;
 }
 
-/* Sidebar */
+/* Sidebar as floating overlay */
 .sidebar {
-  width: 280px;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  height: calc(100vh - 24px);
+  width: 44px; /* collapsed width */
   background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: 20px;
-  overflow-y: auto;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 900;
+  padding: 8px; /* collapsed padding */
+  transition: width 0.25s ease, padding 0.25s ease;
 }
 
+/* Collapsed state shows a simple icon */
+.sidebar:not(.open) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.sidebar:not(.open) * {
+  display: none !important;
+}
+
+.sidebar:not(.open)::before {
+  content: '\2261'; /* triple bar ≡ */
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+/* Expanded overlay panel */
 .sidebar.open {
-  transform: translateX(0);
+  width: 320px;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .sidebar-section {

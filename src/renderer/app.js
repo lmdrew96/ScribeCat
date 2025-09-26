@@ -79,6 +79,8 @@ class ScribeCatApp {
   }
 
   async init() {
+    // Remove any stray duplicate containers that may have been injected by earlier runs or bad merges
+    this.cleanupDomArtifacts();
     this.initializeElements();
     this.setupEventListeners();
     await this.loadSettings();
@@ -107,9 +109,38 @@ class ScribeCatApp {
     console.log('ScribeCat initialized successfully');
   }
 
+  cleanupDomArtifacts() {
+    try {
+      const appRoot = document.getElementById('app');
+      if (!appRoot) return;
+      const bodies = Array.from(appRoot.querySelectorAll('.app-body'));
+      const hasAnyValid = bodies.some(b => b.querySelector('main.main-content'));
+      bodies.forEach(div => {
+        const hasMain = div.querySelector('main.main-content');
+        const hasRecording = div.querySelector('.recording-controls');
+        const onlySidebar = div.children.length === 1 && div.firstElementChild && div.firstElementChild.classList.contains('sidebar');
+        if (hasAnyValid && !hasMain && !hasRecording && onlySidebar) {
+          console.warn('Removing stray app-body without main content');
+          div.remove();
+        }
+      });
+    } catch (e) {
+      // Non-fatal
+    }
+  }
+
   setupEventListeners() {
     if (this.sidebarToggle) {
       this.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
+    }
+    // Allow clicking the collapsed sidebar block itself to open it
+    if (this.sidebar) {
+      this.sidebar.addEventListener('click', (e) => {
+        if (!this.sidebar.classList.contains('open')) {
+          e.stopPropagation();
+          this.sidebar.classList.add('open');
+        }
+      });
     }
     if (this.recordBtn) {
       this.recordBtn.addEventListener('click', () => this.toggleRecording());
@@ -185,6 +216,14 @@ class ScribeCatApp {
     }
     if (this.sendChatBtn) {
       this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
+    }
+    const mainContent = document.getElementById('main-content');
+    if (mainContent) {
+      mainContent.addEventListener('click', () => {
+        if (this.sidebar && this.sidebar.classList.contains('open')) {
+          this.sidebar.classList.remove('open');
+        }
+      });
     }
     if (window.electronAPI && window.electronAPI.onMenuAction) {
       window.electronAPI.onMenuAction((event, action) => {
