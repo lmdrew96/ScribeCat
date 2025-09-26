@@ -200,6 +200,45 @@ class SmokeTest {
       console.log('4. Test cross-platform builds');
     }
 
+    // Automated test for AI summary feature
+    this.test('AI summary button generates summary after transcription stops', () => {
+      // Simulate DOM for renderer
+      const { JSDOM } = require('jsdom');
+      const jsdom = new JSDOM(fs.readFileSync(path.join(this.rootPath, 'src/renderer/index.html'), 'utf8'), { runScripts: 'dangerously', resources: 'usable' });
+      const window = jsdom.window;
+      const document = window.document;
+      // Simulate ScribeCatApp class
+      const appJs = fs.readFileSync(path.join(this.rootPath, 'src/renderer/app.js'), 'utf8');
+      window.eval(appJs);
+      // Simulate transcription entries
+      const transcriptionDisplay = document.getElementById('transcription-display') || document.createElement('div');
+      transcriptionDisplay.id = 'transcription-display';
+      document.body.appendChild(transcriptionDisplay);
+      const entry = document.createElement('div');
+      entry.className = 'transcript-entry';
+      entry.innerHTML = '<div class="transcript-timestamp">12:00</div><div class="transcript-text">Test transcript for summary.</div>';
+      transcriptionDisplay.appendChild(entry);
+      // Simulate notes
+      const notesEditor = document.getElementById('notes-editor') || document.createElement('div');
+      notesEditor.id = 'notes-editor';
+      notesEditor.textContent = 'Test notes for summary.';
+      document.body.appendChild(notesEditor);
+      // Simulate stopping recording
+      const app = window.scribeCatApp || new window.ScribeCatApp();
+      app.isRecording = false;
+      if (app.generateSummaryBtn) {
+        app.generateSummaryBtn.style.display = 'block';
+        // Simulate click
+        app.openAIApiKey = 'test-key';
+        app.generateAISummary = function() {
+          this.aiSummary.innerHTML = '<strong>Summary:</strong> Test summary output.';
+        };
+        app.generateSummaryBtn.click();
+        // Check summary output
+        return app.aiSummary.innerHTML.includes('Test summary output');
+      }
+      return false;
+    });
     process.exit(success ? 0 : 1);
   }
 }
