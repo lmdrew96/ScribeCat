@@ -411,6 +411,20 @@ body {
   background: var(--background);
 }
 
+/* Course selection */
+.course-selection {
+  margin-bottom: 12px;
+}
+
+.manual-course-fields {
+  margin-top: 8px;
+}
+
+.canvas-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .input-field, .font-selector {
   width: 100%;
   padding: 8px 12px;

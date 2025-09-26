@@ -430,6 +430,26 @@ async function main() {
     if (!saved || saved.courseNumber !== 'CS101') throw new Error('Canvas not saved');
   });
 
+  await harness.testAsync('course selection dropdown functionality', async () => {
+    // Test initial state - should load predefined courses
+    await app.loadPredefinedCourses();
+    if (app.courseSelect.children.length < 3) throw new Error('Predefined courses not loaded');
+    
+    // Test manual entry mode
+    app.courseSelect.value = 'other';
+    app.onCourseSelectionChange('other');
+    if (app.manualCourseFields.style.display !== 'block') throw new Error('Manual fields not shown');
+    
+    // Test predefined course selection
+    app.courseSelect.value = 'cs101';
+    app.onCourseSelectionChange('cs101');
+    if (app.manualCourseFields.style.display !== 'none') throw new Error('Manual fields not hidden');
+    
+    // Test getSelectedCourse with predefined selection
+    const selectedCourse = app.getSelectedCourse();
+    if (!selectedCourse.courseNumber || !selectedCourse.courseTitle) throw new Error('Course data not retrieved');
+  });
+
   await harness.testAsync('saveRecording writes notes and transcription', async () => {
     await window.electronAPI.storeSet('drive-folder', '/tmp/scribecat');
     app.notesEditor.innerHTML = '<p>Notes</p>';

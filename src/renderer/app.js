@@ -59,9 +59,12 @@ class ScribeCatApp {
     this.openAIKeyInput = document.getElementById('openai-key');
     this.themeSelect = document.getElementById('theme-select');
     this.canvasUrl = document.getElementById('canvas-url');
+    this.courseSelect = document.getElementById('course-select');
+    this.manualCourseFields = document.getElementById('manual-course-fields');
     this.courseNumber = document.getElementById('course-number');
     this.courseTitle = document.getElementById('course-title');
     this.saveCanvasBtn = document.getElementById('save-canvas');
+    this.manageCoursesBtn = document.getElementById('manage-courses');
     this.driveFolderInput = document.getElementById('drive-folder');
     this.selectDriveFolderBtn = document.getElementById('select-drive-folder');
     // Local audio folder
@@ -201,6 +204,12 @@ class ScribeCatApp {
     if (this.saveCanvasBtn) {
       this.saveCanvasBtn.addEventListener('click', () => this.saveCanvasSettings());
     }
+    if (this.manageCoursesBtn) {
+      this.manageCoursesBtn.addEventListener('click', () => this.manageCourses());
+    }
+    if (this.courseSelect) {
+      this.courseSelect.addEventListener('change', (e) => this.onCourseSelectionChange(e.target.value));
+    }
     if (this.selectDriveFolderBtn) {
       this.selectDriveFolderBtn.addEventListener('click', () => this.selectDriveFolder());
     }
@@ -304,6 +313,28 @@ class ScribeCatApp {
     if (canvasSettings.url) this.canvasUrl.value = canvasSettings.url;
     if (canvasSettings.courseNumber) this.courseNumber.value = canvasSettings.courseNumber;
     if (canvasSettings.courseTitle) this.courseTitle.value = canvasSettings.courseTitle;
+    
+    // Load predefined courses
+    await this.loadPredefinedCourses();
+    
+    // Try to find matching course in predefined list
+    const courses = await window.electronAPI.storeGet('predefined-courses') || [];
+    const matchingCourse = courses.find(course => 
+      course.courseNumber === canvasSettings.courseNumber && 
+      course.courseTitle === canvasSettings.courseTitle
+    );
+    
+    if (matchingCourse) {
+      this.courseSelect.value = matchingCourse.id;
+      this.manualCourseFields.style.display = 'none';
+    } else if (canvasSettings.courseNumber || canvasSettings.courseTitle) {
+      // Use manual entry for existing settings
+      this.courseSelect.value = 'other';
+      this.manualCourseFields.style.display = 'block';
+    } else {
+      // No settings, hide manual fields
+      this.manualCourseFields.style.display = 'none';
+    }
     // Load Drive folder
     const driveFolder = await window.electronAPI.storeGet('drive-folder');
     if (driveFolder) this.driveFolderInput.value = driveFolder;
@@ -1080,12 +1111,151 @@ class ScribeCatApp {
   }
 
   getCanvasInfo() {
+    const selectedCourse = this.getSelectedCourse();
     return {
       url: this.canvasUrl.value,
-      courseNumber: this.courseNumber.value,
-      courseTitle: this.courseTitle.value
+      courseNumber: selectedCourse.courseNumber,
+      courseTitle: selectedCourse.courseTitle
     };
   }
+
+  getSelectedCourse() {
+    if (this.courseSelect.value === 'other' || this.courseSelect.value === '') {
+      // Manual entry or no selection
+      return {
+        courseNumber: this.courseNumber.value,
+        courseTitle: this.courseTitle.value
+      };
+    } else {
+      // Parse selected course option
+      const option = this.courseSelect.options[this.courseSelect.selectedIndex];
+      return {
+        courseNumber: option.dataset.courseNumber || '',
+        courseTitle: option.dataset.courseTitle || option.text
+      };
+    }
+  }
+
+  onCourseSelectionChange(value) {
+    if (value === 'other' || value === '') {
+      this.manualCourseFields.style.display = 'block';
+    } else {
+      this.manualCourseFields.style.display = 'none';
+      // Update manual fields with selected course data for consistency
+      const selectedCourse = this.getSelectedCourse();
+      this.courseNumber.value = selectedCourse.courseNumber;
+      this.courseTitle.value = selectedCourse.courseTitle;
+    }
+  }
+
+  async loadPredefinedCourses() {
+    let courses = await window.electronAPI.storeGet('predefined-courses') || [];
+    
+    // Add some default courses if none exist
+    if (courses.length === 0) {
+      courses = [
+        { id: 'cs101', courseNumber: 'CS 101', courseTitle: 'Introduction to Computer Science' },
+        { id: 'math201', courseNumber: 'MATH 201', courseTitle: 'Calculus I' },
+        { id: 'eng102', courseNumber: 'ENG 102', courseTitle: 'Composition II' },
+        { id: 'hist150', courseNumber: 'HIST 150', courseTitle: 'World History' }
+      ];
+      await window.electronAPI.storeSet('predefined-courses', courses);
+    }
+    
+    // Clear existing options except for default ones
+    while (this.courseSelect.children.length > 2) {
+      this.courseSelect.removeChild(this.courseSelect.lastChild);
+    }
+    
+    // Add predefined courses
+    courses.forEach(course => {
+      const option = document.createElement('option');
+      option.value = course.id;
+      option.textContent = `${course.courseNumber} - ${course.courseTitle}`;
+      option.dataset.courseNumber = course.courseNumber;
+      option.dataset.courseTitle = course.courseTitle;
+      this.courseSelect.appendChild(option);
+    });
+  }
+
+  async manageCourses() {
+    const courses = await window.electronAPI.storeGet('predefined-courses') || [];
+    
+    // Simple course management dialog
+    const courseList = courses.map((course, index) => 
+      `${index + 1}. ${course.courseNumber} - ${course.courseTitle}`
+    ).join('\n');
+    
+    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'scrape' to attempt Canvas course scraping\n4. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
+    
+    if (action) {
+      if (action.startsWith('add:')) {
+        const parts = action.split(':');
+        if (parts.length >= 3) {
+          const courseNumber = parts[1];
+          const courseTitle = parts.slice(2).join(':');
+          const newCourse = {
+            id: Date.now().toString(),
+            courseNumber,
+            courseTitle
+          };
+          courses.push(newCourse);
+          await window.electronAPI.storeSet('predefined-courses', courses);
+          await this.loadPredefinedCourses();
+          alert('Course added successfully!');
+        } else {
+          alert('Invalid format. Use: add:COURSE_NUMBER:COURSE_TITLE');
+        }
+      } else if (action.startsWith('delete:')) {
+        const index = parseInt(action.split(':')[1]) - 1;
+        if (index >= 0 && index < courses.length) {
+          courses.splice(index, 1);
+          await window.electronAPI.storeSet('predefined-courses', courses);
+          await this.loadPredefinedCourses();
+          alert('Course deleted successfully!');
+        } else {
+          alert('Invalid course index.');
+        }
+      } else if (action === 'scrape') {
+        await this.attemptCanvasScraping();
+      } else {
+        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, or scrape');
+      }
+    }
+  }
+
+  async attemptCanvasScraping() {
+    const canvasUrl = this.canvasUrl.value;
+    if (!canvasUrl) {
+      alert('Please enter a Canvas URL first.');
+      return;
+    }
+
+    alert(`Canvas Course Scraping Methods:\n\n1. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n2. Browser Extension:\n   - Create Chrome/Firefox extension\n   - Inject content script into Canvas pages\n   - Parse course list from DOM elements\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nFor now, use the manual course management or consider implementing Canvas API integration.`);
+  }
+
+  /* 
+   * CANVAS SCRAPING IMPLEMENTATION NOTES:
+   * 
+   * Method 1: Canvas API (Best approach)
+   * - GET /api/v1/courses with access token 
+   * - Requires user to generate API token in Canvas settings
+   * - Returns JSON with course data: id, name, course_code, etc.
+   * - Example: https://[institution].instructure.com/api/v1/courses
+   * 
+   * Method 2: Browser Extension
+   * - Content script injected into canvas pages
+   * - Parse DOM: .course-list-item, .course-name, .course-code
+   * - Send data back to Electron app via messaging
+   * 
+   * Method 3: Web Scraping with Authentication
+   * - Use puppeteer or similar to automate login
+   * - Navigate to courses page and extract course elements
+   * - Handle different Canvas themes/layouts
+   * - More fragile due to DOM changes
+   * 
+   * Implementation priority: API > Extension > Scraping
+   */
 
   async saveCanvasSettings() {
     const settings = this.getCanvasInfo();
