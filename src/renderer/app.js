@@ -67,6 +67,9 @@ class ScribeCatApp {
     // Local audio folder
     this.localAudioFolderInput = document.getElementById('local-audio-folder');
     this.selectLocalAudioFolderBtn = document.getElementById('select-local-audio-folder');
+    // Audio destination controls
+    this.audioDestLocalRadio = document.getElementById('audio-dest-local');
+    this.audioDestDriveRadio = document.getElementById('audio-dest-drive');
     
     // Transcription controls
     this.clearTranscriptionBtn = document.getElementById('clear-transcription');
@@ -207,6 +210,13 @@ class ScribeCatApp {
     if (this.selectLocalAudioFolderBtn) {
       this.selectLocalAudioFolderBtn.addEventListener('click', () => this.selectLocalAudioFolder());
     }
+    // Audio destination radio button listeners
+    if (this.audioDestLocalRadio) {
+      this.audioDestLocalRadio.addEventListener('change', () => this.setAudioDestination('local'));
+    }
+    if (this.audioDestDriveRadio) {
+      this.audioDestDriveRadio.addEventListener('change', () => this.setAudioDestination('drive'));
+    }
     if (this.vocalIsolationCheckbox) {
       this.vocalIsolationCheckbox.addEventListener('change', (e) => this.toggleVocalIsolation(!!e.target.checked));
     }
@@ -310,6 +320,12 @@ class ScribeCatApp {
     // Load local audio folder
     const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
     if (localAudioFolder) this.localAudioFolderInput.value = localAudioFolder;
+    // Load audio destination preference
+    const audioDestination = await window.electronAPI.storeGet('audio-destination') || 'local';
+    if (this.audioDestLocalRadio && this.audioDestDriveRadio) {
+      this.audioDestLocalRadio.checked = (audioDestination === 'local');
+      this.audioDestDriveRadio.checked = (audioDestination === 'drive');
+    }
     // Load audio settings
     const audioSettings = await window.electronAPI.storeGet('audio-settings') || {};
     if (audioSettings.vocalIsolation) this.vocalIsolationCheckbox.checked = audioSettings.vocalIsolation;
@@ -982,12 +998,18 @@ class ScribeCatApp {
 
   async saveRecording() {
     try {
-      // Check for local audio folder first, then fall back to Google Drive
+      // Get user's audio destination preference
+      const audioDestination = await window.electronAPI.storeGet('audio-destination') || 'local';
       const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
       const driveFolder = await window.electronAPI.storeGet('drive-folder');
       
-      if (!localAudioFolder && !driveFolder) {
-        alert('Please select either a local audio folder or Google Drive folder first.');
+      // Validate that the selected destination has a folder configured
+      if (audioDestination === 'local' && !localAudioFolder) {
+        alert('Please select a local audio folder first.');
+        return;
+      }
+      if (audioDestination === 'drive' && !driveFolder) {
+        alert('Please select a Google Drive folder first.');
         return;
       }
 
@@ -1003,24 +1025,34 @@ class ScribeCatApp {
       const notesFileName = `${baseFileName}_Notes`;
       const transcriptionFileName = `${baseFileName}_Transcript`;
 
-      // Save audio file to local folder if specified
-      if (localAudioFolder && this.audioChunks.length > 0) {
-        // Ensure target directory exists
-        await window.electronAPI.driveEnsureTarget(localAudioFolder);
-        
+      // Save audio file based on user's destination preference
+      if (this.audioChunks.length > 0) {
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         const audioBuffer = await audioBlob.arrayBuffer();
         const audioArray = new Uint8Array(audioBuffer);
         
-        await window.electronAPI.saveAudioFile({
-          audioData: Array.from(audioArray),
-          fileName: audioFileName, // This will create CourseNumber--OpenAIBlurb.wav
-          folderPath: localAudioFolder
-        });
-        console.log('Audio saved to local folder:', localAudioFolder);
+        if (audioDestination === 'local') {
+          // Save to local folder
+          await window.electronAPI.driveEnsureTarget(localAudioFolder);
+          await window.electronAPI.saveAudioFile({
+            audioData: Array.from(audioArray),
+            fileName: audioFileName,
+            folderPath: localAudioFolder
+          });
+          console.log('Audio saved to local folder:', localAudioFolder);
+        } else if (audioDestination === 'drive') {
+          // Save to Google Drive folder
+          await window.electronAPI.driveEnsureTarget(driveFolder);
+          await window.electronAPI.saveAudioFile({
+            audioData: Array.from(audioArray),
+            fileName: audioFileName,
+            folderPath: driveFolder
+          });
+          console.log('Audio saved to Google Drive:', driveFolder);
+        }
       }
 
-      // Save notes and transcription to Google Drive if specified
+      // Always save notes and transcription to Google Drive if configured
       if (driveFolder) {
         // Ensure target directory exists
         await window.electronAPI.driveEnsureTarget(driveFolder);
@@ -1041,20 +1073,6 @@ class ScribeCatApp {
           fileName: transcriptionFileName // CourseNumber--OpenAIBlurb_Transcript
         });
         console.log('Notes and transcription saved to Google Drive:', driveFolder);
-      }
-
-      // If no local audio folder, save audio to Google Drive as well (legacy behavior)
-      if (!localAudioFolder && driveFolder && this.audioChunks.length > 0) {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        const audioBuffer = await audioBlob.arrayBuffer();
-        const audioArray = new Uint8Array(audioBuffer);
-        
-        await window.electronAPI.saveAudioFile({
-          audioData: Array.from(audioArray),
-          fileName: audioFileName, // This will create CourseNumber--OpenAIBlurb.wav
-          folderPath: driveFolder
-        });
-        console.log('Audio saved to Google Drive:', driveFolder);
       }
 
       alert('Recording saved successfully!');
@@ -1179,6 +1197,17 @@ class ScribeCatApp {
     audioSettings.selectedMicrophone = deviceId;
     await window.electronAPI.storeSet('audio-settings', audioSettings);
     console.log('Microphone selected:', deviceId);
+  }
+
+  async setAudioDestination(destination) {
+    await window.electronAPI.storeSet('audio-destination', destination);
+    console.log('Audio destination set to:', destination);
+    
+    // Update radio button states to reflect the selection
+    if (this.audioDestLocalRadio && this.audioDestDriveRadio) {
+      this.audioDestLocalRadio.checked = (destination === 'local');
+      this.audioDestDriveRadio.checked = (destination === 'drive');
+    }
   }
 
   changeFontFamily(fontFamily) {
