@@ -65,8 +65,11 @@ class ScribeCatApp {
     this.courseTitle = document.getElementById('course-title');
     this.saveCanvasBtn = document.getElementById('save-canvas');
     this.manageCoursesBtn = document.getElementById('manage-courses');
-    this.driveFolderInput = document.getElementById('drive-folder');
-    this.selectDriveFolderBtn = document.getElementById('select-drive-folder');
+    // Drive folder inputs for separate notes and transcriptions
+    this.driveNotesFolderInput = document.getElementById('drive-notes-folder');
+    this.selectDriveNotesFolderBtn = document.getElementById('select-drive-notes-folder');
+    this.driveTranscriptionsFolderInput = document.getElementById('drive-transcriptions-folder');
+    this.selectDriveTranscriptionsFolderBtn = document.getElementById('select-drive-transcriptions-folder');
     // Local audio folder
     this.localAudioFolderInput = document.getElementById('local-audio-folder');
     this.selectLocalAudioFolderBtn = document.getElementById('select-local-audio-folder');
@@ -210,8 +213,11 @@ class ScribeCatApp {
     if (this.courseSelect) {
       this.courseSelect.addEventListener('change', (e) => this.onCourseSelectionChange(e.target.value));
     }
-    if (this.selectDriveFolderBtn) {
-      this.selectDriveFolderBtn.addEventListener('click', () => this.selectDriveFolder());
+    if (this.selectDriveNotesFolderBtn) {
+      this.selectDriveNotesFolderBtn.addEventListener('click', () => this.selectDriveNotesFolder());
+    }
+    if (this.selectDriveTranscriptionsFolderBtn) {
+      this.selectDriveTranscriptionsFolderBtn.addEventListener('click', () => this.selectDriveTranscriptionsFolder());
     }
     if (this.selectLocalAudioFolderBtn) {
       this.selectLocalAudioFolderBtn.addEventListener('click', () => this.selectLocalAudioFolder());
@@ -335,9 +341,22 @@ class ScribeCatApp {
       // No settings, hide manual fields
       this.manualCourseFields.style.display = 'none';
     }
-    // Load Drive folder
-    const driveFolder = await window.electronAPI.storeGet('drive-folder');
-    if (driveFolder) this.driveFolderInput.value = driveFolder;
+    // Load Drive folders (support both new separate folders and legacy single folder)
+    const driveNotesFolder = await window.electronAPI.storeGet('drive-notes-folder');
+    const driveTranscriptionsFolder = await window.electronAPI.storeGet('drive-transcriptions-folder');
+    const legacyDriveFolder = await window.electronAPI.storeGet('drive-folder');
+    
+    // If no separate folders but legacy folder exists, use it for both
+    if (!driveNotesFolder && !driveTranscriptionsFolder && legacyDriveFolder) {
+      this.driveNotesFolderInput.value = legacyDriveFolder;
+      this.driveTranscriptionsFolderInput.value = legacyDriveFolder;
+      // Migrate to new settings
+      await window.electronAPI.storeSet('drive-notes-folder', legacyDriveFolder);
+      await window.electronAPI.storeSet('drive-transcriptions-folder', legacyDriveFolder);
+    } else {
+      if (driveNotesFolder) this.driveNotesFolderInput.value = driveNotesFolder;
+      if (driveTranscriptionsFolder) this.driveTranscriptionsFolderInput.value = driveTranscriptionsFolder;
+    }
     // Load local audio folder
     const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
     if (localAudioFolder) this.localAudioFolderInput.value = localAudioFolder;
@@ -590,8 +609,11 @@ class ScribeCatApp {
   }
 
   async checkDriveStatus() {
-    const driveFolder = await window.electronAPI.storeGet('drive-folder');
-    if (driveFolder) {
+    const driveNotesFolder = await window.electronAPI.storeGet('drive-notes-folder');
+    const driveTranscriptionsFolder = await window.electronAPI.storeGet('drive-transcriptions-folder');
+    const legacyDriveFolder = await window.electronAPI.storeGet('drive-folder');
+    
+    if (driveNotesFolder || driveTranscriptionsFolder || legacyDriveFolder) {
       this.updateStatusChip('drive', 'active');
     } else {
       this.updateStatusChip('drive', 'inactive');
@@ -624,11 +646,11 @@ class ScribeCatApp {
         break;
       case 'drive':
         if (status === 'active') {
-          message = 'Google Drive folder is configured and ready for saving';
+          message = 'Google Drive folders are configured and ready for saving notes and transcriptions';
         } else if (status === 'error') {
           message = 'Google Drive connection error - check folder permissions';
         } else {
-          message = 'Google Drive folder not configured - click the settings button to set up';
+          message = 'Google Drive folders not configured - select folders in sidebar to enable Drive saving';
         }
         break;
     }
@@ -1013,12 +1035,20 @@ class ScribeCatApp {
 
   async saveRecording() {
     try {
-      // Check for local audio folder first, then fall back to Google Drive
+      // Check for local audio folder first, then get separate Drive folders
       const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
-      const driveFolder = await window.electronAPI.storeGet('drive-folder');
+      const driveNotesFolder = await window.electronAPI.storeGet('drive-notes-folder');
+      const driveTranscriptionsFolder = await window.electronAPI.storeGet('drive-transcriptions-folder');
       
-      if (!localAudioFolder && !driveFolder) {
-        alert('Please select either a local audio folder or Google Drive folder first.');
+      // Legacy support: check old single drive folder setting
+      const legacyDriveFolder = await window.electronAPI.storeGet('drive-folder');
+      
+      // Determine effective folders (use legacy as fallback)
+      const effectiveNotesFolder = driveNotesFolder || legacyDriveFolder;
+      const effectiveTranscriptionsFolder = driveTranscriptionsFolder || legacyDriveFolder;
+      
+      if (!localAudioFolder && !effectiveNotesFolder && !effectiveTranscriptionsFolder) {
+        alert('Please select either a local audio folder or Google Drive folders first.');
         return;
       }
 
@@ -1051,31 +1081,38 @@ class ScribeCatApp {
         console.log('Audio saved to local folder:', localAudioFolder);
       }
 
-      // Save notes and transcription to Google Drive if specified
-      if (driveFolder) {
+      // Save notes to Google Drive if notes folder is specified
+      if (effectiveNotesFolder) {
         // Ensure target directory exists
-        await window.electronAPI.driveEnsureTarget(driveFolder);
+        await window.electronAPI.driveEnsureTarget(effectiveNotesFolder);
 
         // Save notes as HTML
         const notesContent = this.generateNotesHTML();
         await window.electronAPI.driveSaveHtml({
-          filePath: driveFolder,
+          filePath: effectiveNotesFolder,
           content: notesContent,
           fileName: notesFileName // CourseNumber--OpenAIBlurb_Notes
         });
+        console.log('Notes saved to Google Drive:', effectiveNotesFolder);
+      }
+
+      // Save transcription to Google Drive if transcriptions folder is specified  
+      if (effectiveTranscriptionsFolder) {
+        // Ensure target directory exists
+        await window.electronAPI.driveEnsureTarget(effectiveTranscriptionsFolder);
 
         // Save transcription as HTML
         const transcriptionContent = this.generateTranscriptionHTML();
         await window.electronAPI.driveSaveHtml({
-          filePath: driveFolder,
+          filePath: effectiveTranscriptionsFolder,
           content: transcriptionContent,
           fileName: transcriptionFileName // CourseNumber--OpenAIBlurb_Transcript
         });
-        console.log('Notes and transcription saved to Google Drive:', driveFolder);
+        console.log('Transcription saved to Google Drive:', effectiveTranscriptionsFolder);
       }
 
-      // If no local audio folder, save audio to Google Drive as well (legacy behavior)
-      if (!localAudioFolder && driveFolder && this.audioChunks.length > 0) {
+      // If no local audio folder, save audio to notes folder as fallback (legacy behavior)
+      if (!localAudioFolder && effectiveNotesFolder && this.audioChunks.length > 0) {
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         const audioBuffer = await audioBlob.arrayBuffer();
         const audioArray = new Uint8Array(audioBuffer);
@@ -1083,9 +1120,9 @@ class ScribeCatApp {
         await window.electronAPI.saveAudioFile({
           audioData: Array.from(audioArray),
           fileName: audioFileName, // This will create CourseNumber--OpenAIBlurb.wav
-          folderPath: driveFolder
+          folderPath: effectiveNotesFolder
         });
-        console.log('Audio saved to Google Drive:', driveFolder);
+        console.log('Audio saved to Google Drive notes folder:', effectiveNotesFolder);
       }
 
       alert('Recording saved successfully!');
@@ -1316,14 +1353,25 @@ class ScribeCatApp {
     alert('Canvas settings saved!');
   }
 
-  async selectDriveFolder() {
+  async selectDriveNotesFolder() {
     const result = await window.electronAPI.showFolderDialog();
     if (!result.canceled && result.filePaths.length > 0) {
       const folderPath = result.filePaths[0];
-      this.driveFolderInput.value = folderPath;
-      await window.electronAPI.storeSet('drive-folder', folderPath);
+      this.driveNotesFolderInput.value = folderPath;
+      await window.electronAPI.storeSet('drive-notes-folder', folderPath);
       this.updateStatusChip('drive', 'active');
-      console.log('Drive folder selected:', folderPath);
+      console.log('Drive notes folder selected:', folderPath);
+    }
+  }
+
+  async selectDriveTranscriptionsFolder() {
+    const result = await window.electronAPI.showFolderDialog();
+    if (!result.canceled && result.filePaths.length > 0) {
+      const folderPath = result.filePaths[0];
+      this.driveTranscriptionsFolderInput.value = folderPath;
+      await window.electronAPI.storeSet('drive-transcriptions-folder', folderPath);
+      this.updateStatusChip('drive', 'active');
+      console.log('Drive transcriptions folder selected:', folderPath);
     }
   }
 
