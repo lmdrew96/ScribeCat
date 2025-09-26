@@ -1,0 +1,47 @@
+{
+  "name": "ScribeCat Codespace",
+  "build": { "dockerfile": "Dockerfile" },
+
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "version": "latest",
+      "webPort": "6080",
+      "installOhMyZsh": false
+    }
+  },
+
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "Desktop (noVNC)",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "remoteUser": "node",
+
+  "postCreateCommand": "npm ci && npx --yes electron-rebuild || true",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig",
+        "github.copilot",
+        "github.vscode-pull-request-github",
+        "eamodio.gitlens",
+        "usernamehw.errorlens",
+        "christian-kohler.path-intellisense",
+        "eg2.vscode-npm-script",
+        "wix.vscode-import-cost"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "eslint.alwaysShowStatus": true,
+        "files.eol": "\n",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
