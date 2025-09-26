@@ -1,26 +1,28 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const keytar = require('keytar');
 
-// Fix electron-store import for both CJS and ESM
+// electron-store works as a default export in recent versions
 const ElectronStore = require('electron-store');
 const Store = ElectronStore.default || ElectronStore;
-const store = new Store({
-  name: 'settings'
-});
+const store = new Store({ name: 'settings' });
 
 let mainWindow;
 
-// Enable live reload for development
-if (process.env.NODE_ENV === 'development') {
-  require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
-    hardResetMethod: 'exit'
-  });
+// Enable live reload for development (optional)
+if (process.env.NODE_ENV === 'development' && !process.env.E2E) {
+  try {
+    require('electron-reload')(__dirname, {
+      hardResetMethod: 'exit'
+      // electron: require('electron') // optional
+    });
+  } catch (e) {
+    console.warn('electron-reload not installed; skipping live reload');
+  }
 }
 
 function createWindow() {
-  // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -37,38 +39,45 @@ function createWindow() {
     icon: path.join(__dirname, '..', 'assets', 'images', 'icon.png')
   });
 
-  // Load the app
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  // Show window when ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
 
-  // Open DevTools in development
+  mainWindow.webContents.once('did-finish-load', () => {
+    if (process.env.E2E) console.log('E2E:WINDOW_LOADED');
+  });
+
   if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
   }
 
-  // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
 // App event handlers
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  if (process.env.E2E) console.log('E2E:MAIN_READY');
+  createWindow();
+  createMenu();
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
+  // During E2E, collect markers sent by preload/renderer and echo to stdout
+  if (process.env.E2E) {
+    ipcMain.on('e2e:marker', (_e, message) => {
+      try { console.log(message); } catch (_) {}
+    });
   }
 });
 
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
 // IPC handlers for Google Drive integration
@@ -84,32 +93,29 @@ ipcMain.handle('drive:ensure-target', async (event, targetPath) => {
 });
 
 // Vosk/Whisper transcription IPC handlers
-let voskRecognizer = null;
-let voskModel = null;
 let transcriptionSession = null;
 
-ipcMain.handle('transcription:start-vosk', async (event, { stream, modelPath }) => {
-  // TODO: Integrate Vosk Node.js binding here
-  // Placeholder: Simulate Vosk result
+ipcMain.handle('transcription:start-vosk', async () => {
   setTimeout(() => {
-    mainWindow.webContents.send('transcription:vosk-result', { text: 'Simulated Vosk transcription.' });
+    if (mainWindow) {
+      mainWindow.webContents.send('transcription:vosk-result', { text: 'Simulated Vosk transcription.' });
+    }
   }, 2000);
   transcriptionSession = 'vosk-session';
   return transcriptionSession;
 });
 
-ipcMain.handle('transcription:start-whisper', async (event, { stream }) => {
-  // TODO: Integrate Whisper backend here
-  // Placeholder: Simulate Whisper result
+ipcMain.handle('transcription:start-whisper', async () => {
   setTimeout(() => {
-    mainWindow.webContents.send('transcription:whisper-result', { text: 'Simulated Whisper transcription.' });
+    if (mainWindow) {
+      mainWindow.webContents.send('transcription:whisper-result', { text: 'Simulated Whisper transcription.' });
+    }
   }, 2000);
   transcriptionSession = 'whisper-session';
   return transcriptionSession;
 });
 
-ipcMain.handle('transcription:stop', async (event, session) => {
-  // TODO: Stop Vosk/Whisper session
+ipcMain.handle('transcription:stop', async () => {
   transcriptionSession = null;
   return true;
 });
@@ -125,13 +131,28 @@ ipcMain.handle('drive:save-html', async (event, { filePath, content, fileName })
 });
 
 // Settings storage
-ipcMain.handle('store:get', (event, key) => {
-  return store.get(key);
-});
-
+ipcMain.handle('store:get', (event, key) => store.get(key));
 ipcMain.handle('store:set', (event, key, value) => {
   store.set(key, value);
   return true;
+});
+
+// Keytar (secure storage)
+ipcMain.handle('keytar:get', async (_e, { service, account }) => {
+  try {
+    const result = await keytar.getPassword(service, account);
+    return result || null;
+  } catch (err) {
+    return null;
+  }
+});
+ipcMain.handle('keytar:set', async (_e, { service, account, password }) => {
+  try {
+    await keytar.setPassword(service, account, password);
+    return true;
+  } catch (err) {
+    return false;
+  }
 });
 
 // File dialog handlers
@@ -145,10 +166,10 @@ ipcMain.handle('show-folder-dialog', async () => {
 // Audio file saving
 ipcMain.handle('save-audio-file', async (event, { audioData, fileName, folderPath }) => {
   try {
-    const filePath = path.join(folderPath, `${fileName}.wav`);
+    const outPath = path.join(folderPath, `${fileName}.wav`);
     const buffer = Buffer.from(audioData);
-    fs.writeFileSync(filePath, buffer);
-    return { success: true, path: filePath };
+    fs.writeFileSync(outPath, buffer);
+    return { success: true, path: outPath };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -163,37 +184,24 @@ function createMenu() {
         {
           label: 'New Recording',
           accelerator: 'CmdOrCtrl+N',
-          click: () => {
-            mainWindow.webContents.send('menu:new-recording');
-          }
+          click: () => mainWindow?.webContents.send('menu:new-recording')
         },
         {
           label: 'Save',
           accelerator: 'CmdOrCtrl+S',
-          click: () => {
-            mainWindow.webContents.send('menu:save');
-          }
+          click: () => mainWindow?.webContents.send('menu:save')
         },
         { type: 'separator' },
         {
           label: 'Exit',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-          click: () => {
-            app.quit();
-          }
+          click: () => app.quit()
         }
       ]
     },
     {
       label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' }
-      ]
+      submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }]
     },
     {
       label: 'View',
@@ -214,7 +222,3 @@ function createMenu() {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
-
-app.whenReady().then(() => {
-  createMenu();
-});

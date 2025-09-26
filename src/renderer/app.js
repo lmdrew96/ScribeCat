@@ -1,5 +1,9 @@
 // ScribeCat Application Logic
-const keytar = require('keytar');
+// Keytar via preload bridge for security
+const keytar = {
+  getPassword: async (service, account) => window.electronAPI.keytarGet({ service, account }),
+  setPassword: async (service, account, password) => window.electronAPI.keytarSet(service, account, password)
+};
 const SERVICE_NAME = 'ScribeCat';
 const OPENAI_KEY = 'openai-api-key';
 
@@ -32,17 +36,43 @@ class ScribeCatApp {
     this.transcriptionDisplay = document.getElementById('transcription-display');
     this.generateSummaryBtn = document.getElementById('generate-summary');
     this.aiSummary = document.getElementById('ai-summary');
+    // Recording controls
+    this.pauseBtn = document.getElementById('pause-btn');
+    this.resumeBtn = document.getElementById('resume-btn');
+    this.stopBtn = document.getElementById('stop-btn');
+    // Sidebar
+    this.sidebar = document.getElementById('sidebar');
+    this.sidebarToggle = document.getElementById('sidebar-toggle');
     
     // Settings elements
     this.saveOpenAIKeyBtn = document.getElementById('save-openai-key');
     this.openAIKeyInput = document.getElementById('openai-key');
+    this.themeSelect = document.getElementById('theme-select');
+    this.canvasUrl = document.getElementById('canvas-url');
+    this.courseNumber = document.getElementById('course-number');
+    this.courseTitle = document.getElementById('course-title');
+    this.saveCanvasBtn = document.getElementById('save-canvas');
+    this.driveFolderInput = document.getElementById('drive-folder');
+    this.selectDriveFolderBtn = document.getElementById('select-drive-folder');
     
     // Transcription controls
     this.clearTranscriptionBtn = document.getElementById('clear-transcription');
     this.jumpLatestBtn = document.getElementById('jump-latest');
+    this.transcriptionBackendSelect = document.getElementById('transcription-backend');
     
     // Status elements
     this.clock = document.querySelector('.clock');
+    this.versionInfo = document.getElementById('version-info');
+    this.vocalIsolationCheckbox = document.getElementById('vocal-isolation');
+    this.microphoneSelect = document.getElementById('microphone-select');
+    this.fontSelector = document.getElementById('font-family');
+    this.formatBtns = Array.from(document.querySelectorAll('.format-btn'));
+    // Chat elements
+    this.aiChat = document.getElementById('ai-chat');
+    this.chatInput = document.getElementById('chat-input');
+    this.chatMessages = document.getElementById('chat-messages');
+    this.toggleChatBtn = document.getElementById('toggle-chat');
+    this.sendChatBtn = document.getElementById('send-chat');
   }
 
   async init() {
@@ -75,6 +105,24 @@ class ScribeCatApp {
   }
 
   setupEventListeners() {
+    if (this.sidebarToggle) {
+      this.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
+    }
+    if (this.recordBtn) {
+      this.recordBtn.addEventListener('click', () => this.toggleRecording());
+    }
+    if (this.pauseBtn) {
+      this.pauseBtn.addEventListener('click', () => this.pauseRecording());
+    }
+    if (this.resumeBtn) {
+      this.resumeBtn.addEventListener('click', () => this.resumeRecording());
+    }
+    if (this.stopBtn) {
+      this.stopBtn.addEventListener('click', () => this.stopRecording());
+    }
+    if (this.saveBtn) {
+      this.saveBtn.addEventListener('click', () => this.saveRecording());
+    }
     if (this.generateSummaryBtn) {
       this.generateSummaryBtn.addEventListener('click', () => this.generateAISummary());
     }
@@ -86,6 +134,54 @@ class ScribeCatApp {
     }
     if (this.jumpLatestBtn) {
       this.jumpLatestBtn.addEventListener('click', () => this.scrollTranscriptionToLatest());
+    }
+    // Transcription event listeners (backend-gated)
+    if (window.electronAPI && window.electronAPI.onVoskResult) {
+      window.electronAPI.onVoskResult((event, result) => {
+        const backend = this.transcriptionBackendSelect?.value || (this.whisperEnabled ? 'whisper' : 'vosk');
+        if ((backend === 'vosk') && result && result.text) this.addTranscriptionEntry(result.text);
+      });
+    }
+    if (window.electronAPI && window.electronAPI.onWhisperResult) {
+      window.electronAPI.onWhisperResult((event, result) => {
+        const backend = this.transcriptionBackendSelect?.value || (this.whisperEnabled ? 'whisper' : 'vosk');
+        if ((backend === 'whisper') && result && result.text) this.addTranscriptionEntry(result.text);
+      });
+    }
+    if (this.themeSelect) {
+      this.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
+    }
+    if (this.saveCanvasBtn) {
+      this.saveCanvasBtn.addEventListener('click', () => this.saveCanvasSettings());
+    }
+    if (this.selectDriveFolderBtn) {
+      this.selectDriveFolderBtn.addEventListener('click', () => this.selectDriveFolder());
+    }
+    if (this.vocalIsolationCheckbox) {
+      this.vocalIsolationCheckbox.addEventListener('change', (e) => this.toggleVocalIsolation(!!e.target.checked));
+    }
+    if (this.microphoneSelect) {
+      this.microphoneSelect.addEventListener('change', (e) => this.selectMicrophone(e.target.value));
+    }
+    if (this.transcriptionBackendSelect) {
+      this.transcriptionBackendSelect.addEventListener('change', (e) => this.changeTranscriptionBackend(e.target.value));
+    }
+    if (this.fontSelector) {
+      this.fontSelector.addEventListener('change', (e) => this.changeFontFamily(e.target.value));
+    }
+    if (this.formatBtns && this.formatBtns.length) {
+      this.formatBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const cmd = btn.dataset.command;
+          if (cmd) this.executeFormat(cmd);
+        });
+      });
+    }
+    if (this.toggleChatBtn) {
+      this.toggleChatBtn.addEventListener('click', () => this.toggleChat());
+    }
+    if (this.sendChatBtn) {
+      this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
     }
     if (window.electronAPI && window.electronAPI.onMenuAction) {
       window.electronAPI.onMenuAction((event, action) => {
@@ -292,7 +388,8 @@ class ScribeCatApp {
     if (!this.isRecording) {
       await this.startRecording();
     } else {
-      await this.stopRecording();
+      // Idempotent: clicking start while recording should do nothing
+      return;
     }
   }
 
@@ -317,13 +414,22 @@ class ScribeCatApp {
       this.mediaRecorder.onstop = () => {
         stream.getTracks().forEach(track => track.stop());
       };
+      this.mediaRecorder.onpause = () => {
+        this.updateRecordingControls();
+      };
+      this.mediaRecorder.onresume = () => {
+        this.updateRecordingControls();
+      };
       this.mediaRecorder.start();
       this.isRecording = true;
       this.recordingStartTime = Date.now();
       // Update UI
-      this.recordBtn.textContent = 'Stop Recording';
+      this.recordBtn.textContent = 'Recording...';
       this.recordBtn.classList.add('recording');
       this.saveBtn.disabled = true;
+      this.pauseBtn.disabled = false;
+      this.stopBtn.disabled = false;
+      this.resumeBtn.disabled = true;
       // Hide summary button during recording
       if (this.generateSummaryBtn) {
         this.generateSummaryBtn.style.display = 'none';
@@ -331,9 +437,10 @@ class ScribeCatApp {
       // Start timer
       this.recordingInterval = setInterval(() => this.updateRecordingTime(), 1000);
       // Start transcription using Vosk or Whisper
-      if (this.whisperEnabled) {
+      const backend = this.transcriptionBackendSelect?.value || (this.whisperEnabled ? 'whisper' : 'vosk');
+      if (backend === 'whisper') {
         await this.startWhisperTranscription(stream);
-      } else if (this.voskModelPath) {
+      } else if (this.voskModelPath || backend === 'vosk') {
         await this.startVoskTranscription(stream);
       } else {
         console.warn('No transcription backend configured. Recording will continue without live transcription.');
@@ -356,6 +463,9 @@ class ScribeCatApp {
       this.recordBtn.textContent = 'Start Recording';
       this.recordBtn.classList.remove('recording');
       this.saveBtn.disabled = false;
+      this.pauseBtn.disabled = true;
+      this.resumeBtn.disabled = true;
+      this.stopBtn.disabled = true;
       // Show summary button after recording stops
       if (this.generateSummaryBtn) {
         this.generateSummaryBtn.style.display = 'block';
@@ -369,6 +479,32 @@ class ScribeCatApp {
       this.stopLiveTranscription();
       this.updateStatusChip('audio', 'inactive');
       console.log('Recording stopped');
+    }
+  }
+
+  pauseRecording() {
+    if (this.mediaRecorder && this.isRecording && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.pause();
+      this.updateRecordingControls();
+    }
+  }
+
+  resumeRecording() {
+    if (this.mediaRecorder && this.isRecording && this.mediaRecorder.state === 'paused') {
+      this.mediaRecorder.resume();
+      this.updateRecordingControls();
+    }
+  }
+
+  updateRecordingControls() {
+    if (!this.mediaRecorder) return;
+    const state = this.mediaRecorder.state;
+    if (state === 'recording') {
+      this.pauseBtn.disabled = false;
+      this.resumeBtn.disabled = true;
+    } else if (state === 'paused') {
+      this.pauseBtn.disabled = true;
+      this.resumeBtn.disabled = false;
     }
   }
 
