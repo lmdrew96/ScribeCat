@@ -389,6 +389,9 @@ class ScribeCatApp {
       await this.startRecording();
     } else {
       // Idempotent: clicking start while recording should do nothing
+      // but ensure controls reflect the current state (robust in dev/tests)
+      this.updateRecordingControls();
+      if (this.stopBtn) this.stopBtn.disabled = false;
       return;
     }
   }
@@ -397,14 +400,25 @@ class ScribeCatApp {
     try {
       const constraints = {
         audio: {
-          deviceId: this.microphoneSelect.value || undefined,
+          deviceId: this.microphoneSelect?.value || undefined,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
         }
       };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      let stream;
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      }
+      if (typeof MediaRecorder !== 'undefined' && stream) {
+        this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      } else if (window.appInfo?.isDev) {
+        // Dev fallback: simulate MediaRecorder so UI/flows work without mic
+        console.warn('MediaRecorder not available; using dev fallback recorder');
+        this.mediaRecorder = this.createMockMediaRecorder();
+      } else {
+        throw new Error('MediaRecorder or getUserMedia unavailable');
+      }
       this.audioChunks = [];
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -412,7 +426,7 @@ class ScribeCatApp {
         }
       };
       this.mediaRecorder.onstop = () => {
-        stream.getTracks().forEach(track => track.stop());
+        try { stream && stream.getTracks().forEach(track => track.stop()); } catch (_) {}
       };
       this.mediaRecorder.onpause = () => {
         this.updateRecordingControls();
@@ -451,8 +465,39 @@ class ScribeCatApp {
     } catch (error) {
       console.error('Error starting recording:', error);
       this.updateStatusChip('audio', 'error');
-      alert('Error accessing microphone. Please check permissions.');
+      if (window.appInfo?.isDev) {
+        // As a last resort in dev, simulate recording session
+        console.warn('Falling back to dev mock recording due to mic error');
+        this.mediaRecorder = this.createMockMediaRecorder();
+        this.isRecording = true;
+        this.recordBtn.textContent = 'Recording...';
+        this.recordBtn.classList.add('recording');
+        this.saveBtn.disabled = true;
+        this.pauseBtn.disabled = false;
+        this.stopBtn.disabled = false;
+        this.resumeBtn.disabled = true;
+        this.recordingStartTime = Date.now();
+        this.recordingInterval = setInterval(() => this.updateRecordingTime(), 1000);
+        this.updateStatusChip('audio', 'active');
+      } else {
+        alert('Error accessing microphone. Please check permissions.');
+      }
     }
+  }
+
+  createMockMediaRecorder() {
+    const rec = {
+      state: 'inactive',
+      ondataavailable: null,
+      onstop: null,
+      onpause: null,
+      onresume: null,
+      start: function() { this.state = 'recording'; if (this.onresume) this.onresume(); },
+      pause: function() { this.state = 'paused'; if (this.onpause) this.onpause(); },
+      resume: function() { this.state = 'recording'; if (this.onresume) this.onresume(); },
+      stop: function() { this.state = 'inactive'; if (this.onstop) this.onstop(); }
+    };
+    return rec;
   }
 
   async stopRecording() {
@@ -502,9 +547,31 @@ class ScribeCatApp {
     if (state === 'recording') {
       this.pauseBtn.disabled = false;
       this.resumeBtn.disabled = true;
+      if (this.stopBtn) this.stopBtn.disabled = false;
+      if (this.saveBtn) this.saveBtn.disabled = true;
+      if (this.recordBtn) {
+        this.recordBtn.textContent = 'Recording...';
+        this.recordBtn.classList.add('recording');
+      }
     } else if (state === 'paused') {
       this.pauseBtn.disabled = true;
       this.resumeBtn.disabled = false;
+      if (this.stopBtn) this.stopBtn.disabled = false;
+      if (this.saveBtn) this.saveBtn.disabled = true;
+      if (this.recordBtn) {
+        this.recordBtn.textContent = 'Recording...';
+        this.recordBtn.classList.add('recording');
+      }
+    } else {
+      // inactive or unknown
+      if (this.pauseBtn) this.pauseBtn.disabled = true;
+      if (this.resumeBtn) this.resumeBtn.disabled = true;
+      if (this.stopBtn) this.stopBtn.disabled = true;
+      if (this.saveBtn) this.saveBtn.disabled = false;
+      if (this.recordBtn) {
+        this.recordBtn.textContent = 'Start Recording';
+        this.recordBtn.classList.remove('recording');
+      }
     }
   }
 

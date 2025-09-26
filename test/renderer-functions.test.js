@@ -231,6 +231,138 @@ async function main() {
     if (store.get('notes-draft') !== '<p>Draft</p>') throw new Error('Draft not saved');
   });
 
+  // Click-driven tests for buttons/controls
+  harness.test('sidebar toggle button toggles sidebar class', () => {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebar-toggle');
+    if (!sidebar || !toggle) return false;
+    sidebar.classList.remove('open');
+    toggle.click();
+    if (!sidebar.classList.contains('open')) return false;
+    toggle.click();
+    return !sidebar.classList.contains('open');
+  });
+
+  harness.test('theme select change triggers changeTheme', () => {
+    const sel = document.getElementById('theme-select');
+    sel.value = 'dark';
+    sel.dispatchEvent(new window.Event('change'));
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+  });
+
+  await harness.testAsync('save canvas button click persists settings', async () => {
+    document.getElementById('canvas-url').value = 'https://canvas';
+    document.getElementById('course-number').value = 'CS50';
+    document.getElementById('course-title').value = 'Intro';
+    document.getElementById('save-canvas').click();
+    await new Promise(r => setTimeout(r, 5));
+    const saved = store.get('canvas-settings');
+    if (!saved || saved.courseNumber !== 'CS50') throw new Error('Not saved');
+  });
+
+  await harness.testAsync('select drive folder button updates input and store', async () => {
+    document.getElementById('select-drive-folder').click();
+    await new Promise(r => setTimeout(r, 5));
+    if (document.getElementById('drive-folder').value !== '/tmp/scribecat') throw new Error('Drive folder not set');
+  });
+
+  harness.test('clear transcription button empties display', () => {
+    app.addTranscriptionEntry('X');
+    document.getElementById('clear-transcription').click();
+    return app.transcriptionDisplay.children.length === 0;
+  });
+
+  harness.test('jump latest button scrolls to bottom', () => {
+    for (let i = 0; i < 3; i++) app.addTranscriptionEntry('Y');
+    app.transcriptionDisplay.scrollTop = 0;
+    document.getElementById('jump-latest').click();
+    return app.transcriptionDisplay.scrollTop === app.transcriptionDisplay.scrollHeight;
+  });
+
+  await harness.testAsync('save openai key button saves via keytar IPC', async () => {
+    const input = document.getElementById('openai-key');
+    input.value = 'sk-click';
+    document.getElementById('save-openai-key').click();
+    await new Promise(r => setTimeout(r, 5));
+    if (app.openAIApiKey !== 'sk-click') throw new Error('Key not saved');
+  });
+
+  await harness.testAsync('generate summary button generates output', async () => {
+    app.openAIApiKey = 'k';
+    app.notesEditor.textContent = 'N';
+    app.transcriptionDisplay.innerHTML = '';
+    app.addTranscriptionEntry('T');
+    document.getElementById('generate-summary').click();
+    await new Promise(r => setTimeout(r, 10));
+    if (!app.aiSummary.innerHTML) throw new Error('No summary');
+  });
+
+  harness.test('toggle chat button toggles collapsed', () => {
+    const btn = document.getElementById('toggle-chat');
+    app.aiChat.classList.remove('collapsed');
+    btn.click();
+    if (!app.aiChat.classList.contains('collapsed')) return false;
+    btn.click();
+    return !app.aiChat.classList.contains('collapsed');
+  });
+
+  await harness.testAsync('send chat button appends user and AI messages', async () => {
+    const before = app.chatMessages.children.length;
+    document.getElementById('chat-input').value = 'Hello?';
+    document.getElementById('send-chat').click();
+    await new Promise(r => setTimeout(r, 1100));
+    const after = app.chatMessages.children.length;
+    if (after < before + 2) throw new Error('Messages not appended');
+  });
+
+  harness.test('formatting buttons click executes format and saves draft', () => {
+    app.notesEditor.innerHTML = '<p>Text</p>';
+    const before = store.get('notes-draft');
+    const boldBtn = document.querySelector('.format-btn[data-command="bold"]');
+    boldBtn.click();
+    const after = store.get('notes-draft');
+    if (after !== '<p>Text</p>') throw new Error('Draft not saved');
+    return true;
+  });
+
+  await harness.testAsync('font family select change sets style and saves draft', async () => {
+    app.notesEditor.innerHTML = '<p>Font</p>';
+    const sel = document.getElementById('font-family');
+    sel.value = 'Georgia';
+    sel.dispatchEvent(new window.Event('change'));
+    await new Promise(r => setTimeout(r, 5));
+    if (app.notesEditor.style.fontFamily !== 'Georgia') throw new Error('Font not applied');
+    if (store.get('notes-draft') !== '<p>Font</p>') throw new Error('Draft not saved');
+  });
+
+  await harness.testAsync('backend select change toggles whisper flag and store', async () => {
+    const sel = document.getElementById('transcription-backend');
+    sel.value = 'whisper';
+    sel.dispatchEvent(new window.Event('change'));
+    await new Promise(r => setTimeout(r, 5));
+    if (!app.whisperEnabled) throw new Error('Whisper not enabled');
+    if (store.get('transcription-backend') !== 'whisper') throw new Error('Backend not persisted');
+  });
+
+  await harness.testAsync('record button click starts and stop button stops', async () => {
+    const record = document.getElementById('record-btn');
+    const stop = document.getElementById('stop-btn');
+    record.click();
+    if (!app.isRecording) throw new Error('Not recording after click');
+    stop.click();
+    await new Promise(r => setTimeout(r, 5));
+    if (app.isRecording) throw new Error('Still recording after stop click');
+  });
+
+  harness.test('record button click while recording is no-op', () => {
+    const record = document.getElementById('record-btn');
+    app.isRecording = true;
+    app.mediaRecorder = new window.MediaRecorder();
+    app.mediaRecorder.state = 'recording';
+    record.click();
+    return app.isRecording === true;
+  });
+
   harness.test('toggleChat toggles collapsed class', () => {
     app.aiChat.classList.add('collapsed');
     app.toggleChat();

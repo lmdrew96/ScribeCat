@@ -57,5 +57,7 @@ if (process.env.E2E) {
 // Version info
 contextBridge.exposeInMainWorld('appInfo', {
   version: '1.0.0',
-  platform: process.platform
+  platform: process.platform,
+  isDev: process.env.NODE_ENV !== 'production',
+  isFull: process.env.DEV_FULL === '1'
 });
