@@ -25,7 +25,44 @@
 - **Version Tracking**: Version number display in bottom-left corner
 - **Collapsible Sidebar**: Organized settings and tools management
 
-## Installation
+## Download ScribeCat 🚀
+
+Get ScribeCat for your platform:
+
+<div align="center">
+
+### Quick Install
+
+[![Download for Windows](https://img.shields.io/badge/Download%20for-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/lmdrew96/ScribeCat/releases/latest/download/ScribeCat%20Setup.exe)
+&nbsp;&nbsp;&nbsp;
+[![Download for macOS](https://img.shields.io/badge/Download%20for-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/lmdrew96/ScribeCat/releases/latest/download/ScribeCat.dmg)
+
+**System Requirements:**
+- Windows 10/11 (64-bit) or macOS 10.14+
+- 4GB RAM minimum, 8GB recommended
+- 500MB free disk space
+
+</div>
+
+### Installation Instructions
+
+#### Windows
+1. Click the **Download for Windows** button above
+2. Run the downloaded `ScribeCat Setup.exe` file
+3. Follow the installation wizard
+4. Launch ScribeCat from your Start Menu or Desktop
+
+#### macOS
+1. Click the **Download for macOS** button above
+2. Open the downloaded `ScribeCat.dmg` file
+3. Drag ScribeCat to your Applications folder
+4. Launch ScribeCat from Applications or Launchpad
+
+---
+
+## Development Installation
+
+> **Note for Developers:** The instructions below are for setting up a development environment. If you just want to use ScribeCat, use the download buttons above.
 
 ### Prerequisites
 - Node.js (v14 or higher)
