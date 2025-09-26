@@ -21,15 +21,25 @@ Runs comprehensive smoke tests to validate the application structure.
 
 ## API Configuration
 
-### AssemblyAI Setup
-1. Get API key from [AssemblyAI Console](https://www.assemblyai.com/app)
-2. In the app, go to Settings → API Keys
-3. Enter your AssemblyAI key for real-time transcription
+### Transcription Backend
+ScribeCat now uses **Vosk** (offline) as the primary transcription engine, with optional **Whisper** support:
+
+1. **Vosk Setup (Default)**:
+   - Download a Vosk model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models)
+   - In the app, go to Settings → Transcription Backend → select "Vosk (Offline)"
+   - Provide the path to your Vosk model directory
+
+2. **Whisper Setup (Optional)**:
+   - Select "Whisper (Optional)" in Settings → Transcription Backend
+   - Requires internet connection for API calls
 
 ### OpenAI Setup  
+**Note**: ScribeCat includes a **developer API key by default** for GPT-4o-mini access, so OpenAI features work out of the box for all users.
+
+**Optional - Use Your Own Key**:
 1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. In the app, go to Settings → API Keys
-3. Enter your OpenAI key for AI chat functionality
+2. In the app, go to Settings → OpenAI API
+3. Enter your key to use your own quota instead of the shared developer key
 
 ## Google Drive Integration
 
@@ -80,6 +90,9 @@ Preload Script (preload.js)
 - `save-audio-file` - Save WAV recordings
 - `store:get/set` - Persistent settings
 - `show-folder-dialog` - File picker
+- `transcription:start-vosk` - Start Vosk transcription
+- `transcription:start-whisper` - Start Whisper transcription
+- `transcription:stop` - Stop transcription session
 
 ### Settings Storage
 Uses `electron-store` for persistent configuration:
@@ -89,10 +102,26 @@ Uses `electron-store` for persistent configuration:
   "canvas-settings": { ... },
   "drive-folder": "/path/to/drive",
   "audio-settings": { ... },
-  "assemblyai-key": "...",
-  "openai-key": "..."
+  "vosk-model-path": "/path/to/vosk/model",
+  "transcription-backend": "vosk",
+  "whisper-enabled": false
 }
 ```
+
+## Transcription Pipeline
+
+### Live Transcription Features
+- **Real-time streaming**: Audio is processed as it's recorded
+- **Auto-accumulation**: Transcript entries are automatically appended
+- **Auto-scroll**: Display scrolls to show latest transcription
+- **Context-aware polish**: GPT-4o-mini intelligently improves transcript clarity
+- **Jittered timing**: Polish requests are staggered to avoid API rate limits
+
+### AI Polish System
+- **Context gathering**: Uses previous transcript entries for context
+- **Intelligent timing**: 1.2-2.0 second delay with random jitter
+- **Graceful fallback**: Continues without polish if API unavailable
+- **Visual indication**: Polished entries receive `.polished` CSS class
 
 ## Feature Development
 

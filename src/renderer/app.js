@@ -2,7 +2,6 @@
 const keytar = require('keytar');
 const SERVICE_NAME = 'ScribeCat';
 const OPENAI_KEY = 'openai-api-key';
-const ASSEMBLYAI_KEY = 'assemblyai-api-key';
 
 // Developer's OpenAI API key as fallback (for all users)
 // Note: In production, this should be loaded from environment variables or secure config
@@ -68,8 +67,6 @@ class ScribeCatApp {
       this.isUsingDeveloperKey = false;
       console.log('Using user-provided OpenAI API key');
     }
-    // Securely retrieve AssemblyAI key (if needed)
-    this.assemblyAIApiKey = await keytar.getPassword(SERVICE_NAME, ASSEMBLYAI_KEY);
     // Hide summary button initially
     if (this.generateSummaryBtn) {
       this.generateSummaryBtn.style.display = 'none';
@@ -335,9 +332,12 @@ class ScribeCatApp {
       this.recordingInterval = setInterval(() => this.updateRecordingTime(), 1000);
       // Start transcription using Vosk or Whisper
       if (this.whisperEnabled) {
-        this.startWhisperTranscription(stream);
+        await this.startWhisperTranscription(stream);
       } else if (this.voskModelPath) {
-        this.startVoskTranscription(stream);
+        await this.startVoskTranscription(stream);
+      } else {
+        console.warn('No transcription backend configured. Recording will continue without live transcription.');
+        this.updateStatusChip('transcription', 'inactive');
       }
       this.updateStatusChip('audio', 'active');
       console.log('Recording started');
@@ -379,17 +379,6 @@ class ScribeCatApp {
       const seconds = Math.floor((elapsed % 60000) / 1000);
       this.recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
-  }
-
-  async startRealTimeTranscription(stream) {
-    // Deprecated: AssemblyAI logic removed
-    // Use Vosk or Whisper instead
-    return;
-  }
-
-  stopRealTimeTranscription() {
-    // Deprecated: AssemblyAI logic removed
-    return;
   }
 
   async startVoskTranscription(stream) {
