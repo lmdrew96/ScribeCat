@@ -1,0 +1,73 @@
+{
+  "name": "scribecat",
+  "version": "1.0.0",
+  "description": "ScribeCat scribes and is cat - Desktop app for audio transcription and note-taking",
+  "main": "src/main.js",
+  "homepage": ".",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "dev": "electron . --dev --no-sandbox",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "dist": "electron-builder --publish=never",
+    "pack": "electron-builder --dir",
+    "test": "node test/smoke-test.js"
+  },
+  "keywords": [
+    "electron",
+    "transcription",
+    "notes",
+    "audio",
+    "desktop"
+  ],
+  "author": "ScribeCat Team",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "electron-store": "^10.1.0",
+    "ws": "^8.18.3"
+  },
+  "build": {
+    "appId": "com.scribecat.app",
+    "productName": "ScribeCat",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
