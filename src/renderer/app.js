@@ -378,6 +378,60 @@ class ScribeCatApp {
       this.generateSummaryBtn.disabled = false;
     }
 
+    async generateAIBlurb() {
+      // Generate a brief 1-6 word blurb based on notes and transcription for file naming
+      const notesContent = this.notesEditor.textContent || '';
+      const transcriptContent = Array.from(this.transcriptionDisplay.children)
+        .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
+        .join('\n');
+      
+      if (!this.openAIApiKey) {
+        console.warn('OpenAI API key not available for blurb generation, using fallback');
+        return 'Session_Notes';
+      }
+
+      try {
+        const prompt = `Generate a brief 1-6 word description suitable for a filename based on the following notes and transcript content. The response should be concise, descriptive, and use underscores instead of spaces. Focus on the main topic or subject matter.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
+        
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.openAIApiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant that generates brief, descriptive filenames. Respond with only the filename-friendly phrase using underscores instead of spaces, no quotes or extra text.' },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 32,
+            temperature: 0.3
+          })
+        });
+        
+        const data = await response.json();
+        const blurb = data.choices?.[0]?.message?.content?.trim();
+        
+        if (blurb) {
+          // Clean up the blurb for filename use
+          const cleanBlurb = blurb
+            .replace(/[^a-zA-Z0-9\s_-]/g, '') // Remove special characters except spaces, underscores, hyphens
+            .replace(/\s+/g, '_') // Replace spaces with underscores
+            .replace(/_+/g, '_') // Replace multiple underscores with single
+            .replace(/^_|_$/g, '') // Remove leading/trailing underscores
+            .substring(0, 50); // Limit length
+          
+          return cleanBlurb || 'Session_Notes';
+        } else {
+          return 'Session_Notes';
+        }
+      } catch (err) {
+        console.error('Error generating AI blurb:', err);
+        return 'Session_Notes';
+      }
+    }
+
   async saveOpenAIKey() {
     const key = this.openAIKeyInput.value.trim();
     if (!key) {
@@ -937,18 +991,17 @@ class ScribeCatApp {
         return;
       }
 
-      // Generate date in YYYY-MM-DD format
-      const now = new Date();
-      const dateStr = now.toISOString().split('T')[0]; // Gets YYYY-MM-DD
       const courseInfo = await this.getCanvasInfo();
+      const courseNumber = courseInfo.courseNumber || 'UNKNOWN';
       
-      // New naming convention: CourseTitle_Date.wav
-      const courseTitle = courseInfo.courseTitle || 'Recording';
-      const audioFileName = `${courseTitle}_${dateStr}`;
+      // Generate AI blurb for filename
+      const aiBlurb = await this.generateAIBlurb();
       
-      // For HTML files, keep the detailed timestamp for uniqueness
-      const timestamp = now.toISOString().replace(/[:.]/g, '-');
-      const htmlFileName = `${courseInfo.courseNumber || 'Recording'}_${timestamp}`;
+      // New naming convention: CourseNumber--OpenAIBlurb
+      const baseFileName = `${courseNumber}--${aiBlurb}`;
+      const audioFileName = baseFileName; // .wav extension added by saveAudioFile
+      const notesFileName = `${baseFileName}_Notes`;
+      const transcriptionFileName = `${baseFileName}_Transcript`;
 
       // Save audio file to local folder if specified
       if (localAudioFolder && this.audioChunks.length > 0) {
@@ -961,7 +1014,7 @@ class ScribeCatApp {
         
         await window.electronAPI.saveAudioFile({
           audioData: Array.from(audioArray),
-          fileName: audioFileName, // This will create CourseTitle_Date.wav
+          fileName: audioFileName, // This will create CourseNumber--OpenAIBlurb.wav
           folderPath: localAudioFolder
         });
         console.log('Audio saved to local folder:', localAudioFolder);
@@ -977,7 +1030,7 @@ class ScribeCatApp {
         await window.electronAPI.driveSaveHtml({
           filePath: driveFolder,
           content: notesContent,
-          fileName: `${htmlFileName}_notes`
+          fileName: notesFileName // CourseNumber--OpenAIBlurb_Notes
         });
 
         // Save transcription as HTML
@@ -985,7 +1038,7 @@ class ScribeCatApp {
         await window.electronAPI.driveSaveHtml({
           filePath: driveFolder,
           content: transcriptionContent,
-          fileName: `${htmlFileName}_transcription`
+          fileName: transcriptionFileName // CourseNumber--OpenAIBlurb_Transcript
         });
         console.log('Notes and transcription saved to Google Drive:', driveFolder);
       }
@@ -998,7 +1051,7 @@ class ScribeCatApp {
         
         await window.electronAPI.saveAudioFile({
           audioData: Array.from(audioArray),
-          fileName: audioFileName, // This will create CourseTitle_Date.wav
+          fileName: audioFileName, // This will create CourseNumber--OpenAIBlurb.wav
           folderPath: driveFolder
         });
         console.log('Audio saved to Google Drive:', driveFolder);
