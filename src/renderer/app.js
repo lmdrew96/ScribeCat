@@ -4,6 +4,10 @@ const SERVICE_NAME = 'ScribeCat';
 const OPENAI_KEY = 'openai-api-key';
 const ASSEMBLYAI_KEY = 'assemblyai-api-key';
 
+// Developer's OpenAI API key as fallback (for all users)
+// Note: In production, this should be loaded from environment variables or secure config
+const DEVELOPER_OPENAI_KEY = process.env.SCRIBECAT_OPENAI_KEY || 'sk-proj-placeholder-developer-key-needs-to-be-set';
+
 class ScribeCatApp {
   constructor() {
     this.isRecording = false;
@@ -15,8 +19,31 @@ class ScribeCatApp {
     this.voskModelPath = null;
     this.whisperEnabled = false;
     this.openAIApiKey = null;
+    this.isUsingDeveloperKey = false;
     this.currentTheme = 'default';
     this.init();
+  }
+
+  initializeElements() {
+    // Core UI elements
+    this.recordBtn = document.getElementById('record-btn');
+    this.saveBtn = document.getElementById('save-btn');
+    this.recordingTime = document.getElementById('recording-time');
+    this.notesEditor = document.getElementById('notes-editor');
+    this.transcriptionDisplay = document.getElementById('transcription-display');
+    this.generateSummaryBtn = document.getElementById('generate-summary');
+    this.aiSummary = document.getElementById('ai-summary');
+    
+    // Settings elements
+    this.saveOpenAIKeyBtn = document.getElementById('save-openai-key');
+    this.openAIKeyInput = document.getElementById('openai-key');
+    
+    // Transcription controls
+    this.clearTranscriptionBtn = document.getElementById('clear-transcription');
+    this.jumpLatestBtn = document.getElementById('jump-latest');
+    
+    // Status elements
+    this.clock = document.querySelector('.clock');
   }
 
   async init() {
@@ -30,14 +57,16 @@ class ScribeCatApp {
     // Load Vosk model path and Whisper toggle
     this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
     this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
-    // Securely retrieve OpenAI key
+    // Securely retrieve OpenAI key, with developer fallback
     this.openAIApiKey = await keytar.getPassword(SERVICE_NAME, OPENAI_KEY);
     if (!this.openAIApiKey) {
-      // Prompt user for key if not found
-      this.openAIApiKey = prompt('Enter your OpenAI API key:');
-      if (this.openAIApiKey) {
-        await keytar.setPassword(SERVICE_NAME, OPENAI_KEY, this.openAIApiKey);
-      }
+      // Use developer's API key by default for all users
+      this.openAIApiKey = DEVELOPER_OPENAI_KEY;
+      this.isUsingDeveloperKey = true;
+      console.log('Using developer OpenAI API key for GPT-4o mini access');
+    } else {
+      this.isUsingDeveloperKey = false;
+      console.log('Using user-provided OpenAI API key');
     }
     // Securely retrieve AssemblyAI key (if needed)
     this.assemblyAIApiKey = await keytar.getPassword(SERVICE_NAME, ASSEMBLYAI_KEY);
@@ -147,10 +176,35 @@ class ScribeCatApp {
           this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
         }
       } catch (err) {
-        this.aiSummary.innerHTML = '<span style="color:red">Error generating summary.</span>';
+        console.error('Error generating summary:', err);
+        if (this.isUsingDeveloperKey) {
+          this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own OpenAI API key in settings.</span>';
+        } else {
+          this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key.</span>';
+        }
       }
       this.generateSummaryBtn.disabled = false;
     }
+
+  async saveOpenAIKey() {
+    const key = this.openAIKeyInput.value.trim();
+    if (!key) {
+      alert('Please enter a valid OpenAI API key.');
+      return;
+    }
+    
+    try {
+      await keytar.setPassword(SERVICE_NAME, OPENAI_KEY, key);
+      this.openAIApiKey = key;
+      this.isUsingDeveloperKey = false;
+      this.openAIKeyInput.value = '';
+      alert('OpenAI API key saved successfully! You are now using your own key.');
+      console.log('User provided their own OpenAI API key');
+    } catch (error) {
+      console.error('Error saving OpenAI key:', error);
+      alert('Error saving API key. Please try again.');
+    }
+  }
 
   changeTheme(theme) {
     this.currentTheme = theme;
