@@ -27,6 +27,10 @@ class ScribeCatApp {
     this.openAIApiKey = null;
     this.isUsingDeveloperKey = false;
     this.currentTheme = 'default';
+    // Audio analysis for VU meter
+    this.audioContext = null;
+    this.analyserNode = null;
+    this.vuMeterInterval = null;
     this.init();
   }
 
@@ -43,6 +47,9 @@ class ScribeCatApp {
     this.pauseBtn = document.getElementById('pause-btn');
     this.resumeBtn = document.getElementById('resume-btn');
     this.stopBtn = document.getElementById('stop-btn');
+    // VU Meter
+    this.vuMeter = document.getElementById('vu-meter');
+    this.vuBar = document.getElementById('vu-bar');
     // Sidebar
     this.sidebar = document.getElementById('sidebar');
     this.sidebarToggle = document.getElementById('sidebar-toggle');
@@ -57,6 +64,9 @@ class ScribeCatApp {
     this.saveCanvasBtn = document.getElementById('save-canvas');
     this.driveFolderInput = document.getElementById('drive-folder');
     this.selectDriveFolderBtn = document.getElementById('select-drive-folder');
+    // Local audio folder
+    this.localAudioFolderInput = document.getElementById('local-audio-folder');
+    this.selectLocalAudioFolderBtn = document.getElementById('select-local-audio-folder');
     
     // Transcription controls
     this.clearTranscriptionBtn = document.getElementById('clear-transcription');
@@ -191,6 +201,9 @@ class ScribeCatApp {
     if (this.selectDriveFolderBtn) {
       this.selectDriveFolderBtn.addEventListener('click', () => this.selectDriveFolder());
     }
+    if (this.selectLocalAudioFolderBtn) {
+      this.selectLocalAudioFolderBtn.addEventListener('click', () => this.selectLocalAudioFolder());
+    }
     if (this.vocalIsolationCheckbox) {
       this.vocalIsolationCheckbox.addEventListener('change', (e) => this.toggleVocalIsolation(!!e.target.checked));
     }
@@ -253,6 +266,9 @@ class ScribeCatApp {
     // Load Drive folder
     const driveFolder = await window.electronAPI.storeGet('drive-folder');
     if (driveFolder) this.driveFolderInput.value = driveFolder;
+    // Load local audio folder
+    const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
+    if (localAudioFolder) this.localAudioFolderInput.value = localAudioFolder;
     // Load audio settings
     const audioSettings = await window.electronAPI.storeGet('audio-settings') || {};
     if (audioSettings.vocalIsolation) this.vocalIsolationCheckbox.checked = audioSettings.vocalIsolation;
@@ -454,10 +470,14 @@ class ScribeCatApp {
       }
       if (typeof MediaRecorder !== 'undefined' && stream) {
         this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        // Set up VU meter with Web Audio API
+        this.setupVUMeter(stream);
       } else if (window.appInfo?.isDev) {
         // Dev fallback: simulate MediaRecorder so UI/flows work without mic
         console.warn('MediaRecorder not available; using dev fallback recorder');
         this.mediaRecorder = this.createMockMediaRecorder();
+        // Mock VU meter for dev
+        this.setupMockVUMeter();
       } else {
         throw new Error('MediaRecorder or getUserMedia unavailable');
       }
@@ -486,6 +506,10 @@ class ScribeCatApp {
       this.pauseBtn.disabled = false;
       this.stopBtn.disabled = false;
       this.resumeBtn.disabled = true;
+      // Show VU meter during recording
+      if (this.vuMeter) {
+        this.vuMeter.style.display = 'flex';
+      }
       // Hide summary button during recording
       if (this.generateSummaryBtn) {
         this.generateSummaryBtn.style.display = 'none';
@@ -553,6 +577,12 @@ class ScribeCatApp {
       this.pauseBtn.disabled = true;
       this.resumeBtn.disabled = true;
       this.stopBtn.disabled = true;
+      // Hide VU meter when recording stops
+      if (this.vuMeter) {
+        this.vuMeter.style.display = 'none';
+      }
+      // Stop VU meter updates
+      this.stopVUMeter();
       // Show summary button after recording stops
       if (this.generateSummaryBtn) {
         this.generateSummaryBtn.style.display = 'block';
@@ -624,6 +654,69 @@ class ScribeCatApp {
       const seconds = Math.floor((elapsed % 60000) / 1000);
       this.recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
+  }
+
+  setupVUMeter(stream) {
+    try {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = this.audioContext.createMediaStreamSource(stream);
+      this.analyserNode = this.audioContext.createAnalyser();
+      this.analyserNode.fftSize = 256;
+      source.connect(this.analyserNode);
+      
+      // Start VU meter updates
+      this.startVUMeterUpdates();
+    } catch (error) {
+      console.error('Error setting up VU meter:', error);
+      // Fall back to mock VU meter
+      this.setupMockVUMeter();
+    }
+  }
+
+  setupMockVUMeter() {
+    // Mock VU meter for dev environments without microphone access
+    this.startVUMeterUpdates(true);
+  }
+
+  startVUMeterUpdates(mock = false) {
+    if (this.vuMeterInterval) {
+      clearInterval(this.vuMeterInterval);
+    }
+    
+    this.vuMeterInterval = setInterval(() => {
+      let level;
+      if (mock) {
+        // Generate mock audio level
+        level = Math.random() * 0.8 + 0.1; // Random between 0.1 and 0.9
+      } else if (this.analyserNode) {
+        const dataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+        this.analyserNode.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+        level = average / 255; // Normalize to 0-1
+      } else {
+        level = 0;
+      }
+      
+      // Update VU bar width
+      if (this.vuBar) {
+        this.vuBar.style.width = `${level * 100}%`;
+      }
+    }, 100); // Update every 100ms
+  }
+
+  stopVUMeter() {
+    if (this.vuMeterInterval) {
+      clearInterval(this.vuMeterInterval);
+      this.vuMeterInterval = null;
+    }
+    if (this.vuBar) {
+      this.vuBar.style.width = '0%';
+    }
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+    this.analyserNode = null;
   }
 
   async startVoskTranscription(stream) {
@@ -726,50 +819,83 @@ class ScribeCatApp {
 
   async saveRecording() {
     try {
+      // Check for local audio folder first, then fall back to Google Drive
+      const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
       const driveFolder = await window.electronAPI.storeGet('drive-folder');
-      if (!driveFolder) {
-        alert('Please select a Google Drive folder first.');
+      
+      if (!localAudioFolder && !driveFolder) {
+        alert('Please select either a local audio folder or Google Drive folder first.');
         return;
       }
 
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      // Generate date in YYYY-MM-DD format
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0]; // Gets YYYY-MM-DD
       const courseInfo = await this.getCanvasInfo();
-      const fileName = `${courseInfo.courseNumber || 'Recording'}_${timestamp}`;
+      
+      // New naming convention: CourseTitle_Date.wav
+      const courseTitle = courseInfo.courseTitle || 'Recording';
+      const audioFileName = `${courseTitle}_${dateStr}`;
+      
+      // For HTML files, keep the detailed timestamp for uniqueness
+      const timestamp = now.toISOString().replace(/[:.]/g, '-');
+      const htmlFileName = `${courseInfo.courseNumber || 'Recording'}_${timestamp}`;
 
-      // Ensure target directory exists
-      await window.electronAPI.driveEnsureTarget(driveFolder);
-
-      // Save audio file
-      if (this.audioChunks.length > 0) {
+      // Save audio file to local folder if specified
+      if (localAudioFolder && this.audioChunks.length > 0) {
+        // Ensure target directory exists
+        await window.electronAPI.driveEnsureTarget(localAudioFolder);
+        
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         const audioBuffer = await audioBlob.arrayBuffer();
         const audioArray = new Uint8Array(audioBuffer);
         
         await window.electronAPI.saveAudioFile({
           audioData: Array.from(audioArray),
-          fileName: `${fileName}_audio`,
-          folderPath: driveFolder
+          fileName: audioFileName, // This will create CourseTitle_Date.wav
+          folderPath: localAudioFolder
         });
+        console.log('Audio saved to local folder:', localAudioFolder);
       }
 
-      // Save notes as HTML
-      const notesContent = this.generateNotesHTML();
-      await window.electronAPI.driveSaveHtml({
-        filePath: driveFolder,
-        content: notesContent,
-        fileName: `${fileName}_notes`
-      });
+      // Save notes and transcription to Google Drive if specified
+      if (driveFolder) {
+        // Ensure target directory exists
+        await window.electronAPI.driveEnsureTarget(driveFolder);
 
-      // Save transcription as HTML
-      const transcriptionContent = this.generateTranscriptionHTML();
-      await window.electronAPI.driveSaveHtml({
-        filePath: driveFolder,
-        content: transcriptionContent,
-        fileName: `${fileName}_transcription`
-      });
+        // Save notes as HTML
+        const notesContent = this.generateNotesHTML();
+        await window.electronAPI.driveSaveHtml({
+          filePath: driveFolder,
+          content: notesContent,
+          fileName: `${htmlFileName}_notes`
+        });
+
+        // Save transcription as HTML
+        const transcriptionContent = this.generateTranscriptionHTML();
+        await window.electronAPI.driveSaveHtml({
+          filePath: driveFolder,
+          content: transcriptionContent,
+          fileName: `${htmlFileName}_transcription`
+        });
+        console.log('Notes and transcription saved to Google Drive:', driveFolder);
+      }
+
+      // If no local audio folder, save audio to Google Drive as well (legacy behavior)
+      if (!localAudioFolder && driveFolder && this.audioChunks.length > 0) {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        const audioBuffer = await audioBlob.arrayBuffer();
+        const audioArray = new Uint8Array(audioBuffer);
+        
+        await window.electronAPI.saveAudioFile({
+          audioData: Array.from(audioArray),
+          fileName: audioFileName, // This will create CourseTitle_Date.wav
+          folderPath: driveFolder
+        });
+        console.log('Audio saved to Google Drive:', driveFolder);
+      }
 
       alert('Recording saved successfully!');
-      console.log('Recording saved to:', driveFolder);
 
     } catch (error) {
       console.error('Error saving recording:', error);
@@ -866,6 +992,16 @@ class ScribeCatApp {
       await window.electronAPI.storeSet('drive-folder', folderPath);
       this.updateStatusChip('drive', 'active');
       console.log('Drive folder selected:', folderPath);
+    }
+  }
+
+  async selectLocalAudioFolder() {
+    const result = await window.electronAPI.showFolderDialog();
+    if (!result.canceled && result.filePaths.length > 0) {
+      const folderPath = result.filePaths[0];
+      this.localAudioFolderInput.value = folderPath;
+      await window.electronAPI.storeSet('local-audio-folder', folderPath);
+      console.log('Local audio folder selected:', folderPath);
     }
   }
 
