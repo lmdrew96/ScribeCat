@@ -80,6 +80,9 @@ class ScribeCatApp {
     this.microphoneSelect = document.getElementById('microphone-select');
     this.fontSelector = document.getElementById('font-family');
     this.formatBtns = Array.from(document.querySelectorAll('.format-btn'));
+    // Color selector elements
+    this.fontColorSelector = document.getElementById('font-color');
+    this.highlightColorSelector = document.getElementById('highlight-color');
     // Chat elements
     this.aiChat = document.getElementById('ai-chat');
     this.chatInput = document.getElementById('chat-input');
@@ -220,9 +223,29 @@ class ScribeCatApp {
       this.formatBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
           const cmd = btn.dataset.command;
-          if (cmd) this.executeFormat(cmd);
+          const shortcut = btn.dataset.shortcut;
+          if (cmd) {
+            this.executeFormat(cmd);
+          } else if (shortcut) {
+            this.insertTextShortcut(shortcut);
+          }
         });
       });
+    }
+    
+    // Color selector event listeners
+    if (this.fontColorSelector) {
+      this.fontColorSelector.addEventListener('change', (e) => this.changeFontColor(e.target.value));
+    }
+    if (this.highlightColorSelector) {
+      this.highlightColorSelector.addEventListener('change', (e) => this.changeHighlightColor(e.target.value));
+    }
+    
+    // Add keyboard event listener for notes editor
+    if (this.notesEditor) {
+      this.notesEditor.addEventListener('keydown', (e) => this.handleKeyDown(e));
+      this.notesEditor.addEventListener('keyup', () => this.updateFormattingState());
+      this.notesEditor.addEventListener('mouseup', () => this.updateFormattingState());
     }
     if (this.toggleChatBtn) {
       this.toggleChatBtn.addEventListener('click', () => this.toggleChat());
@@ -1026,19 +1049,158 @@ class ScribeCatApp {
   }
 
   executeFormat(command) {
-    document.execCommand(command, false, null);
+    // Store the current selection to restore it later if needed
+    const selection = window.getSelection();
+    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    
+    try {
+      if (command === 'highlight') {
+        this.applyHighlight();
+      } else {
+        document.execCommand(command, false, null);
+      }
+    } catch (error) {
+      console.warn(`Format command '${command}' failed:`, error);
+    }
+    
     this.updateFormattingState();
     this.saveNotesDraft();
+  }
+
+  applyHighlight() {
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return; // No text selected
+    
+    const highlightColor = this.highlightColorSelector ? this.highlightColorSelector.value : '#ffd200';
+    
+    // Create a span with background color
+    const span = document.createElement('span');
+    span.style.backgroundColor = highlightColor;
+    span.style.padding = '1px 2px';
+    span.style.borderRadius = '2px';
+    
+    try {
+      range.surroundContents(span);
+    } catch (error) {
+      // If surroundContents fails (e.g., range spans multiple elements),
+      // extract contents and wrap them
+      const contents = range.extractContents();
+      span.appendChild(contents);
+      range.insertNode(span);
+    }
+    
+    // Clear selection
+    selection.removeAllRanges();
+  }
+
+  changeFontColor(color) {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0 && !selection.getRangeAt(0).collapsed) {
+      // Apply to selected text
+      document.execCommand('foreColor', false, color);
+    } else {
+      // Apply to future text by setting the current color
+      this.notesEditor.style.color = color;
+    }
+    this.updateFormattingState();
+    this.saveNotesDraft();
+  }
+
+  changeHighlightColor(color) {
+    // Just update the color value - highlighting is applied on button click
+    this.updateFormattingState();
+  }
+
+  insertTextShortcut(shortcut) {
+    const shortcuts = {
+      'dash': '—', // Em dash
+      'arrow': '→' // Right arrow
+    };
+    
+    const text = shortcuts[shortcut];
+    if (text) {
+      document.execCommand('insertText', false, text);
+      this.saveNotesDraft();
+    }
+  }
+
+  handleKeyDown(e) {
+    // Handle Tab key for indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        document.execCommand('outdent', false, null);
+      } else {
+        document.execCommand('indent', false, null);
+      }
+      this.saveNotesDraft();
+      return;
+    }
+    
+    // Handle keyboard shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          this.executeFormat('bold');
+          break;
+        case 'i':
+          e.preventDefault();
+          this.executeFormat('italic');
+          break;
+        case 'u':
+          e.preventDefault();
+          this.executeFormat('underline');
+          break;
+        case 'z':
+          if (e.shiftKey) {
+            e.preventDefault();
+            this.executeFormat('redo');
+          } else {
+            e.preventDefault();
+            this.executeFormat('undo');
+          }
+          break;
+        case 'y':
+          e.preventDefault();
+          this.executeFormat('redo');
+          break;
+      }
+    }
   }
 
   updateFormattingState() {
     this.formatBtns.forEach(btn => {
       const command = btn.dataset.command;
-      if (command) {
-        const isActive = document.queryCommandState(command);
-        btn.classList.toggle('active', isActive);
+      if (command && command !== 'highlight') {
+        try {
+          const isActive = document.queryCommandState(command);
+          btn.classList.toggle('active', isActive);
+        } catch (error) {
+          // Some commands might not be supported in all browsers
+          btn.classList.remove('active');
+        }
       }
     });
+    
+    // Update color button indicators
+    if (this.fontColorSelector) {
+      const colorBtn = this.fontColorSelector.nextElementSibling;
+      if (colorBtn) {
+        colorBtn.style.setProperty('--font-color', this.fontColorSelector.value);
+        colorBtn.style.color = this.fontColorSelector.value;
+      }
+    }
+    
+    if (this.highlightColorSelector) {
+      const highlightBtn = this.highlightColorSelector.nextElementSibling;
+      if (highlightBtn) {
+        highlightBtn.style.setProperty('--highlight-color', this.highlightColorSelector.value);
+      }
+    }
   }
 
   async saveNotesDraft() {

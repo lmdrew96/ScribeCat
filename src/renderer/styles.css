@@ -428,7 +428,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .editor-header h2 {
@@ -445,7 +445,8 @@ body {
   padding: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 8px 8px 0 0;
+  border-bottom: none;
   flex-wrap: wrap;
 }
 
@@ -477,12 +478,52 @@ body {
   margin: 0 4px;
 }
 
+/* Color selector styles */
+.color-selector-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.color-selector {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.color-btn {
+  position: relative;
+  font-weight: bold;
+  color: var(--text-primary);
+  border-bottom: 3px solid currentColor;
+}
+
+.color-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--selected-color, currentColor);
+}
+
+#font-color:checked + .color-btn::after {
+  background: var(--font-color, #000000);
+}
+
+#highlight-color:checked + button::after {
+  background: var(--highlight-color, #ffd200);
+}
+
 /* Notes editor */
 .notes-editor {
   flex: 1;
   padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0 0 8px 8px;
   background: var(--background);
   font-size: 16px;
   line-height: 1.6;
