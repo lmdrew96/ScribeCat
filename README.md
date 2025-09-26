@@ -33,7 +33,7 @@ Get ScribeCat for your platform:
 
 ### Quick Install
 
-[![Download for Windows](https://img.shields.io/badge/Download%20for-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/lmdrew96/ScribeCat/releases/latest/download/ScribeCat-Setup.exe)
+[![Download for Windows](https://img.shields.io/badge/Download%20for-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/lmdrew96/ScribeCat/releases/latest/download/ScribeCat%20Setup.exe)
 &nbsp;&nbsp;&nbsp;
 [![Download for macOS](https://img.shields.io/badge/Download%20for-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/lmdrew96/ScribeCat/releases/latest/download/ScribeCat.dmg)
 
@@ -48,7 +48,7 @@ Get ScribeCat for your platform:
 
 #### Windows
 1. Click the **Download for Windows** button above
-2. Run the downloaded `ScribeCat-Setup.exe` file
+2. Run the downloaded `ScribeCat Setup.exe` file
 3. Follow the installation wizard
 4. Launch ScribeCat from your Start Menu or Desktop
 
