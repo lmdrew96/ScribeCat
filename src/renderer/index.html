@@ -108,9 +108,23 @@
 
                 <div class="sidebar-section">
                     <h3>Google Drive</h3>
+                    <div class="drive-setup-info" style="margin-bottom: 12px;">
+                        <p style="font-size: 12px; color: #666; margin: 0 0 8px 0;">
+                            Need Google Drive for Desktop? 
+                            <a href="#" id="drive-download-link" style="color: #1a73e8;">Download here</a>
+                        </p>
+                    </div>
                     <div class="drive-settings">
-                        <input type="text" id="drive-folder" placeholder="Drive Folder Path" class="input-field" readonly>
-                        <button id="select-drive-folder" class="btn btn-small">Select Folder</button>
+                        <div class="drive-folder-setting" style="margin-bottom: 12px;">
+                            <label style="font-weight: bold; margin-bottom: 4px; display: block;">Notes Folder:</label>
+                            <input type="text" id="notes-drive-folder" placeholder="Select Drive folder for notes" class="input-field" readonly>
+                            <button id="select-notes-drive-folder" class="btn btn-small">Select Folder</button>
+                        </div>
+                        <div class="drive-folder-setting">
+                            <label style="font-weight: bold; margin-bottom: 4px; display: block;">Transcription Folder:</label>
+                            <input type="text" id="transcription-drive-folder" placeholder="Select Drive folder for transcriptions" class="input-field" readonly>
+                            <button id="select-transcription-drive-folder" class="btn btn-small">Select Folder</button>
+                        </div>
                     </div>
                 </div>
 

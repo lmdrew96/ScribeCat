@@ -260,10 +260,10 @@ async function main() {
     if (!saved || saved.courseNumber !== 'CS50') throw new Error('Not saved');
   });
 
-  await harness.testAsync('select drive folder button updates input and store', async () => {
-    document.getElementById('select-drive-folder').click();
+  await harness.testAsync('select notes drive folder button updates input and store', async () => {
+    document.getElementById('select-notes-drive-folder').click();
     await new Promise(r => setTimeout(r, 5));
-    if (document.getElementById('drive-folder').value !== '/tmp/scribecat') throw new Error('Drive folder not set');
+    if (document.getElementById('notes-drive-folder').value !== '/tmp/scribecat') throw new Error('Notes drive folder not set');
   });
 
   harness.test('clear transcription button empties display', () => {
@@ -394,9 +394,9 @@ async function main() {
     if (app.openAIKeyInput.value !== '') throw new Error('Input not cleared');
   });
 
-  await harness.testAsync('selectDriveFolder sets folder and chip active', async () => {
-    await app.selectDriveFolder();
-    if (app.driveFolderInput.value !== '/tmp/scribecat') throw new Error('Path not set');
+  await harness.testAsync('selectNotesDriveFolder sets folder and chip active', async () => {
+    await app.selectNotesDriveFolder();
+    if (app.notesDriveFolderInput.value !== '/tmp/scribecat') throw new Error('Path not set');
     const driveChip = document.getElementById('drive-status');
     if (!driveChip.className.includes('active')) throw new Error('Drive chip not active');
   });
@@ -451,7 +451,8 @@ async function main() {
   });
 
   await harness.testAsync('saveRecording writes notes and transcription', async () => {
-    await window.electronAPI.storeSet('drive-folder', '/tmp/scribecat');
+    await window.electronAPI.storeSet('notes-drive-folder', '/tmp/scribecat');
+    await window.electronAPI.storeSet('transcription-drive-folder', '/tmp/scribecat');
     await window.electronAPI.storeSet('audio-destination', 'drive'); // Set audio destination to drive
     app.notesEditor.innerHTML = '<p>Notes</p>';
     app.transcriptionDisplay.innerHTML = '';
@@ -473,6 +474,62 @@ async function main() {
     const stored2 = await window.electronAPI.storeGet('audio-destination');
     if (stored2 !== 'drive') throw new Error('Drive destination not stored');
     if (!app.audioDestDriveRadio.checked) throw new Error('Drive radio not checked');
+  });
+
+  await harness.testAsync('separate folders can be configured for notes and transcriptions', async () => {
+    // Test separate folders
+    app.notesDriveFolderInput.value = '/tmp/notes';
+    app.transcriptionDriveFolderInput.value = '/tmp/transcripts';
+    await window.electronAPI.storeSet('notes-drive-folder', '/tmp/notes');
+    await window.electronAPI.storeSet('transcription-drive-folder', '/tmp/transcripts');
+    
+    // Test saveRecording with different folders
+    app.notesEditor.innerHTML = '<p>Test Notes</p>';
+    app.transcriptionDisplay.innerHTML = '';
+    app.addTranscriptionEntry('Test Transcript');
+    
+    let saveHtmlCalls = [];
+    const origSaveHtml = window.electronAPI.driveSaveHtml;
+    window.electronAPI.driveSaveHtml = async (payload) => { 
+      saveHtmlCalls.push(payload); 
+      return origSaveHtml(payload); 
+    };
+    
+    await app.saveRecording();
+    
+    // Verify both files were saved to different folders
+    if (saveHtmlCalls.length !== 2) throw new Error('Expected 2 save calls');
+    const notesSave = saveHtmlCalls.find(call => call.fileName.includes('_Notes'));
+    const transcriptSave = saveHtmlCalls.find(call => call.fileName.includes('_Transcript'));
+    
+    if (!notesSave || notesSave.filePath !== '/tmp/notes') throw new Error('Notes not saved to correct folder');
+    if (!transcriptSave || transcriptSave.filePath !== '/tmp/transcripts') throw new Error('Transcript not saved to correct folder');
+  });
+
+  await harness.testAsync('same folder can be used for both notes and transcriptions', async () => {
+    // Test same folder for both
+    const sameFolder = '/tmp/same-folder';
+    app.notesDriveFolderInput.value = sameFolder;
+    app.transcriptionDriveFolderInput.value = sameFolder;
+    await window.electronAPI.storeSet('notes-drive-folder', sameFolder);
+    await window.electronAPI.storeSet('transcription-drive-folder', sameFolder);
+    
+    app.notesEditor.innerHTML = '<p>Same Folder Notes</p>';
+    app.transcriptionDisplay.innerHTML = '';
+    app.addTranscriptionEntry('Same Folder Transcript');
+    
+    let saveHtmlCalls = [];
+    const origSaveHtml = window.electronAPI.driveSaveHtml;
+    window.electronAPI.driveSaveHtml = async (payload) => { 
+      saveHtmlCalls.push(payload); 
+      return origSaveHtml(payload); 
+    };
+    
+    await app.saveRecording();
+    
+    // Verify both files were saved to the same folder
+    if (saveHtmlCalls.length !== 2) throw new Error('Expected 2 save calls');
+    if (!saveHtmlCalls.every(call => call.filePath === sameFolder)) throw new Error('Not all files saved to same folder');
   });
 
   await harness.testAsync('saveRecording respects local audio destination', async () => {
