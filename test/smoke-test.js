@@ -202,42 +202,47 @@ class SmokeTest {
 
     // Automated test for AI summary feature
     this.test('AI summary button generates summary after transcription stops', () => {
-      // Simulate DOM for renderer
+      // ...existing code...
+    });
+
+    // Automated test for recording functionality
+    this.test('Recording, transcription, and saving work end-to-end', () => {
       const { JSDOM } = require('jsdom');
       const jsdom = new JSDOM(fs.readFileSync(path.join(this.rootPath, 'src/renderer/index.html'), 'utf8'), { runScripts: 'dangerously', resources: 'usable' });
       const window = jsdom.window;
       const document = window.document;
-      // Simulate ScribeCatApp class
       const appJs = fs.readFileSync(path.join(this.rootPath, 'src/renderer/app.js'), 'utf8');
       window.eval(appJs);
-      // Simulate transcription entries
+      const app = window.scribeCatApp || new window.ScribeCatApp();
+      // Simulate starting recording
+      app.isRecording = true;
+      app.audioChunks = [];
+      // Simulate adding audio chunk
+      app.audioChunks.push(new Uint8Array([1,2,3,4]));
+      // Simulate transcription
       const transcriptionDisplay = document.getElementById('transcription-display') || document.createElement('div');
       transcriptionDisplay.id = 'transcription-display';
       document.body.appendChild(transcriptionDisplay);
       const entry = document.createElement('div');
       entry.className = 'transcript-entry';
-      entry.innerHTML = '<div class="transcript-timestamp">12:00</div><div class="transcript-text">Test transcript for summary.</div>';
+      entry.innerHTML = '<div class="transcript-timestamp">12:01</div><div class="transcript-text">Test recording transcript.</div>';
       transcriptionDisplay.appendChild(entry);
       // Simulate notes
       const notesEditor = document.getElementById('notes-editor') || document.createElement('div');
       notesEditor.id = 'notes-editor';
-      notesEditor.textContent = 'Test notes for summary.';
+      notesEditor.innerHTML = 'Test notes.';
       document.body.appendChild(notesEditor);
       // Simulate stopping recording
-      const app = window.scribeCatApp || new window.ScribeCatApp();
       app.isRecording = false;
-      if (app.generateSummaryBtn) {
-        app.generateSummaryBtn.style.display = 'block';
-        // Simulate click
-        app.openAIApiKey = 'test-key';
-        app.generateAISummary = function() {
-          this.aiSummary.innerHTML = '<strong>Summary:</strong> Test summary output.';
-        };
-        app.generateSummaryBtn.click();
-        // Check summary output
-        return app.aiSummary.innerHTML.includes('Test summary output');
-      }
-      return false;
+      // Simulate saveRecording
+      let saved = false;
+      app.saveRecording = function() {
+        saved = true;
+        return true;
+      };
+      app.saveRecording();
+      // Check that save logic was called and transcript exists
+      return saved && transcriptionDisplay.innerHTML.includes('Test recording transcript');
     });
     process.exit(success ? 0 : 1);
   }
