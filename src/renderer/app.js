@@ -1012,7 +1012,7 @@ class ScribeCatApp {
       
       // Check if at least one folder is configured
       if (!localAudioFolder && !driveNotesFolder && !driveTranscriptsFolder) {
-        alert('Please configure at least one folder for saving:\n- Local audio folder for audio files\n- Drive notes folder for notes\n- Drive transcripts folder for transcriptions');
+        alert('Please configure at least one folder for saving. Options include: Local audio folder for audio files; Drive notes folder for notes; Drive transcripts folder for transcriptions.');
         return;
       }
 
