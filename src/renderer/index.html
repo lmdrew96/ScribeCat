@@ -88,6 +88,11 @@
                 <div class="sidebar-section">
                     <h3>Audio Settings</h3>
                     <div class="audio-settings">
+                        <div class="local-folder-settings" style="margin-bottom: 12px;">
+                            <label>Local Audio Folder:</label>
+                            <input type="text" id="local-audio-folder" placeholder="Select local folder for audio files" class="input-field" readonly>
+                            <button id="select-local-audio-folder" class="btn btn-small">Select Folder</button>
+                        </div>
                         <label>
                             <input type="checkbox" id="vocal-isolation"> Vocal Isolation
                         </label>
@@ -128,6 +133,15 @@
                         Start Recording
                     </button>
                     <div class="recording-time" id="recording-time">00:00</div>
+                    
+                    <!-- VU Meter -->
+                    <div class="vu-meter" id="vu-meter" style="display: none;">
+                        <label>Audio Level:</label>
+                        <div class="vu-bar-container">
+                            <div class="vu-bar" id="vu-bar"></div>
+                        </div>
+                    </div>
+                    
                     <button id="pause-btn" class="btn" disabled>Pause</button>
                     <button id="resume-btn" class="btn" disabled>Resume</button>
                     <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
