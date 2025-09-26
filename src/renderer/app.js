@@ -1,4 +1,9 @@
 // ScribeCat Application Logic
+const keytar = require('keytar');
+const SERVICE_NAME = 'ScribeCat';
+const OPENAI_KEY = 'openai-api-key';
+const ASSEMBLYAI_KEY = 'assemblyai-api-key';
+
 class ScribeCatApp {
   constructor() {
     this.isRecording = false;
@@ -25,7 +30,17 @@ class ScribeCatApp {
     // Load Vosk model path and Whisper toggle
     this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
     this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
-    this.openAIApiKey = await window.electronAPI.storeGet('openai-key');
+    // Securely retrieve OpenAI key
+    this.openAIApiKey = await keytar.getPassword(SERVICE_NAME, OPENAI_KEY);
+    if (!this.openAIApiKey) {
+      // Prompt user for key if not found
+      this.openAIApiKey = prompt('Enter your OpenAI API key:');
+      if (this.openAIApiKey) {
+        await keytar.setPassword(SERVICE_NAME, OPENAI_KEY, this.openAIApiKey);
+      }
+    }
+    // Securely retrieve AssemblyAI key (if needed)
+    this.assemblyAIApiKey = await keytar.getPassword(SERVICE_NAME, ASSEMBLYAI_KEY);
     // Hide summary button initially
     if (this.generateSummaryBtn) {
       this.generateSummaryBtn.style.display = 'none';
@@ -62,28 +77,18 @@ class ScribeCatApp {
   }
 
   async loadSettings() {
-  // Load OpenAI key
-  const openaiKey = await window.electronAPI.storeGet('openai-key');
-  if (openaiKey) this.openAIKeyInput.value = openaiKey;
-  const key = this.openAIKeyInput.value.trim();
-  await window.electronAPI.storeSet('openai-key', key);
-  this.openAIApiKey = key;
-  alert('OpenAI API key saved!');
     // Load theme
     const savedTheme = await window.electronAPI.storeGet('theme') || 'default';
     this.changeTheme(savedTheme);
     this.themeSelect.value = savedTheme;
-    
     // Load Canvas settings
     const canvasSettings = await window.electronAPI.storeGet('canvas-settings') || {};
     if (canvasSettings.url) this.canvasUrl.value = canvasSettings.url;
     if (canvasSettings.courseNumber) this.courseNumber.value = canvasSettings.courseNumber;
     if (canvasSettings.courseTitle) this.courseTitle.value = canvasSettings.courseTitle;
-    
     // Load Drive folder
     const driveFolder = await window.electronAPI.storeGet('drive-folder');
     if (driveFolder) this.driveFolderInput.value = driveFolder;
-    
     // Load audio settings
     const audioSettings = await window.electronAPI.storeGet('audio-settings') || {};
     if (audioSettings.vocalIsolation) this.vocalIsolationCheckbox.checked = audioSettings.vocalIsolation;
@@ -95,7 +100,6 @@ class ScribeCatApp {
     // Load notes draft
     const notesDraft = await window.electronAPI.storeGet('notes-draft');
     if (notesDraft) this.notesEditor.innerHTML = notesDraft;
-
   }
 
   async changeTranscriptionBackend(backend) {
