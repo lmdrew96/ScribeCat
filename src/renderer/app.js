@@ -8,8 +8,11 @@ const SERVICE_NAME = 'ScribeCat';
 const OPENAI_KEY = 'openai-api-key';
 
 // Developer's OpenAI API key as fallback (for all users)
-// Note: In production, this should be loaded from environment variables or secure config
-const DEVELOPER_OPENAI_KEY = process.env.SCRIBECAT_OPENAI_KEY || 'sk-proj-placeholder-developer-key-needs-to-be-set';
+// Note: In production, this should be loaded from environment variables or secure config.
+// In the isolated renderer (nodeIntegration: false), `process` is not defined; guard access.
+const DEVELOPER_OPENAI_KEY = (typeof process !== 'undefined' && process.env && process.env.SCRIBECAT_OPENAI_KEY)
+  ? process.env.SCRIBECAT_OPENAI_KEY
+  : 'sk-proj-placeholder-developer-key-needs-to-be-set';
 
 class ScribeCatApp {
   constructor() {
