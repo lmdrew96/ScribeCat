@@ -138,7 +138,8 @@ async function main() {
       this.formatBtns = Array.from(document.querySelectorAll('.format-btn'));
       this.fontSelector = document.getElementById('font-family');
       this.saveCanvasBtn = document.getElementById('save-canvas');
-      this.selectDriveFolderBtn = document.getElementById('select-drive-folder');
+      this.selectDriveNotesFolderBtn = document.getElementById('select-drive-notes-folder');
+      this.selectDriveTranscriptsFolderBtn = document.getElementById('select-drive-transcripts-folder');
     };
   }
 
@@ -260,10 +261,10 @@ async function main() {
     if (!saved || saved.courseNumber !== 'CS50') throw new Error('Not saved');
   });
 
-  await harness.testAsync('select drive folder button updates input and store', async () => {
-    document.getElementById('select-drive-folder').click();
+  await harness.testAsync('select drive notes folder button updates input and store', async () => {
+    document.getElementById('select-drive-notes-folder').click();
     await new Promise(r => setTimeout(r, 5));
-    if (document.getElementById('drive-folder').value !== '/tmp/scribecat') throw new Error('Drive folder not set');
+    if (document.getElementById('drive-notes-folder').value !== '/tmp/scribecat') throw new Error('Drive notes folder not set');
   });
 
   harness.test('clear transcription button empties display', () => {
@@ -394,9 +395,9 @@ async function main() {
     if (app.openAIKeyInput.value !== '') throw new Error('Input not cleared');
   });
 
-  await harness.testAsync('selectDriveFolder sets folder and chip active', async () => {
-    await app.selectDriveFolder();
-    if (app.driveFolderInput.value !== '/tmp/scribecat') throw new Error('Path not set');
+  await harness.testAsync('selectDriveNotesFolder sets folder and chip active', async () => {
+    await app.selectDriveNotesFolder();
+    if (app.driveNotesFolderInput.value !== '/tmp/scribecat') throw new Error('Path not set');
     const driveChip = document.getElementById('drive-status');
     if (!driveChip.className.includes('active')) throw new Error('Drive chip not active');
   });
@@ -431,7 +432,8 @@ async function main() {
   });
 
   await harness.testAsync('saveRecording writes notes and transcription', async () => {
-    await window.electronAPI.storeSet('drive-folder', '/tmp/scribecat');
+    await window.electronAPI.storeSet('drive-notes-folder', '/tmp/scribecat');
+    await window.electronAPI.storeSet('drive-transcripts-folder', '/tmp/scribecat');
     app.notesEditor.innerHTML = '<p>Notes</p>';
     app.transcriptionDisplay.innerHTML = '';
     app.addTranscriptionEntry('Transcript');
