@@ -83,6 +83,37 @@ ipcMain.handle('drive:ensure-target', async (event, targetPath) => {
   }
 });
 
+// Vosk/Whisper transcription IPC handlers
+let voskRecognizer = null;
+let voskModel = null;
+let transcriptionSession = null;
+
+ipcMain.handle('transcription:start-vosk', async (event, { stream, modelPath }) => {
+  // TODO: Integrate Vosk Node.js binding here
+  // Placeholder: Simulate Vosk result
+  setTimeout(() => {
+    mainWindow.webContents.send('transcription:vosk-result', { text: 'Simulated Vosk transcription.' });
+  }, 2000);
+  transcriptionSession = 'vosk-session';
+  return transcriptionSession;
+});
+
+ipcMain.handle('transcription:start-whisper', async (event, { stream }) => {
+  // TODO: Integrate Whisper backend here
+  // Placeholder: Simulate Whisper result
+  setTimeout(() => {
+    mainWindow.webContents.send('transcription:whisper-result', { text: 'Simulated Whisper transcription.' });
+  }, 2000);
+  transcriptionSession = 'whisper-session';
+  return transcriptionSession;
+});
+
+ipcMain.handle('transcription:stop', async (event, session) => {
+  // TODO: Stop Vosk/Whisper session
+  transcriptionSession = null;
+  return true;
+});
+
 ipcMain.handle('drive:save-html', async (event, { filePath, content, fileName }) => {
   try {
     const fullPath = path.join(filePath, `${fileName}.html`);

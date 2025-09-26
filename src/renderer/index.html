@@ -94,7 +94,23 @@
                         <select id="microphone-select" class="input-field">
                             <option value="">Select Microphone</option>
                         </select>
+                        <div style="margin-top:12px">
+                            <label for="transcription-backend">Transcription Backend:</label>
+                            <select id="transcription-backend" class="input-field">
+                                <option value="vosk">Vosk (Offline)</option>
+                                <option value="whisper">Whisper (Optional)</option>
+                            </select>
+                        </div>
                     </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>OpenAI API</h3>
+                    <div class="openai-settings">
+                        <input type="text" id="openai-key" placeholder="OpenAI API Key (gpt-4o mini)" class="input-field">
+                        <button id="save-openai-key" class="btn btn-small">Save Key</button>
+                    </div>
+                </div>
                 </div>
             </aside>
 
@@ -174,6 +190,10 @@
                         </div>
                         <div id="notes-editor" class="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>
+                        <div id="ai-summary-container" style="margin-top:24px;">
+                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;">Generate AI Summary</button>
+                            <div id="ai-summary" class="notes-editor" style="min-height:80px;background:#f8fafc;border:1px solid #e2e8f0;"></div>
+                        </div>
                     </div>
 
                     <!-- Transcription Panel -->
@@ -182,6 +202,7 @@
                             <h2>Live Transcription</h2>
                             <div class="transcription-controls">
                                 <button id="clear-transcription" class="btn btn-small">Clear</button>
+                                <button id="jump-latest" class="btn btn-small" title="Scroll to latest">Jump to Latest</button>
                             </div>
                         </div>
                         <div id="transcription-display" class="transcription-display"></div>

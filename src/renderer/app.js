@@ -7,122 +7,54 @@ class ScribeCatApp {
     this.mediaRecorder = null;
     this.audioChunks = [];
     this.transcriptionSocket = null;
-    this.assemblyAIApiKey = null;
+    this.voskModelPath = null;
+    this.whisperEnabled = false;
     this.openAIApiKey = null;
     this.currentTheme = 'default';
-    
     this.init();
   }
 
   async init() {
     this.initializeElements();
     this.setupEventListeners();
-    this.loadSettings();
+    await this.loadSettings();
     this.initializeClock();
-    this.initializeAudioDevices();
+    await this.initializeAudioDevices();
     this.updateVersionInfo();
     this.initializeStatusChips();
-    
-    // Load API keys from settings
-    this.assemblyAIApiKey = await window.electronAPI.storeGet('assemblyai-key');
+    // Load Vosk model path and Whisper toggle
+    this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
+    this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
     this.openAIApiKey = await window.electronAPI.storeGet('openai-key');
-    
+    // Hide summary button initially
+    if (this.generateSummaryBtn) {
+      this.generateSummaryBtn.style.display = 'none';
+    }
     console.log('ScribeCat initialized successfully');
   }
 
-  initializeElements() {
-    // Main UI elements
-    this.sidebar = document.getElementById('sidebar');
-    this.sidebarToggle = document.getElementById('sidebar-toggle');
-    this.recordBtn = document.getElementById('record-btn');
-    this.saveBtn = document.getElementById('save-btn');
-    this.recordingTime = document.getElementById('recording-time');
-    this.notesEditor = document.getElementById('notes-editor');
-    this.transcriptionDisplay = document.getElementById('transcription-display');
-    
-    // Settings elements
-    this.themeSelect = document.getElementById('theme-select');
-    this.canvasUrl = document.getElementById('canvas-url');
-    this.courseNumber = document.getElementById('course-number');
-    this.courseTitle = document.getElementById('course-title');
-    this.saveCanvasBtn = document.getElementById('save-canvas');
-    this.driveFolderInput = document.getElementById('drive-folder');
-    this.selectDriveFolderBtn = document.getElementById('select-drive-folder');
-    this.vocalIsolationCheckbox = document.getElementById('vocal-isolation');
-    this.microphoneSelect = document.getElementById('microphone-select');
-    
-    // Formatting toolbar
-    this.fontFamilySelect = document.getElementById('font-family');
-    this.formatBtns = document.querySelectorAll('.format-btn');
-    
-    // AI Chat elements
-    this.aiChat = document.getElementById('ai-chat');
-    this.toggleChatBtn = document.getElementById('toggle-chat');
-    this.chatMessages = document.getElementById('chat-messages');
-    this.chatInput = document.getElementById('chat-input');
-    this.sendChatBtn = document.getElementById('send-chat');
-    
-    // Clock and status elements
-    this.clock = document.getElementById('clock');
-    this.audioStatus = document.getElementById('audio-status');
-    this.transcriptionStatus = document.getElementById('transcription-status');
-    this.driveStatus = document.getElementById('drive-status');
-    
-    // Other elements
-    this.clearTranscriptionBtn = document.getElementById('clear-transcription');
-    this.versionInfo = document.getElementById('version-info');
-  }
-
   setupEventListeners() {
-    // Sidebar toggle
-    this.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
-    
-    // Recording controls
-    this.recordBtn.addEventListener('click', () => this.toggleRecording());
-    this.saveBtn.addEventListener('click', () => this.saveRecording());
-    
-    // Settings
-    this.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
-    this.saveCanvasBtn.addEventListener('click', () => this.saveCanvasSettings());
-    this.selectDriveFolderBtn.addEventListener('click', () => this.selectDriveFolder());
-    this.vocalIsolationCheckbox.addEventListener('change', (e) => this.toggleVocalIsolation(e.target.checked));
-    this.microphoneSelect.addEventListener('change', (e) => this.selectMicrophone(e.target.value));
-    
-    // Text formatting
-    this.fontFamilySelect.addEventListener('change', (e) => this.changeFontFamily(e.target.value));
-    this.formatBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => this.executeFormat(e.target.dataset.command));
-    });
-    
-    // Notes editor events
-    this.notesEditor.addEventListener('input', () => this.saveNotesDraft());
-    this.notesEditor.addEventListener('keyup', () => this.updateFormattingState());
-    this.notesEditor.addEventListener('mouseup', () => this.updateFormattingState());
-    
-    // AI Chat
-    this.toggleChatBtn.addEventListener('click', () => this.toggleChat());
-    this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
-    this.chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        this.sendChatMessage();
-      }
-    });
-    
-    // Other controls
-    this.clearTranscriptionBtn.addEventListener('click', () => this.clearTranscription());
-    
-    // Menu event listeners
-    window.electronAPI.onMenuAction((event, action) => {
-      switch(action) {
-        case 'menu:new-recording':
+    if (this.generateSummaryBtn) {
+      this.generateSummaryBtn.addEventListener('click', () => this.generateAISummary());
+    }
+    if (this.saveOpenAIKeyBtn) {
+      this.saveOpenAIKeyBtn.addEventListener('click', () => this.saveOpenAIKey());
+    }
+    if (this.clearTranscriptionBtn) {
+      this.clearTranscriptionBtn.addEventListener('click', () => this.clearTranscription());
+    }
+    if (this.jumpLatestBtn) {
+      this.jumpLatestBtn.addEventListener('click', () => this.scrollTranscriptionToLatest());
+    }
+    if (window.electronAPI && window.electronAPI.onMenuAction) {
+      window.electronAPI.onMenuAction((event, action) => {
+        if (action === 'menu:new-recording') {
           this.newRecording();
-          break;
-        case 'menu:save':
+        } else if (action === 'menu:save') {
           this.saveRecording();
-          break;
-      }
-    });
+        }
+      });
+    }
   }
 
   toggleSidebar() {
@@ -130,6 +62,13 @@ class ScribeCatApp {
   }
 
   async loadSettings() {
+  // Load OpenAI key
+  const openaiKey = await window.electronAPI.storeGet('openai-key');
+  if (openaiKey) this.openAIKeyInput.value = openaiKey;
+  const key = this.openAIKeyInput.value.trim();
+  await window.electronAPI.storeSet('openai-key', key);
+  this.openAIApiKey = key;
+  alert('OpenAI API key saved!');
     // Load theme
     const savedTheme = await window.electronAPI.storeGet('theme') || 'default';
     this.changeTheme(savedTheme);
@@ -148,11 +87,66 @@ class ScribeCatApp {
     // Load audio settings
     const audioSettings = await window.electronAPI.storeGet('audio-settings') || {};
     if (audioSettings.vocalIsolation) this.vocalIsolationCheckbox.checked = audioSettings.vocalIsolation;
-    
+    // Load transcription backend
+    const backend = await window.electronAPI.storeGet('transcription-backend') || 'vosk';
+    this.transcriptionBackendSelect.value = backend;
+    this.whisperEnabled = backend === 'whisper';
+    await window.electronAPI.storeSet('whisper-enabled', this.whisperEnabled);
     // Load notes draft
     const notesDraft = await window.electronAPI.storeGet('notes-draft');
     if (notesDraft) this.notesEditor.innerHTML = notesDraft;
+
   }
+
+  async changeTranscriptionBackend(backend) {
+    this.whisperEnabled = backend === 'whisper';
+    await window.electronAPI.storeSet('transcription-backend', backend);
+    await window.electronAPI.storeSet('whisper-enabled', this.whisperEnabled);
+  }
+    async generateAISummary() {
+      // Prevent duplicate requests
+      if (this.generateSummaryBtn.disabled) return;
+      // Gather context from notes and transcription
+      const notesContent = this.notesEditor.textContent || '';
+      const transcriptContent = Array.from(this.transcriptionDisplay.children)
+        .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
+        .join('\n');
+      if (!this.openAIApiKey) {
+        this.aiSummary.innerHTML = '<span style="color:red">OpenAI API key required.</span>';
+        return;
+      }
+      this.generateSummaryBtn.disabled = true;
+      this.aiSummary.innerHTML = '<em>Generating summary...</em>';
+      try {
+        const prompt = `Summarize the following notes and transcript. Highlight key topics, phrases, and any due dates. Format the output in rich markdown.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.openAIApiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a helpful assistant that summarizes notes and transcripts in rich markdown.' },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 256,
+            temperature: 0.3
+          })
+        });
+        const data = await response.json();
+        const summary = data.choices?.[0]?.message?.content?.trim();
+        if (summary) {
+          this.aiSummary.innerHTML = window.marked ? marked.parse(summary) : summary;
+        } else {
+          this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
+        }
+      } catch (err) {
+        this.aiSummary.innerHTML = '<span style="color:red">Error generating summary.</span>';
+      }
+      this.generateSummaryBtn.disabled = false;
+    }
 
   changeTheme(theme) {
     this.currentTheme = theme;
@@ -257,42 +251,38 @@ class ScribeCatApp {
           autoGainControl: true
         }
       };
-
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
       this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       this.audioChunks = [];
-      
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           this.audioChunks.push(event.data);
         }
       };
-      
       this.mediaRecorder.onstop = () => {
         stream.getTracks().forEach(track => track.stop());
       };
-      
       this.mediaRecorder.start();
       this.isRecording = true;
       this.recordingStartTime = Date.now();
-      
       // Update UI
       this.recordBtn.textContent = 'Stop Recording';
       this.recordBtn.classList.add('recording');
       this.saveBtn.disabled = true;
-      
+      // Hide summary button during recording
+      if (this.generateSummaryBtn) {
+        this.generateSummaryBtn.style.display = 'none';
+      }
       // Start timer
       this.recordingInterval = setInterval(() => this.updateRecordingTime(), 1000);
-      
-      // Start transcription if API key is available
-      if (this.assemblyAIApiKey) {
-        this.startRealTimeTranscription(stream);
+      // Start transcription using Vosk or Whisper
+      if (this.whisperEnabled) {
+        this.startWhisperTranscription(stream);
+      } else if (this.voskModelPath) {
+        this.startVoskTranscription(stream);
       }
-      
       this.updateStatusChip('audio', 'active');
       console.log('Recording started');
-      
     } catch (error) {
       console.error('Error starting recording:', error);
       this.updateStatusChip('audio', 'error');
@@ -304,21 +294,21 @@ class ScribeCatApp {
     if (this.mediaRecorder && this.isRecording) {
       this.mediaRecorder.stop();
       this.isRecording = false;
-      
       // Update UI
       this.recordBtn.textContent = 'Start Recording';
       this.recordBtn.classList.remove('recording');
       this.saveBtn.disabled = false;
-      
+      // Show summary button after recording stops
+      if (this.generateSummaryBtn) {
+        this.generateSummaryBtn.style.display = 'block';
+      }
       // Stop timer
       if (this.recordingInterval) {
         clearInterval(this.recordingInterval);
         this.recordingInterval = null;
       }
-      
       // Stop transcription
-      this.stopRealTimeTranscription();
-      
+      this.stopLiveTranscription();
       this.updateStatusChip('audio', 'inactive');
       console.log('Recording stopped');
     }
@@ -334,20 +324,42 @@ class ScribeCatApp {
   }
 
   async startRealTimeTranscription(stream) {
-    // This would integrate with AssemblyAI's real-time transcription
-    // For now, we'll simulate transcription
-    this.updateStatusChip('transcription', 'active');
-    
-    // Simulate periodic transcription updates
-    this.transcriptionInterval = setInterval(() => {
-      this.addTranscriptionEntry("This is a simulated transcription entry. In a real implementation, this would connect to AssemblyAI's real-time transcription service.");
-    }, 5000);
+    // Deprecated: AssemblyAI logic removed
+    // Use Vosk or Whisper instead
+    return;
   }
 
   stopRealTimeTranscription() {
-    if (this.transcriptionInterval) {
-      clearInterval(this.transcriptionInterval);
-      this.transcriptionInterval = null;
+    // Deprecated: AssemblyAI logic removed
+    return;
+  }
+
+  async startVoskTranscription(stream) {
+    this.updateStatusChip('transcription', 'active');
+    // Vosk integration via preload (IPC)
+    this.transcriptionSession = await window.electronAPI.startVoskTranscription({ stream, modelPath: this.voskModelPath });
+    window.electronAPI.onVoskResult((event, result) => {
+      if (result && result.text) {
+        this.addTranscriptionEntry(result.text);
+      }
+    });
+  }
+
+  async startWhisperTranscription(stream) {
+    this.updateStatusChip('transcription', 'active');
+    // Whisper integration via preload (IPC)
+    this.transcriptionSession = await window.electronAPI.startWhisperTranscription({ stream });
+    window.electronAPI.onWhisperResult((event, result) => {
+      if (result && result.text) {
+        this.addTranscriptionEntry(result.text);
+      }
+    });
+  }
+
+  stopLiveTranscription() {
+    if (this.transcriptionSession) {
+      window.electronAPI.stopTranscription(this.transcriptionSession);
+      this.transcriptionSession = null;
     }
     this.updateStatusChip('transcription', 'inactive');
   }
@@ -360,8 +372,51 @@ class ScribeCatApp {
       <div class="transcript-timestamp">${timestamp}</div>
       <div class="transcript-text">${text}</div>
     `;
-    
     this.transcriptionDisplay.appendChild(entry);
+    this.scrollTranscriptionToLatest();
+
+    // Jittered auto polish after a short delay
+    setTimeout(() => this.autoPolishEntry(entry, text), 1200 + Math.random() * 800);
+  }
+
+  async autoPolishEntry(entry, originalText) {
+    // Gather context from previous entries
+    const context = Array.from(this.transcriptionDisplay.children)
+      .map(e => e.querySelector('.transcript-text')?.textContent || '')
+      .join(' ');
+    // Call GPT-4o mini (OpenAI API) for polish
+    if (!this.openAIApiKey) return;
+    try {
+      const prompt = `Polish this transcript for clarity and grammar, keeping context in mind.\nContext: ${context}\nTranscript: ${originalText}`;
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.openAIApiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that polishes transcripts for clarity.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 128,
+          temperature: 0.3
+        })
+      });
+      const data = await response.json();
+      const polished = data.choices?.[0]?.message?.content?.trim();
+      if (polished && polished !== originalText) {
+        const textDiv = entry.querySelector('.transcript-text');
+        if (textDiv) textDiv.textContent = polished;
+        entry.classList.add('polished');
+      }
+    } catch (err) {
+      // Fail silently for polish errors
+    }
+  }
+
+  scrollTranscriptionToLatest() {
     this.transcriptionDisplay.scrollTop = this.transcriptionDisplay.scrollHeight;
   }
 

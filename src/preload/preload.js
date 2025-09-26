@@ -6,23 +6,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Google Drive operations
   driveEnsureTarget: (targetPath) => ipcRenderer.invoke('drive:ensure-target', targetPath),
   driveSaveHtml: (data) => ipcRenderer.invoke('drive:save-html', data),
-  
+
   // Settings storage
   storeGet: (key) => ipcRenderer.invoke('store:get', key),
   storeSet: (key, value) => ipcRenderer.invoke('store:set', key, value),
-  
+
   // File dialogs
   showFolderDialog: () => ipcRenderer.invoke('show-folder-dialog'),
-  
+
   // Audio file operations
   saveAudioFile: (data) => ipcRenderer.invoke('save-audio-file', data),
-  
+
+  // Vosk/Whisper transcription
+  startVoskTranscription: (params) => ipcRenderer.invoke('transcription:start-vosk', params),
+  onVoskResult: (callback) => ipcRenderer.on('transcription:vosk-result', callback),
+  startWhisperTranscription: (params) => ipcRenderer.invoke('transcription:start-whisper', params),
+  onWhisperResult: (callback) => ipcRenderer.on('transcription:whisper-result', callback),
+  stopTranscription: (session) => ipcRenderer.invoke('transcription:stop', session),
+
   // Menu events
   onMenuAction: (callback) => {
     ipcRenderer.on('menu:new-recording', callback);
     ipcRenderer.on('menu:save', callback);
   },
-  
+
   // Remove listeners
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
 });
