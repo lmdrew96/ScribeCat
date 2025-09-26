@@ -89,9 +89,20 @@
                     <h3>Canvas Integration</h3>
                     <div class="canvas-settings">
                         <input type="text" id="canvas-url" placeholder="Canvas URL" class="input-field">
-                        <input type="text" id="course-number" placeholder="Course Number" class="input-field">
-                        <input type="text" id="course-title" placeholder="Course Title" class="input-field">
-                        <button id="save-canvas" class="btn btn-small">Save</button>
+                        <div class="course-selection">
+                            <select id="course-select" class="input-field">
+                                <option value="">Select Course</option>
+                                <option value="other">Other (Manual Entry)</option>
+                            </select>
+                            <div id="manual-course-fields" class="manual-course-fields" style="display: none;">
+                                <input type="text" id="course-number" placeholder="Course Number" class="input-field">
+                                <input type="text" id="course-title" placeholder="Course Title" class="input-field">
+                            </div>
+                        </div>
+                        <div class="canvas-buttons">
+                            <button id="save-canvas" class="btn btn-small">Save</button>
+                            <button id="manage-courses" class="btn btn-small">Manage Courses</button>
+                        </div>
                     </div>
                 </div>
 
