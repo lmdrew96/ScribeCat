@@ -1,9 +1,12 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const Store = require('electron-store');
+const ElectronStore = require('electron-store');
+const Store = ElectronStore.default || ElectronStore;
 
-const store = new Store();
+const store = new Store({
+  name: 'settings'
+});
 let mainWindow;
 
 // Enable live reload for development
