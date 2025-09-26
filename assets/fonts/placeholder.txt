@@ -1,0 +1,6 @@
+# Font Assets Placeholder
+
+This directory is reserved for custom fonts.
+The GalaxyCaterpillar.ttf mentioned in the requirements would go here.
+
+For now, the application uses system fonts and web fonts as fallbacks.

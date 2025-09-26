@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScribeCat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle Sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo-container">
+                    <img src="../../assets/images/nugget.png" alt="ScribeCat" class="logo" onerror="this.style.display='none'">
+                    <h1 class="app-title">ScribeCat</h1>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="status-chips">
+                    <div class="status-chip" id="audio-status" title="Audio Status">
+                        <div class="status-indicator"></div>
+                        <span>Audio</span>
+                    </div>
+                    <div class="status-chip" id="transcription-status" title="Transcription Status">
+                        <div class="status-indicator"></div>
+                        <span>AI</span>
+                    </div>
+                    <div class="status-chip" id="drive-status" title="Drive Status">
+                        <div class="status-indicator"></div>
+                        <span>Drive</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="clock" id="clock">
+                    <div class="time">12:00 PM</div>
+                    <div class="date">Monday, Jan 1</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="app-body">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-section">
+                    <h3>Themes</h3>
+                    <div class="theme-selector">
+                        <select id="theme-select">
+                            <option value="default">Default</option>
+                            <option value="dark">Dark</option>
+                            <option value="blue">Ocean Blue</option>
+                            <option value="forest">Forest Green</option>
+                            <option value="sunset">Sunset Orange</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Canvas Integration</h3>
+                    <div class="canvas-settings">
+                        <input type="text" id="canvas-url" placeholder="Canvas URL" class="input-field">
+                        <input type="text" id="course-number" placeholder="Course Number" class="input-field">
+                        <input type="text" id="course-title" placeholder="Course Title" class="input-field">
+                        <button id="save-canvas" class="btn btn-small">Save</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Google Drive</h3>
+                    <div class="drive-settings">
+                        <input type="text" id="drive-folder" placeholder="Drive Folder Path" class="input-field" readonly>
+                        <button id="select-drive-folder" class="btn btn-small">Select Folder</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Audio Settings</h3>
+                    <div class="audio-settings">
+                        <label>
+                            <input type="checkbox" id="vocal-isolation"> Vocal Isolation
+                        </label>
+                        <select id="microphone-select" class="input-field">
+                            <option value="">Select Microphone</option>
+                        </select>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Recording Controls -->
+                <div class="recording-controls">
+                    <button id="record-btn" class="btn btn-primary record-btn">
+                        <svg class="record-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        Start Recording
+                    </button>
+                    <div class="recording-time" id="recording-time">00:00</div>
+                    <button id="save-btn" class="btn btn-success" disabled>Save</button>
+                </div>
+
+                <!-- Content Container -->
+                <div class="content-container">
+                    <!-- Notes Editor -->
+                    <div class="editor-section">
+                        <div class="editor-header">
+                            <h2>Notes</h2>
+                            <div class="formatting-toolbar">
+                                <select id="font-family" class="font-selector">
+                                    <optgroup label="Traditional Serif">
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Garamond">Garamond</option>
+                                        <option value="Book Antiqua">Book Antiqua</option>
+                                        <option value="Palatino">Palatino</option>
+                                    </optgroup>
+                                    <optgroup label="Non-Traditional Serif">
+                                        <option value="Playfair Display">Playfair Display</option>
+                                        <option value="Crimson Text">Crimson Text</option>
+                                        <option value="Libre Baskerville">Libre Baskerville</option>
+                                        <option value="Merriweather">Merriweather</option>
+                                        <option value="Vollkorn">Vollkorn</option>
+                                    </optgroup>
+                                    <optgroup label="Traditional Sans Serif">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Helvetica">Helvetica</option>
+                                        <option value="Calibri">Calibri</option>
+                                        <option value="Tahoma">Tahoma</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Geneva">Geneva</option>
+                                        <option value="Lucida Sans">Lucida Sans</option>
+                                        <option value="Trebuchet MS">Trebuchet MS</option>
+                                        <option value="Century Gothic">Century Gothic</option>
+                                        <option value="Franklin Gothic">Franklin Gothic</option>
+                                    </optgroup>
+                                    <optgroup label="Non-Traditional Sans Serif">
+                                        <option value="Inter" selected>Inter</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Open Sans">Open Sans</option>
+                                        <option value="Lato">Lato</option>
+                                        <option value="Montserrat">Montserrat</option>
+                                        <option value="Source Sans Pro">Source Sans Pro</option>
+                                        <option value="Nunito">Nunito</option>
+                                        <option value="Poppins">Poppins</option>
+                                        <option value="Raleway">Raleway</option>
+                                        <option value="Work Sans">Work Sans</option>
+                                    </optgroup>
+                                </select>
+                                <button class="format-btn" data-command="bold" title="Bold"><b>B</b></button>
+                                <button class="format-btn" data-command="italic" title="Italic"><i>I</i></button>
+                                <button class="format-btn" data-command="underline" title="Underline"><u>U</u></button>
+                                <button class="format-btn" data-command="strikethrough" title="Strikethrough"><s>S</s></button>
+                                <div class="toolbar-separator"></div>
+                                <button class="format-btn" data-command="justifyLeft" title="Align Left">L</button>
+                                <button class="format-btn" data-command="justifyCenter" title="Align Center">C</button>
+                                <button class="format-btn" data-command="justifyRight" title="Align Right">R</button>
+                                <div class="toolbar-separator"></div>
+                                <button class="format-btn" data-command="insertUnorderedList" title="Bullet List">•</button>
+                                <button class="format-btn" data-command="insertOrderedList" title="Numbered List">1.</button>
+                            </div>
+                        </div>
+                        <div id="notes-editor" class="notes-editor" contenteditable="true" 
+                             placeholder="Start typing your notes here..."></div>
+                    </div>
+
+                    <!-- Transcription Panel -->
+                    <div class="transcription-section">
+                        <div class="transcription-header">
+                            <h2>Live Transcription</h2>
+                            <div class="transcription-controls">
+                                <button id="clear-transcription" class="btn btn-small">Clear</button>
+                            </div>
+                        </div>
+                        <div id="transcription-display" class="transcription-display"></div>
+                    </div>
+                </div>
+
+                <!-- AI Chat Window -->
+                <div class="ai-chat" id="ai-chat">
+                    <div class="chat-header">
+                        <h3>Ask AI</h3>
+                        <button id="toggle-chat" class="chat-toggle">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="18,15 12,9 6,15"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="chat-content" id="chat-content">
+                        <div class="chat-messages" id="chat-messages"></div>
+                        <div class="chat-input-container">
+                            <input type="text" id="chat-input" placeholder="Ask about your notes or transcription..." class="chat-input">
+                            <button id="send-chat" class="btn btn-primary btn-small">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Version Info -->
+        <div class="version-info" id="version-info">v1.0.0</div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
