@@ -270,6 +270,22 @@ class ScribeCatApp {
         }
       });
     }
+    
+    // Status chip click handlers
+    const audioStatus = document.getElementById('audio-status');
+    if (audioStatus) {
+      audioStatus.addEventListener('click', () => this.showStatusDetails('audio'));
+    }
+    
+    const transcriptionStatus = document.getElementById('transcription-status');
+    if (transcriptionStatus) {
+      transcriptionStatus.addEventListener('click', () => this.showStatusDetails('transcription'));
+    }
+    
+    const driveStatus = document.getElementById('drive-status');
+    if (driveStatus) {
+      driveStatus.addEventListener('click', () => this.showStatusDetails('drive'));
+    }
   }
 
   toggleSidebar() {
@@ -281,6 +297,8 @@ class ScribeCatApp {
     const savedTheme = await window.electronAPI.storeGet('theme') || 'default';
     this.changeTheme(savedTheme);
     this.themeSelect.value = savedTheme;
+    // Update theme preview on load
+    this.updateThemePreview();
     // Load Canvas settings
     const canvasSettings = await window.electronAPI.storeGet('canvas-settings') || {};
     if (canvasSettings.url) this.canvasUrl.value = canvasSettings.url;
@@ -384,6 +402,36 @@ class ScribeCatApp {
     this.currentTheme = theme;
     document.documentElement.setAttribute('data-theme', theme);
     window.electronAPI.storeSet('theme', theme);
+    
+    // Update theme preview swatches
+    this.updateThemePreview();
+  }
+
+  updateThemePreview() {
+    const preview = document.getElementById('theme-preview');
+    if (preview) {
+      // Force a repaint to get the latest CSS custom property values
+      setTimeout(() => {
+        const primarySwatch = preview.querySelector('.theme-swatch.primary');
+        const surfaceSwatch = preview.querySelector('.theme-swatch.surface');
+        const backgroundSwatch = preview.querySelector('.theme-swatch.background');
+        
+        if (primarySwatch) {
+          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+          primarySwatch.style.backgroundColor = primaryColor;
+        }
+        
+        if (surfaceSwatch) {
+          const surfaceColor = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+          surfaceSwatch.style.backgroundColor = surfaceColor;
+        }
+        
+        if (backgroundSwatch) {
+          const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
+          backgroundSwatch.style.backgroundColor = backgroundColor;
+        }
+      }, 50);
+    }
   }
 
   initializeClock() {
@@ -394,7 +442,7 @@ class ScribeCatApp {
   updateClock() {
     const now = new Date();
     const timeOptions = { 
-      hour: '2-digit', 
+      hour: 'numeric', // Changed from '2-digit' to 'numeric' to remove leading zeros
       minute: '2-digit',
       hour12: true 
     };
@@ -463,6 +511,44 @@ class ScribeCatApp {
     } else {
       this.updateStatusChip('drive', 'inactive');
     }
+  }
+
+  showStatusDetails(type) {
+    let message = '';
+    const chip = document.getElementById(`${type}-status`);
+    const status = chip?.className.split(' ')[1] || 'unknown';
+    
+    switch (type) {
+      case 'audio':
+        if (status === 'active') {
+          message = 'Audio device is connected and ready for recording';
+        } else if (status === 'error') {
+          message = 'Audio device error - check microphone permissions and connections';
+        } else {
+          message = 'Audio device not initialized or not available';
+        }
+        break;
+      case 'transcription':
+        if (status === 'active') {
+          message = 'Transcription service is running and processing audio';
+        } else if (status === 'error') {
+          message = 'Transcription service error - check backend settings';
+        } else {
+          message = 'Transcription service is not active';
+        }
+        break;
+      case 'drive':
+        if (status === 'active') {
+          message = 'Google Drive folder is configured and ready for saving';
+        } else if (status === 'error') {
+          message = 'Google Drive connection error - check folder permissions';
+        } else {
+          message = 'Google Drive folder not configured - click the settings button to set up';
+        }
+        break;
+    }
+    
+    alert(`${type.charAt(0).toUpperCase() + type.slice(1)} Status:\n\n${message}`);
   }
 
   async toggleRecording() {

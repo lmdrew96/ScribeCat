@@ -57,6 +57,109 @@
   --border: #fb923c;
 }
 
+/* Purple theme */
+[data-theme="purple"] {
+  --primary-color: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --background: #faf5ff;
+  --surface: #ede9fe;
+  --surface-hover: #ddd6fe;
+  --border: #c4b5fd;
+}
+
+/* Rose theme */
+[data-theme="rose"] {
+  --primary-color: #f43f5e;
+  --primary-hover: #e11d48;
+  --background: #fff1f2;
+  --surface: #fecdd3;
+  --surface-hover: #fda4af;
+  --border: #fb7185;
+}
+
+/* Teal theme */
+[data-theme="teal"] {
+  --primary-color: #14b8a6;
+  --primary-hover: #0d9488;
+  --background: #f0fdfa;
+  --surface: #ccfbf1;
+  --surface-hover: #99f6e4;
+  --border: #5eead4;
+}
+
+/* Indigo theme */
+[data-theme="indigo"] {
+  --primary-color: #6366f1;
+  --primary-hover: #4f46e5;
+  --background: #eef2ff;
+  --surface: #e0e7ff;
+  --surface-hover: #c7d2fe;
+  --border: #a5b4fc;
+}
+
+/* Amber theme */
+[data-theme="amber"] {
+  --primary-color: #f59e0b;
+  --primary-hover: #d97706;
+  --background: #fffbeb;
+  --surface: #fef3c7;
+  --surface-hover: #fde68a;
+  --border: #fcd34d;
+}
+
+/* Emerald theme */
+[data-theme="emerald"] {
+  --primary-color: #10b981;
+  --primary-hover: #059669;
+  --background: #ecfdf5;
+  --surface: #d1fae5;
+  --surface-hover: #a7f3d0;
+  --border: #6ee7b7;
+}
+
+/* Cyan theme */
+[data-theme="cyan"] {
+  --primary-color: #06b6d4;
+  --primary-hover: #0891b2;
+  --background: #ecfeff;
+  --surface: #cffafe;
+  --surface-hover: #a5f3fc;
+  --border: #67e8f9;
+}
+
+/* Pink theme */
+[data-theme="pink"] {
+  --primary-color: #ec4899;
+  --primary-hover: #db2777;
+  --background: #fdf2f8;
+  --surface: #fce7f3;
+  --surface-hover: #fbcfe8;
+  --border: #f9a8d4;
+}
+
+/* Slate theme */
+[data-theme="slate"] {
+  --primary-color: #64748b;
+  --primary-hover: #475569;
+  --background: #f8fafc;
+  --surface: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --border: #cbd5e1;
+}
+
+/* Midnight theme */
+[data-theme="midnight"] {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --background: #020617;
+  --surface: #0f172a;
+  --surface-hover: #1e293b;
+  --border: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+}
+
 /* Base styles */
 * {
   margin: 0;
@@ -70,12 +173,28 @@ body {
   color: var(--text-primary);
   overflow: hidden;
   user-select: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Enhanced transitions for theme changes */
+.app-header,
+.sidebar,
+.main-content,
+.recording-controls,
+.content-container,
+.editor-section,
+.transcription-section,
+.notes-editor,
+.transcription-display,
+.status-chip,
+.btn {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Header */
@@ -134,24 +253,33 @@ body {
 /* Status chips */
 .status-chips {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
 }
 
 .status-chip {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 4px 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-chip:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
 }
 
 .status-indicator {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--text-muted);
   transition: background-color 0.3s;
@@ -169,7 +297,13 @@ body {
   background: var(--danger-color);
 }
 
-/* Clock */
+/* Clock section */
+.clock-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 .clock {
   text-align: right;
   font-size: 12px;
@@ -243,6 +377,38 @@ body {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 12px;
+}
+
+/* Theme selector and preview */
+.theme-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-preview {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.theme-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.theme-swatch.primary {
+  background: var(--primary-color);
+}
+
+.theme-swatch.surface {
+  background: var(--surface);
+}
+
+.theme-swatch.background {
+  background: var(--background);
 }
 
 .input-field, .font-selector {
@@ -732,6 +898,12 @@ body {
 }
 
 /* Responsive design */
+@media (max-width: 1400px) {
+  .ai-chat {
+    width: 320px;
+  }
+}
+
 @media (max-width: 1200px) {
   .content-container {
     flex-direction: column;
@@ -745,6 +917,40 @@ body {
   .ai-chat {
     width: 350px;
   }
+  
+  .header-right .clock-section {
+    align-items: center;
+  }
+  
+  .status-chips {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar.open {
+    width: 280px;
+  }
+  
+  .recording-controls {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .status-chips {
+    gap: 4px;
+  }
+  
+  .status-chip {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+  
+  .status-indicator {
+    width: 5px;
+    height: 5px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -756,6 +962,33 @@ body {
     width: calc(100vw - 40px);
     right: 20px;
     left: 20px;
+  }
+  
+  .app-header {
+    padding: 0 12px;
+  }
+  
+  .header-left .app-title {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .content-container {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .recording-controls {
+    padding: 12px;
+  }
+  
+  .clock {
+    font-size: 10px;
+  }
+  
+  .status-chips {
+    margin-top: 4px;
   }
 }
 
