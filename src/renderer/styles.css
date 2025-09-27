@@ -504,6 +504,30 @@ body {
   border-color: var(--primary-color);
 }
 
+.font-selector {
+  width: 20%; /* 80% reduction from 100% */
+  max-width: 200px;
+  min-width: 120px;
+}
+
+.font-size-selector {
+  width: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+  margin-left: 8px;
+}
+
+.font-size-selector:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
 /* Buttons */
 .btn {
   padding: 8px 16px;
@@ -715,13 +739,17 @@ body {
 .formatting-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px 8px 0 0;
   border-bottom: none;
   flex-wrap: wrap;
+  overflow-x: auto;
+  overflow-y: visible;
+  min-height: 40px;
+  max-width: 100%;
 }
 
 .format-btn {
@@ -749,7 +777,8 @@ body {
   width: 1px;
   height: 20px;
   background: var(--border);
-  margin: 0 4px;
+  margin: 0 2px;
+  flex-shrink: 0;
 }
 
 /* Color selector styles */

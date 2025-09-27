@@ -90,9 +90,13 @@ class ScribeCatApp {
     this.vocalIsolationCheckbox = document.getElementById('vocal-isolation');
     this.microphoneSelect = document.getElementById('microphone-select');
     this.fontSelector = document.getElementById('font-family');
+    this.fontSizeSelector = document.getElementById('font-size');
+    this.fontGrowBtn = document.getElementById('font-grow');
+    this.fontShrinkBtn = document.getElementById('font-shrink');
     this.formatBtns = Array.from(document.querySelectorAll('.format-btn'));
     // Color selector elements
     this.fontColorSelector = document.getElementById('font-color');
+    this.fontColorBtn = document.getElementById('font-color-btn');
     this.highlightColorSelector = document.getElementById('highlight-color');
     // Chat elements
     this.aiChat = document.getElementById('ai-chat');
@@ -268,6 +272,15 @@ class ScribeCatApp {
     if (this.fontSelector) {
       this.fontSelector.addEventListener('change', (e) => this.changeFontFamily(e.target.value));
     }
+    if (this.fontSizeSelector) {
+      this.fontSizeSelector.addEventListener('change', (e) => this.changeFontSize(e.target.value));
+    }
+    if (this.fontGrowBtn) {
+      this.fontGrowBtn.addEventListener('click', () => this.increaseFontSize());
+    }
+    if (this.fontShrinkBtn) {
+      this.fontShrinkBtn.addEventListener('click', () => this.decreaseFontSize());
+    }
     if (this.formatBtns && this.formatBtns.length) {
       this.formatBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -285,6 +298,9 @@ class ScribeCatApp {
     // Color selector event listeners
     if (this.fontColorSelector) {
       this.fontColorSelector.addEventListener('change', (e) => this.changeFontColor(e.target.value));
+    }
+    if (this.fontColorBtn) {
+      this.fontColorBtn.addEventListener('click', () => this.fontColorSelector.click());
     }
     if (this.highlightColorSelector) {
       this.highlightColorSelector.addEventListener('change', (e) => this.changeHighlightColor(e.target.value));
@@ -481,19 +497,60 @@ class ScribeCatApp {
         const data = await response.json();
         const summary = data.choices?.[0]?.message?.content?.trim();
         if (summary) {
-          this.aiSummary.innerHTML = window.marked ? marked.parse(summary) : summary;
+          // Insert summary into notes field at the end
+          this.insertSummaryIntoNotes(summary);
+          if (this.aiSummary) {
+            this.aiSummary.innerHTML = '<span style="color:green">Summary added to notes successfully!</span>';
+          }
         } else {
-          this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
+          if (this.aiSummary) {
+            this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
+          }
         }
       } catch (err) {
         console.error('Error generating summary:', err);
-        if (this.isUsingDeveloperKey) {
-          this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own OpenAI API key in settings.</span>';
-        } else {
-          this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key.</span>';
+        if (this.aiSummary) {
+          if (this.isUsingDeveloperKey) {
+            this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own OpenAI API key in settings.</span>';
+          } else {
+            this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key.</span>';
+          }
         }
       }
       this.generateSummaryBtn.disabled = false;
+    }
+
+    insertSummaryIntoNotes(summary) {
+      if (!this.notesEditor) return;
+      
+      // Add line breaks and summary
+      const summaryText = '\n\n--- AI Summary ---\n' + summary;
+      
+      // Use both methods to ensure compatibility with tests and real usage
+      if (document.execCommand && !window.isTestEnvironment) {
+        // Move cursor to the end of the notes
+        const range = document.createRange();
+        const selection = window.getSelection();
+        
+        // Place cursor at the end of the editor
+        range.selectNodeContents(this.notesEditor);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        document.execCommand('insertText', false, summaryText);
+      } else {
+        // Fallback for test environment or when execCommand is not available
+        this.notesEditor.textContent += summaryText;
+      }
+      
+      // Save the updated notes
+      this.saveNotesDraft();
+      
+      // Scroll to show the added summary
+      if (this.notesEditor.scrollTop !== undefined) {
+        this.notesEditor.scrollTop = this.notesEditor.scrollHeight;
+      }
     }
 
     async generateAIBlurb() {
@@ -1503,6 +1560,59 @@ class ScribeCatApp {
     this.saveNotesDraft();
   }
 
+  changeFontSize(fontSize) {
+    document.execCommand('fontSize', false, '7'); // Set to largest, then use style
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const selectedElements = this.getSelectedElements();
+      selectedElements.forEach(element => {
+        if (element.style) {
+          element.style.fontSize = fontSize + 'px';
+        }
+      });
+    }
+    this.saveNotesDraft();
+  }
+
+  increaseFontSize() {
+    const currentSize = parseInt(this.fontSizeSelector.value) || 16;
+    const newSize = Math.min(currentSize + 2, 72);
+    this.fontSizeSelector.value = newSize;
+    this.changeFontSize(newSize);
+  }
+
+  decreaseFontSize() {
+    const currentSize = parseInt(this.fontSizeSelector.value) || 16;
+    const newSize = Math.max(currentSize - 2, 8);
+    this.fontSizeSelector.value = newSize;
+    this.changeFontSize(newSize);
+  }
+
+  getSelectedElements() {
+    const selection = window.getSelection();
+    const elements = [];
+    
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const walker = document.createTreeWalker(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode: function(node) {
+            return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
+      
+      let node;
+      while (node = walker.nextNode()) {
+        elements.push(node);
+      }
+    }
+    
+    return elements;
+  }
+
   executeFormat(command) {
     // Store the current selection to restore it later if needed
     const selection = window.getSelection();
@@ -1583,16 +1693,15 @@ class ScribeCatApp {
   }
 
   handleKeyDown(e) {
-    // Handle Tab key for indentation
+    // Prevent Tab key indentation - let it behave normally for navigation
     if (e.key === 'Tab') {
-      e.preventDefault();
-      if (e.shiftKey) {
-        document.execCommand('outdent', false, null);
-      } else {
-        document.execCommand('indent', false, null);
-      }
-      this.saveNotesDraft();
+      // Don't prevent default - allow normal tab behavior for accessibility
       return;
+    }
+    
+    // Handle autocorrect shortcuts on Space or Enter
+    if (e.key === ' ' || e.key === 'Enter') {
+      this.handleAutocorrect(e);
     }
     
     // Handle keyboard shortcuts
@@ -1623,6 +1732,66 @@ class ScribeCatApp {
           e.preventDefault();
           this.executeFormat('redo');
           break;
+        case '=':
+        case '+':
+          e.preventDefault();
+          this.increaseFontSize();
+          break;
+        case '-':
+          e.preventDefault();
+          this.decreaseFontSize();
+          break;
+      }
+    }
+  }
+
+  handleAutocorrect(e) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    const textNode = range.startContainer;
+    
+    if (textNode.nodeType !== Node.TEXT_NODE) return;
+    
+    const text = textNode.textContent;
+    const cursorPos = range.startOffset;
+    
+    // Look for autocorrect patterns before cursor
+    const beforeCursor = text.substring(0, cursorPos);
+    
+    // Define autocorrect patterns
+    const patterns = {
+      '--': '—',        // Em dash
+      '-->': '→',       // Right arrow
+      '<--': '←',       // Left arrow
+      ':)': '😊',       // Smiley face
+      ':(' : '😢',      // Frowning face
+      '...': '…',       // Ellipsis
+      '(c)': '©',       // Copyright
+      '(r)': '®',       // Registered
+      '(tm)': '™',      // Trademark
+      '+-': '±',        // Plus-minus
+      '1/2': '½',       // Half
+      '1/4': '¼',       // Quarter
+      '3/4': '¾',       // Three quarters
+    };
+    
+    // Check each pattern
+    for (const [pattern, replacement] of Object.entries(patterns)) {
+      if (beforeCursor.endsWith(pattern)) {
+        e.preventDefault();
+        
+        // Select the pattern text
+        const patternStart = cursorPos - pattern.length;
+        range.setStart(textNode, patternStart);
+        range.setEnd(textNode, cursorPos);
+        
+        // Replace with the symbol
+        document.execCommand('insertText', false, replacement + (e.key === 'Enter' ? '\n' : ' '));
+        
+        this.saveNotesDraft();
+        return;
       }
     }
   }

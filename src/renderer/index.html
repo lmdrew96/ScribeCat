@@ -215,7 +215,8 @@
                             <h2>Notes</h2>
                         </div>
                         <div class="formatting-toolbar">
-                            <select id="font-family" class="font-selector">
+                            <!-- Font and Size Controls -->
+                            <select id="font-family" class="font-selector" title="Font Family">
                                 <optgroup label="Traditional Serif">
                                     <option value="Times New Roman">Times New Roman</option>
                                     <option value="Georgia">Georgia</option>
@@ -255,35 +256,77 @@
                                     <option value="Work Sans">Work Sans</option>
                                 </optgroup>
                             </select>
+                            
+                            <select id="font-size" class="font-size-selector" title="Font Size">
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="14">14</option>
+                                <option value="16" selected>16</option>
+                                <option value="18">18</option>
+                                <option value="20">20</option>
+                                <option value="22">22</option>
+                                <option value="24">24</option>
+                                <option value="26">26</option>
+                                <option value="28">28</option>
+                                <option value="36">36</option>
+                                <option value="48">48</option>
+                                <option value="72">72</option>
+                            </select>
+                            
+                            <button class="format-btn" id="font-grow" title="Increase Font Size (Ctrl++)">A+</button>
+                            <button class="format-btn" id="font-shrink" title="Decrease Font Size (Ctrl+-)">A-</button>
+                            
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z)">↶</button>
-                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Y)">↷</button>
-                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Formatting Controls -->
                             <button class="format-btn" data-command="bold" title="Bold (Ctrl+B)"><b>B</b></button>
                             <button class="format-btn" data-command="italic" title="Italic (Ctrl+I)"><i>I</i></button>
                             <button class="format-btn" data-command="underline" title="Underline (Ctrl+U)"><u>U</u></button>
-                            <button class="format-btn" data-command="strikethrough" title="Strikethrough"><s>S</s></button>
+                            <button class="format-btn" data-command="strikethrough" title="Strikethrough">S̶</button>
+                            <button class="format-btn" data-command="subscript" title="Subscript">X₂</button>
+                            <button class="format-btn" data-command="superscript" title="Superscript">X²</button>
+                            
                             <div class="toolbar-separator"></div>
+                            
+                            <!-- Text Color and Highlighting -->
                             <div class="color-selector-group">
                                 <input type="color" id="font-color" class="color-selector" value="#000000" title="Font Color">
-                                <label for="font-color" class="format-btn color-btn" title="Font Color">A</label>
+                                <button class="format-btn color-btn" id="font-color-btn" title="Font Color">A</button>
                             </div>
                             <div class="color-selector-group">
                                 <input type="color" id="highlight-color" class="color-selector" value="#ffd200" title="Highlight Color">
-                                <button class="format-btn" data-command="highlight" title="Highlight">🖍</button>
+                                <button class="format-btn" data-command="hiliteColor" title="Highlight">🖍</button>
                             </div>
+                            
                             <div class="toolbar-separator"></div>
+                            
+                            <!-- Text Alignment -->
                             <button class="format-btn" data-command="justifyLeft" title="Align Left">⬅</button>
                             <button class="format-btn" data-command="justifyCenter" title="Align Center">↔</button>
                             <button class="format-btn" data-command="justifyRight" title="Align Right">➡</button>
+                            <button class="format-btn" data-command="justifyFull" title="Justify">≡</button>
+                            
                             <div class="toolbar-separator"></div>
+                            
+                            <!-- Lists and Indentation -->
                             <button class="format-btn" data-command="insertUnorderedList" title="Bullet List">•</button>
                             <button class="format-btn" data-command="insertOrderedList" title="Numbered List">1.</button>
                             <button class="format-btn" data-command="indent" title="Indent">→</button>
                             <button class="format-btn" data-command="outdent" title="Outdent">←</button>
+                            
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-shortcut="dash" title="Insert Dash">—</button>
-                            <button class="format-btn" data-shortcut="arrow" title="Insert Arrow">→</button>
+                            
+                            <!-- Undo/Redo -->
+                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z)">↶</button>
+                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Y)">↷</button>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Clear Formatting -->
+                            <button class="format-btn" data-command="removeFormat" title="Clear Formatting">📄</button>
                         </div>
                         <div id="notes-editor" class="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>

@@ -384,7 +384,8 @@ async function main() {
     app.transcriptionDisplay.innerHTML = '';
     app.addTranscriptionEntry('Transcript A');
     await app.generateAISummary();
-    if (!app.aiSummary.innerHTML.includes('Test summary output')) throw new Error('No summary');
+    // Check that summary was added to notes field
+    if (!app.notesEditor.textContent.includes('Test summary output')) throw new Error('No summary in notes');
   });
 
   await harness.testAsync('saveOpenAIKey saves and clears input', async () => {
