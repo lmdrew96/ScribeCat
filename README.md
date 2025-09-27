@@ -5,7 +5,7 @@
 ## Features
 
 ### Main Features ✨
-- **Real-time Audio Transcription**: Accumulate live transcription with timestamps via AssemblyAI API
+- **Real-time Audio Transcription**: Accumulate live transcription with timestamps via Vosk (offline) or Whisper
 - **Rich Text Editor**: Full-featured note-taking with comprehensive formatting toolbar
 - **30 Font Options**: Extensive typography selection including:
   - 5 Traditional Serif fonts (Times New Roman, Georgia, Garamond, Book Antiqua, Palatino)
@@ -124,10 +124,21 @@ npm run pack
 ## Configuration
 
 ### API Keys Setup
-Add your API keys through the application settings or environment variables:
+Add your API keys through the application settings:
 
-- **AssemblyAI API Key**: For real-time transcription
-- **OpenAI API Key**: For AI chat functionality
+- **OpenAI API Key**: For AI chat functionality (optional - developer key included by default)
+
+### Transcription Backend Configuration
+ScribeCat supports two transcription engines:
+
+1. **Vosk (Offline - Default)**:
+   - Download a Vosk model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models)
+   - In Settings → Transcription Backend → select "Vosk (Offline)"
+   - Provide the path to your Vosk model directory
+
+2. **Whisper (Optional)**:
+   - Select "Whisper" in Settings → Transcription Backend
+   - Requires internet connection for API calls
 
 ### Google Drive Integration
 ScribeCat uses Drive-for-desktop folder sync:
@@ -141,7 +152,8 @@ ScribeCat uses Drive-for-desktop folder sync:
 - **Electron**: Cross-platform desktop framework
 - **Node.js**: Backend runtime
 - **HTML/CSS/JavaScript**: Frontend interface
-- **AssemblyAI**: Real-time speech transcription
+- **Vosk**: Offline speech transcription (primary)
+- **Whisper**: Optional cloud-based transcription
 - **OpenAI**: AI chat functionality
 
 ### Project Structure

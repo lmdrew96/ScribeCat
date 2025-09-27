@@ -195,9 +195,10 @@ class SmokeTest {
       console.log('\n🚀 ScribeCat is ready for development and testing!');
       console.log('\nNext steps:');
       console.log('1. Replace placeholder assets with actual logo and fonts');
-      console.log('2. Add API keys for AssemblyAI and OpenAI');
-      console.log('3. Test recording functionality');
-      console.log('4. Test cross-platform builds');
+      console.log('2. Configure transcription backend (Vosk model or Whisper API)');
+      console.log('3. Optionally add your own OpenAI API key in settings');
+      console.log('4. Test recording functionality');
+      console.log('5. Test cross-platform builds');
     }
 
     // Automated test for AI summary feature
