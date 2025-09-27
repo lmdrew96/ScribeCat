@@ -109,6 +109,14 @@ class ScribeCatApp {
     
     // Developer Settings
     this.simulationModeToggle = document.getElementById('simulation-mode-toggle');
+    
+    // Bug Reporter elements
+    this.bugReportForm = document.getElementById('bug-report-form');
+    this.bugTitleInput = document.getElementById('bug-title');
+    this.bugDescriptionTextarea = document.getElementById('bug-description');
+    this.userEmailInput = document.getElementById('user-email');
+    this.createBugReportBtn = document.getElementById('create-bug-report');
+    this.bugReportStatus = document.getElementById('bug-report-status');
   }
 
   async init() {
@@ -347,6 +355,11 @@ class ScribeCatApp {
     const driveStatus = document.getElementById('drive-status');
     if (driveStatus) {
       driveStatus.addEventListener('click', () => this.showStatusDetails('drive'));
+    }
+    
+    // Bug Reporter event listeners
+    if (this.createBugReportBtn) {
+      this.createBugReportBtn.addEventListener('click', () => this.createBugReport());
     }
   }
 
@@ -2026,6 +2039,136 @@ class ScribeCatApp {
         console.error('Error calling OpenAI API:', error);
         return `Error: Could not connect to OpenAI API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
       }
+    }
+  }
+
+  // Simple Bug Reporter Methods
+  async createBugReport() {
+    const title = this.bugTitleInput?.value?.trim();
+    const description = this.bugDescriptionTextarea?.value?.trim();
+    const email = this.userEmailInput?.value?.trim();
+
+    if (!title || !description) {
+      this.updateBugReportStatus('Please fill in the title and description', 'error');
+      return;
+    }
+
+    try {
+      if (this.createBugReportBtn) {
+        this.createBugReportBtn.disabled = true;
+        this.createBugReportBtn.textContent = 'Reporting...';
+      }
+
+      // Create comprehensive bug report
+      const bugReport = this.generateBugReportContent(title, description, email);
+      
+      // Try multiple reporting methods
+      const success = await this.submitBugReport(bugReport, title);
+      
+      if (success) {
+        this.updateBugReportStatus('✅ Bug report submitted successfully!', 'success');
+        // Clear form
+        if (this.bugTitleInput) this.bugTitleInput.value = '';
+        if (this.bugDescriptionTextarea) this.bugDescriptionTextarea.value = '';
+        if (this.userEmailInput) this.userEmailInput.value = '';
+      } else {
+        throw new Error('Failed to submit bug report');
+      }
+      
+    } catch (error) {
+      console.error('Error creating bug report:', error);
+      this.updateBugReportStatus(`❌ ${error.message}`, 'error');
+    } finally {
+      if (this.createBugReportBtn) {
+        this.createBugReportBtn.disabled = false;
+        this.createBugReportBtn.textContent = 'Report Bug';
+      }
+    }
+  }
+
+  generateBugReportContent(title, description, email) {
+    return {
+      title: `[User Report] ${title}`,
+      body: `## Bug Report
+
+**Summary:** ${title}
+
+**Description:**
+${description}
+
+**User Details:**
+- Email: ${email || 'Not provided'}
+- App Version: ${window.appInfo?.version || 'Unknown'}
+- Platform: ${window.appInfo?.platform || 'Unknown'}
+- User Agent: ${navigator.userAgent}
+- Timestamp: ${new Date().toISOString()}
+
+**System Info:**
+- Screen Resolution: ${screen.width}x${screen.height}
+- Language: ${navigator.language}
+- Online: ${navigator.onLine}
+
+---
+*This bug report was submitted via ScribeCat's integrated bug reporter*`,
+      labels: ['bug', 'user-report', 'scribecat']
+    };
+  }
+
+  async submitBugReport(bugReport, title) {
+    // Method 1: Try to open GitHub issue creation page with pre-filled data
+    try {
+      const repo = 'lmdrew96/ScribeCat'; // ScribeCat repository
+      const issueUrl = new URL(`https://github.com/${repo}/issues/new`);
+      
+      // Add query parameters for pre-filled issue
+      issueUrl.searchParams.set('title', bugReport.title);
+      issueUrl.searchParams.set('body', bugReport.body);
+      issueUrl.searchParams.set('labels', bugReport.labels.join(','));
+      
+      // Open in external browser
+      window.open(issueUrl.toString(), '_blank');
+      
+      this.updateBugReportStatus('Opening GitHub in your browser...', 'info');
+      
+      // Give user feedback that browser opened
+      setTimeout(() => {
+        this.updateBugReportStatus('✅ Please complete the issue submission in your browser', 'success');
+      }, 2000);
+      
+      return true;
+      
+    } catch (error) {
+      console.error('Failed to open GitHub issue page:', error);
+      
+      // Fallback: Copy to clipboard
+      try {
+        const reportText = `${bugReport.title}\n\n${bugReport.body}`;
+        await navigator.clipboard.writeText(reportText);
+        this.updateBugReportStatus('📋 Bug report copied to clipboard - please paste it at: https://github.com/lmdrew96/ScribeCat/issues/new', 'warning');
+        return true;
+      } catch (clipboardError) {
+        console.error('Failed to copy to clipboard:', clipboardError);
+        // Show manual instructions
+        this.updateBugReportStatus('❌ Please manually report this at: https://github.com/lmdrew96/ScribeCat/issues/new', 'error');
+        return false;
+      }
+    }
+  }
+
+  updateBugReportStatus(message, type = 'info') {
+    if (!this.bugReportStatus) return;
+    
+    this.bugReportStatus.style.display = 'block';
+    this.bugReportStatus.textContent = message;
+    this.bugReportStatus.className = `bug-status ${type}`;
+    
+    // Auto-hide success/info messages after 5 seconds
+    if (type === 'success' || type === 'info') {
+      setTimeout(() => {
+        if (this.bugReportStatus) {
+          this.bugReportStatus.style.display = 'none';
+        }
+      }, 5000);
     }
   }
 }

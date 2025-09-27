@@ -1,10 +1,21 @@
-### Summary
-Implement GitHub API integration in the ScribeCat Electron app to enable: (1) in-app bug reporting that creates issues with session context, (2) AskAI answering user questions about app functionality using repo/docs context, and (3) AskAI-assisted issue creation that summarizes session context and proposes an issue the user can review and post.
+### Summa### User ### User flows
+1) **Enhanced manual report**  
+- User clicks "Report Bug" in sidebar → form auto-populates with session context (current notes, recent transcription) → user adds description and optional email → clicks "Report Bug" → browser opens with comprehensive GitHub issue pre-filled → user clicks "Submit new issue" to complete.
+
+2) **AskAI-assisted report**  
+- User asks AskAI "Create a bug report from this session" → AskAI analyzes current context, notes, and transcription → generates comprehensive bug report with symptoms analysis → user reviews and approves → browser opens with AI-generated report → user submits in GitHub.
+
+3) **AskAI app-help**  
+- User asks AskAI a functionality question → AskAI references built-in knowledge about ScribeCat features → provides step-by-step guidance with specific UI references → optionally includes links to relevant documentation or settings. As a user, I can click "Report Bug" and have my current session's transcript and notes automatically included in the GitHub issue (via browser pre-fill or clipboard)
+- As a user, I can ask the built-in AskAI "Create a bug report from this session" and review the AI‑generated comprehensive report before opening it in my browser
+- As a user, I can ask AskAI questions about app features ("How do I save to Drive?" "What transcription backends are available?") and receive helpful answers with step-by-step guidance
+- As a developer, I get detailed issues that include session context, system information, and AI-analyzed symptoms for faster problem resolutionhance ScribeCat's existing zero-configuration bug reporter with advanced features: (1) session context integration for comprehensive bug reports, (2) AskAI integration for intelligent question answering about app functionality, and (3) AskAI-assisted bug report generation that analyzes session data and creates detailed reports users can review before submission.
 
 ### Goals
-- Let users create well‑formed GitHub issues from inside ScribeCat with useful reproduction context (notes, transcript, optional audio link or gist).
-- Enable AskAI to answer questions about the app using repository docs or selected files as context.
-- Let AskAI propose and prefill issue title/body from session context; user confirms before posting.
+- Enhance the current simple bug reporter with session context (notes, transcripts) while maintaining zero-config operation
+- Enable AskAI to answer questions about the app using built-in knowledge and documentation
+- Let AskAI analyze current session data to generate comprehensive bug reports users can review and submit
+- Maintain privacy-first, no-authentication approach while adding intelligence features
 
 ### User stories
 - As a user, I can click “Report bug” and choose a repo to file an issue that includes the current session’s transcript and notes (or a private gist link for large attachments).
@@ -23,32 +34,37 @@ Implement GitHub API integration in the ScribeCat Electron app to enable: (1) in
 - User asks AskAI a functionality question → AskAI can reference README or docs files loaded from the repo (if user permits) and answer with step-by-step guidance; UI shows source file links when applicable.
 
 ### Acceptance criteria
-- Users can authenticate with GitHub via OAuth and token is stored securely in OS keychain (keytar or similar).
-- The Report modal can create an issue in a chosen repo and returns the issue URL on success.
-- AskAI can read selected repo docs (README, docs/ folder) when user permits, and answer app-related questions using that content.
-- AskAI can propose issue title/body from session context; submission requires explicit user confirmation.
-- Attachments: transcript can be attached by creating a private gist or committing a Markdown file to a chosen repo; the created link is included in the issue body.
-- Clear error handling and user-facing messages for auth failure, rate limits, offline queueing, and permission issues.
+- Bug reporter works immediately without any authentication or setup (zero-configuration approach maintained)
+- Session context (notes, transcripts) is automatically included in bug reports via browser pre-fill or clipboard
+- AskAI can analyze current session data and generate comprehensive bug reports for user review
+- AskAI can answer questions about ScribeCat functionality using built-in knowledge base
+- Reports include automatic system information (app version, platform, timestamp, etc.)
+- Clear fallback methods when browser opening fails (clipboard copy with instructions)
+- Privacy-first approach: only user-provided information is included in reports
 - Unit or integration tests added for new IPC handlers and a smoke test for the Report flow.
 
 ### Implementation notes (Electron-friendly)
-- Use the system browser OAuth flow; capture token via redirect or device code flow. Store token in OS secure storage (keytar).
-- Add IPC channels: github:auth, github:create-issue, github:create-gist, github:commit-file, github:comment-issue. Run network and file IO in main process.
-- For attachments: prefer creating a private Gist for large content, or commit a Markdown transcript to a selected repo/branch for full traceability.
-- AskAI doc context: provide a toggle to let the assistant fetch README/docs from the repo (only when user allows) and pass that content as context to the AI request.
-- Keep requested scopes minimal: gist for gists, public_repo for public only, repo for private repos; request scopes only when features are enabled.
+- Enhance existing bug reporter to include session context (notes, transcripts) in the GitHub issue pre-fill URL
+- Add session analysis methods to gather current app state for comprehensive bug reports
+- Integrate with existing AskAI system to provide app functionality guidance and bug report generation
+- Use browser-based submission with GitHub issue templates for zero-authentication approach
+- Include session attachments via formatted text blocks in the issue body (no external file hosting needed)
+- AskAI features: built-in knowledge base about ScribeCat functionality, no external API calls required for basic help
 
 ### UI suggestions
-- Add a compact "Report" quick-action in the status chips area (under the clock) and an item in the AskAI context menu.
-- Report modal fields: Repo selector, Branch (optional), Title, Body (prefilled), Attachments toggle (Transcript/Gist/Audio link), Labels, Create button.
-- After creation: toast with "Issue created — open on GitHub" and a copy link button.
+- Enhance existing "Bug Reporter" sidebar section with session context integration
+- Add AskAI integration for "Create bug report from session" and general help queries
+- Enhanced bug report form: auto-populate with session data, improve formatting and context inclusion
+- After submission: status updates showing "Opening GitHub in browser..." and "Complete submission in your browser"
 
 ### Testing notes
-- Test flows for public and private repos and gist creation. Test offline queue and retry logic.
-- Add tests for: OAuth flow handling, IPC handlers, create-issue error cases, and the AskAI prefill -> submit confirmation path.
+- Test session context collection and formatting for bug reports
+- Add tests for: AskAI integration, session analysis methods, enhanced bug report generation
+- Test browser opening fallback to clipboard copy, comprehensive bug report formatting
+- Validate existing zero-config bug reporter remains functional while adding enhanced features
 
 ### Suggested labels
 enhancement, feature, needs-design
 
 ### Notes
-Place this feature to integrate with the existing save/export system (Google Drive flow) as an alternate save target and reuse the new status chip area added in PR #15 as the surface for quick actions.
+This enhancement builds upon the existing zero-configuration bug reporter while adding intelligence and session context. It maintains the privacy-first, no-authentication approach while providing more comprehensive bug reports through AskAI integration and session analysis. The feature integrates with the existing save/export system as an enhanced reporting mechanism.

@@ -210,6 +210,24 @@
                     <button id="save-openai-key" class="btn btn-small">Save Your Key</button>
                 </div>
             </div>
+
+            <div class="sidebar-section">
+                <h3>Bug Reporter</h3>
+                <div class="bug-report-settings">
+                    <p style="font-size:12px;color:#666;margin-bottom:8px;">
+                        Report bugs directly to the ScribeCat team. No account required.
+                    </p>
+                    
+                    <div class="bug-report-form" id="bug-report-form">
+                        <input type="text" id="bug-title" placeholder="Brief description of the issue" class="input-field">
+                        <textarea id="bug-description" placeholder="What happened? Include steps to reproduce if possible." class="input-field" rows="4"></textarea>
+                        <input type="email" id="user-email" placeholder="Your email (optional, for follow-up)" class="input-field">
+                        <button id="create-bug-report" class="btn btn-small">Report Bug</button>
+                    </div>
+                    
+                    <div id="bug-report-status" class="bug-status" style="display: none; margin-top: 8px;"></div>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content Area -->
