@@ -1,4 +1,4 @@
-/* Variables for theming */
+/* Variables for theming and dynamic sizing */
 :root {
   --primary-color: #6366f1;
   --primary-hover: #5855eb;
@@ -14,6 +14,14 @@
   --text-muted: #94a3b8;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Dynamic sizing variables */
+  --card-width-ratio: 1; /* Full width usage */
+  --container-max-width: 100vw; /* Full viewport width */
+  --card-min-width: 0; /* No minimum, allow full flexibility */
+  --card-gap: 12px; /* Standard gap */
+  --container-padding: 12px; /* Standard container padding */
+  --transition-speed: 0.3s;
 }
 
 /* Custom fonts */
@@ -340,12 +348,19 @@ body {
   overflow: hidden;
   user-select: none;
   transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 #app {
   height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 /* Enhanced transitions for theme changes */
@@ -755,27 +770,32 @@ body {
   cursor: not-allowed;
 }
 
-/* Main content */
+/* Main content - Full viewport dynamic sizing */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   height: calc(100vh - 90px); /* Account for header height */
+  width: 100vw; /* Full viewport width */
+  min-height: 0;
+  box-sizing: border-box;
 }
 
-/* Recording controls - 20% shorter height */
+/* Recording controls - Full width with dynamic sizing */
 .recording-controls {
-  padding: 10px 16px; /* Reduced from 16px to 10px vertically */
+  padding: 10px 20px; /* Consistent padding */
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  border-radius: 8px; /* Smaller radius */
-  margin: 12px 16px; /* Reduced top/bottom margin */
+  border-radius: 8px;
+  margin: 12px; /* Minor padding from window edges */
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
-  gap: 12px; /* Reduced gap */
+  gap: 12px;
   flex-shrink: 0;
+  width: calc(100% - 24px); /* Full width minus margin */
+  box-sizing: border-box;
 }
 
 .record-btn {
@@ -893,28 +913,35 @@ body {
   border-radius: 1px;
 }
 
-/* Content container */
+/* Content container - Full width side-by-side layout */
 .content-container {
   flex: 1;
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  justify-content: flex-start; /* Align to start, not center */
+  align-items: flex-start;
+  gap: 12px; /* Fixed gap between cards */
+  padding: 12px; /* Minor padding from window edges */
   overflow: hidden;
   min-height: 0; /* Allow flex shrinking */
+  width: 100%;
+  box-sizing: border-box;
+  transition: all var(--transition-speed) ease;
+  container-type: inline-size; /* Enable container queries where supported */
 }
 
-/* Editor section - Less padding */
+/* Editor section - Dynamic full-width sizing, always side-by-side */
 .editor-section {
-  flex: 1;
+  flex: 1; /* Take equal share of available space */
+  min-width: 0; /* Allow shrinking below content size */
   display: flex;
   flex-direction: column;
-  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 12px; /* Reduced from 20px to 12px */
+  padding: 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: all var(--transition-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .editor-header {
@@ -1016,7 +1043,7 @@ body {
   background: var(--highlight-color, #ffd200);
 }
 
-/* Notes editor */
+/* Notes editor - Dynamic full container sizing */
 .notes-editor {
   flex: 1;
   padding: 16px;
@@ -1030,6 +1057,8 @@ body {
   user-select: text;
   min-height: 0;
   margin-top: 16px;
+  width: 100%; /* Ensure full width usage */
+  box-sizing: border-box;
 }
 
 .notes-editor:empty::before {
@@ -1042,17 +1071,19 @@ body {
   border-color: var(--primary-color);
 }
 
-/* Transcription section - Less padding */
+/* Transcription section - Dynamic full-width sizing, always side-by-side */
 .transcription-section {
-  flex: 1; /* Changed to flex: 1 for equal width with editor */
+  flex: 1; /* Take equal share of available space */
+  min-width: 0; /* Allow shrinking below content size */
   display: flex;
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 12px; /* Reduced from 20px to 12px */
+  padding: 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: all var(--transition-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .transcription-header {
@@ -1068,6 +1099,7 @@ body {
   color: var(--text-primary);
 }
 
+/* Transcription display - Dynamic full container sizing */
 .transcription-display {
   flex: 1;
   padding: 16px;
@@ -1079,6 +1111,8 @@ body {
   overflow-y: auto;
   min-height: 0;
   margin-top: 16px;
+  width: 100%; /* Ensure full width usage */
+  box-sizing: border-box;
 }
 
 .transcript-entry {
@@ -1247,21 +1281,50 @@ body {
   background: var(--text-muted);
 }
 
-/* Responsive design */
+/* Enhanced Responsive Design for Dynamic UI */
+
+/* Extra Large Screens - Cards spread out with more space */
+@media (min-width: 1600px) {
+  .content-container {
+    max-width: 80%;
+    margin: 0 auto;
+  }
+  
+  .editor-section,
+  .transcription-section {
+    flex: 0.4; /* Slightly smaller on very large screens */
+    max-width: 45%;
+  }
+}
+
+/* Large Screens - Standard layout */
 @media (max-width: 1400px) {
+  .content-container {
+    max-width: 90%;
+    margin: 0 auto;
+  }
+  
   .ai-chat {
     width: 320px;
   }
 }
 
+/* Medium-Large Screens - Always side-by-side, adjust padding */
 @media (max-width: 1200px) {
   .content-container {
-    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
   }
   
+  .recording-controls {
+    margin: 10px;
+    padding: 8px 16px;
+    width: calc(100% - 20px);
+  }
+  
+  .editor-section,
   .transcription-section {
-    width: 100%;
-    height: 200px;
+    padding: 10px; /* Reduced padding on smaller screens */
   }
   
   .ai-chat {
@@ -1278,14 +1341,28 @@ body {
   }
 }
 
+/* Medium Screens - Maintain side-by-side, compact layout */
 @media (max-width: 900px) {
-  .sidebar.open {
-    width: 280px;
+  .content-container {
+    gap: 8px;
+    padding: 8px;
   }
   
   .recording-controls {
+    margin: 8px;
+    padding: 8px 12px;
+    width: calc(100% - 16px);
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
+  }
+  
+  .editor-section,
+  .transcription-section {
+    padding: 8px; /* More compact padding */
+  }
+  
+  .sidebar.open {
+    width: 280px;
   }
   
   .status-chips {
@@ -1302,6 +1379,8 @@ body {
     height: 5px;
   }
 }
+
+
 
 @media (max-width: 768px) {
   .formatting-toolbar {
@@ -1333,18 +1412,30 @@ body {
   }
 }
 
+/* Small Screens - Mobile optimized, maintain side-by-side */
 @media (max-width: 600px) {
   .content-container {
-    padding: 12px;
-    gap: 12px;
+    padding: 6px;
+    gap: 6px;
+    /* Keep flex-direction: row to maintain side-by-side */
+  }
+  
+  .editor-section,
+  .transcription-section {
+    padding: 6px; /* Minimal padding on mobile */
   }
   
   .recording-controls {
-    padding: 12px;
+    padding: 6px 10px;
+    margin: 6px;
+    width: calc(100% - 12px);
+    gap: 6px;
+    flex-wrap: wrap;
   }
   
   .app-header {
     height: 60px; /* Compact height on mobile */
+    padding: 0 8px;
   }
   
   .logo {
@@ -1354,6 +1445,53 @@ body {
   
   .app-title {
     font-size: 20px; /* Compact title on mobile */
+  }
+  
+  .theme-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
+  }
+  
+  .sidebar.open {
+    width: calc(100vw - 20px); /* Nearly full width on mobile */
+    left: 10px;
+    right: 10px;
+  }
+}
+
+/* Extra Small Screens - Ultra mobile optimized, maintain side-by-side */
+@media (max-width: 480px) {
+  .content-container {
+    padding: 4px;
+    gap: 4px;
+    /* Keep side-by-side even on very small screens */
+  }
+  
+  .editor-section,
+  .transcription-section {
+    padding: 4px; /* Minimal padding for maximum content area */
+  }
+  
+  .recording-controls {
+    padding: 4px 6px;
+    margin: 4px;
+    width: calc(100% - 8px);
+    gap: 4px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .recording-controls .record-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .app-header {
+    height: 50px;
+    padding: 0 6px;
+  }
+  
+  .theme-grid {
+    grid-template-columns: 1fr; /* Single column on very small screens */
   }
   
   .clock {
