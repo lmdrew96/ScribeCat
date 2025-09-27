@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const keytar = require('keytar');
+const { Document, Packer, Paragraph, TextRun, HeadingLevel } = require('docx');
+const cheerio = require('cheerio');
 
 // electron-store works as a default export in recent versions
 const ElectronStore = require('electron-store');
@@ -122,10 +124,92 @@ ipcMain.handle('transcription:stop', async () => {
 
 ipcMain.handle('drive:save-html', async (event, { filePath, content, fileName }) => {
   try {
-    const fullPath = path.join(filePath, `${fileName}.html`);
-    fs.writeFileSync(fullPath, content, 'utf8');
+    const $ = cheerio.load(content);
+    
+    // Extract header information
+    const courseNumber = $('.course-info').first().text().replace('Course: ', '').trim() || 'N/A';
+    const courseTitle = $('.course-info').eq(1).text().replace('Title: ', '').trim() || 'Untitled';
+    const date = $('.date').text().replace('Date: ', '').trim() || new Date().toLocaleDateString();
+    
+    // Extract content and create paragraphs
+    const contentDiv = $('.content');
+    const paragraphs = [];
+    
+    // Add header paragraphs
+    paragraphs.push(
+      new Paragraph({
+        text: `Course: ${courseNumber}`,
+        heading: HeadingLevel.HEADING_2,
+      }),
+      new Paragraph({
+        text: `Title: ${courseTitle}`,
+        spacing: { after: 200 },
+      }),
+      new Paragraph({
+        text: `Date: ${date}`,
+        spacing: { after: 400 },
+      })
+    );
+    
+    // Process content
+    if (contentDiv.length > 0) {
+      // Handle different content types
+      contentDiv.find('p, div.entry').each((i, elem) => {
+        const text = $(elem).text().trim();
+        if (text) {
+          // Check if this is a transcription entry with timestamp
+          const strongText = $(elem).find('strong').text();
+          if (strongText) {
+            // This is likely a transcription entry
+            const remainingText = text.replace(strongText, '').trim();
+            paragraphs.push(
+              new Paragraph({
+                children: [
+                  new TextRun({ text: strongText, bold: true }),
+                  new TextRun({ text: remainingText ? `: ${remainingText}` : '' })
+                ],
+                spacing: { after: 200 }
+              })
+            );
+          } else {
+            // Regular paragraph
+            paragraphs.push(
+              new Paragraph({
+                text: text,
+                spacing: { after: 200 }
+              })
+            );
+          }
+        }
+      });
+    }
+    
+    // If no content was found, add a default message
+    if (paragraphs.length === 3) { // Only header paragraphs
+      paragraphs.push(
+        new Paragraph({
+          text: 'No content available.',
+          spacing: { after: 200 }
+        })
+      );
+    }
+    
+    // Create DOCX document
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: paragraphs,
+      }],
+    });
+    
+    // Generate DOCX buffer and save
+    const buffer = await Packer.toBuffer(doc);
+    const fullPath = path.join(filePath, `${fileName}.docx`);
+    fs.writeFileSync(fullPath, buffer);
+    
     return { success: true, path: fullPath };
   } catch (error) {
+    console.error('Error creating DOCX file:', error);
     return { success: false, error: error.message };
   }
 });
