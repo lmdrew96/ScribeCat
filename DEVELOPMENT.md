@@ -93,6 +93,7 @@ Preload Script (preload.js)
 - `transcription:start-vosk` - Start Vosk transcription
 - `transcription:start-whisper` - Start Whisper transcription
 - `transcription:stop` - Stop transcription session
+- `keytar:get/set` - Secure credential storage
 
 ### Settings Storage
 Uses `electron-store` for persistent configuration:

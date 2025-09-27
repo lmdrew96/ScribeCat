@@ -19,7 +19,7 @@
 
 ### Additional Features 🎨
 - **Immersive UI/UX**: Modern, vibrant interface with smooth animations
-- **Multiple Themes**: 5+ preset themes with customizable color schemes
+- **Multiple Themes**: 15 preset themes with customizable color schemes
 - **Real-time Clock**: Date and time display synced to user's timezone
 - **Status Monitoring**: Color-coded health status chips for app functions
 - **Version Tracking**: Version number display in bottom-left corner
