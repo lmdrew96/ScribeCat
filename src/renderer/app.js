@@ -1644,7 +1644,7 @@ class ScribeCatApp {
       `${index + 1}. ${course.courseNumber} - ${course.courseTitle}`
     ).join('\n');
     
-    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'scrape' to attempt Canvas course scraping\n4. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
+    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'scrape' to attempt Canvas course scraping\n4. Enter 'import' to import from Canvas extension\n5. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
     
     if (action) {
       if (action.startsWith('add:')) {
@@ -1676,8 +1676,10 @@ class ScribeCatApp {
         }
       } else if (action === 'scrape') {
         await this.attemptCanvasScraping();
+      } else if (action === 'import') {
+        await this.importCanvasExtensionData();
       } else {
-        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, or scrape');
+        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, scrape, or import');
       }
     }
   }
@@ -1689,7 +1691,75 @@ class ScribeCatApp {
       return;
     }
 
-    alert(`Canvas Course Scraping Methods:\n\n1. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n2. Browser Extension:\n   - Create Chrome/Firefox extension\n   - Inject content script into Canvas pages\n   - Parse course list from DOM elements\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nFor now, use the manual course management or consider implementing Canvas API integration.`);
+    alert(`Canvas Course Scraping Methods:\n\n1. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n2. Browser Extension:\n   - Install ScribeCat Canvas Extension\n   - Automatically scrapes Canvas dashboard\n   - Export data and import using "import" action\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nFor Canvas Extension integration, use the "import" action in course management.`);
+  }
+
+  async importCanvasExtensionData() {
+    try {
+      // Show file dialog to select extension export
+      const fileResult = await window.electronAPI.showCanvasImportDialog();
+      
+      if (!fileResult.success) {
+        if (!fileResult.canceled) {
+          alert(`Error selecting file: ${fileResult.error}`);
+        }
+        return;
+      }
+      
+      // Parse the selected file
+      const parseResult = await window.electronAPI.parseCanvasImport({
+        content: fileResult.content,
+        type: fileResult.type
+      });
+      
+      if (!parseResult.success) {
+        alert(`Error parsing file: ${parseResult.error}`);
+        return;
+      }
+      
+      if (parseResult.count === 0) {
+        alert('No courses found in the selected file.');
+        return;
+      }
+      
+      // Confirm import
+      const coursesList = parseResult.courses.map(course => 
+        `- ${course.courseNumber} - ${course.courseTitle}`
+      ).join('\n');
+      
+      const confirmMessage = `Import ${parseResult.count} courses from Canvas Extension?\n\n${coursesList}\n\nThis will add these courses to your predefined course list.`;
+      
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+      
+      // Get existing courses and merge
+      const existingCourses = await window.electronAPI.storeGet('predefined-courses') || [];
+      
+      // Filter out duplicates based on course number and title
+      const uniqueNewCourses = parseResult.courses.filter(newCourse => 
+        !existingCourses.some(existing => 
+          existing.courseNumber === newCourse.courseNumber && 
+          existing.courseTitle === newCourse.courseTitle
+        )
+      );
+      
+      if (uniqueNewCourses.length === 0) {
+        alert('All courses from the file already exist in your course list.');
+        return;
+      }
+      
+      // Add unique courses
+      const updatedCourses = [...existingCourses, ...uniqueNewCourses];
+      await window.electronAPI.storeSet('predefined-courses', updatedCourses);
+      await this.loadPredefinedCourses();
+      
+      alert(`Successfully imported ${uniqueNewCourses.length} new courses!\n\nFile: ${fileResult.fileName}\nTotal courses in list: ${updatedCourses.length}`);
+      
+    } catch (error) {
+      console.error('Canvas import error:', error);
+      alert(`Import failed: ${error.message}`);
+    }
   }
 
   /* 
