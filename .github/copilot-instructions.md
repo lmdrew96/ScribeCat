@@ -12,7 +12,7 @@ Follow these repo-specific rules to implement features correctly and keep tests 
 ## IPC patterns (use these shapes)
 - Request/response channel: main registers `ipcMain.handle('name', async (e, data) => ({ success: true }))`
 - Preload exposes: `name: (data) => ipcRenderer.invoke('name', data)`
-- Existing channels: `drive:ensure-target`, `drive:save-html`, `store:get`, `store:set`, `show-folder-dialog`, `save-audio-file`, `transcription:start-vosk`, `transcription:start-whisper`, `transcription:stop`
+- Existing channels: `drive:ensure-target`, `drive:save-html`, `store:get`, `store:set`, `show-folder-dialog`, `save-audio-file`, `transcription:start-vosk`, `transcription:start-whisper`, `transcription:stop`, `keytar:get`, `keytar:set`
 - Menu events: main uses `webContents.send('menu:new-recording'|'menu:save')`; preload exposes `onMenuAction(cb)` to subscribe.
 - Return shapes for file ops: `{ success: boolean, path?: string, error?: string }`
 
