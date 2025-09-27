@@ -26,6 +26,7 @@ class ScribeCatApp {
     this.whisperEnabled = false;
     this.openAIApiKey = null;
     this.isUsingDeveloperKey = false;
+    this.simulationMode = true; // Default to simulation mode enabled
     this.currentTheme = 'default';
     this.simulationMode = true; // Default to simulation mode enabled
     this.simulatedTranscriptionInterval = null;
@@ -86,6 +87,9 @@ class ScribeCatApp {
     this.jumpLatestBtn = document.getElementById('jump-latest');
     this.transcriptionBackendSelect = document.getElementById('transcription-backend');
     
+    // Developer settings
+    this.simulationToggle = document.getElementById('simulation-toggle');
+    
     // Status elements
     this.clock = document.querySelector('.clock');
     this.versionInfo = document.getElementById('version-info');
@@ -117,6 +121,7 @@ class ScribeCatApp {
     await this.initializeAudioDevices();
     this.updateVersionInfo();
     this.initializeStatusChips();
+    this.updateStatusIndicators(); // Update status indicators based on simulation mode
     // Load Vosk model path and Whisper toggle
     this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
     this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
@@ -381,6 +386,14 @@ class ScribeCatApp {
     this.themeSelect.value = savedTheme;
     // Update theme preview on load
     this.updateThemePreview();
+    
+    // Load simulation mode (defaults to true if not set)
+    const savedSimulationMode = await window.electronAPI.storeGet('simulation-mode');
+    this.simulationMode = savedSimulationMode !== null ? savedSimulationMode : true;
+    if (this.simulationToggle) {
+      this.simulationToggle.checked = this.simulationMode;
+    }
+    
     // Load Canvas settings
     const canvasSettings = await window.electronAPI.storeGet('canvas-settings') || {};
     if (canvasSettings.url) this.canvasUrl.value = canvasSettings.url;
@@ -501,43 +514,61 @@ class ScribeCatApp {
       const transcriptContent = Array.from(this.transcriptionDisplay.children)
         .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
         .join('\n');
-      if (!this.openAIApiKey) {
-        this.aiSummary.innerHTML = '<span style="color:red">OpenAI API key required.</span>';
-        return;
-      }
+        
       this.generateSummaryBtn.disabled = true;
       this.aiSummary.innerHTML = '<em>Generating summary...</em>';
-      try {
-        const prompt = `Summarize the following notes and transcript. Highlight key topics, phrases, and any due dates. Format the output in rich markdown.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.openAIApiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'You are a helpful assistant that summarizes notes and transcripts in rich markdown.' },
-              { role: 'user', content: prompt }
-            ],
-            max_tokens: 256,
-            temperature: 0.3
-          })
-        });
-        const data = await response.json();
-        const summary = data.choices?.[0]?.message?.content?.trim();
-        if (summary) {
-          this.aiSummary.innerHTML = window.marked ? marked.parse(summary) : summary;
-        } else {
-          this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
+      
+      if (this.simulationMode) {
+        // Simulation mode - generate mock summary
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+          const mockSummary = `## Summary\n\n**Key Topics Covered:**\n- Course discussion points\n- Important concepts and definitions\n- Action items identified\n\n**Notes Analysis:**\n${notesContent ? '- Found detailed notes with key information' : '- No notes content available'}\n\n**Transcription Analysis:**\n${transcriptContent ? '- Transcription contains valuable discussion points' : '- No transcription content available'}\n\n*[This is a simulated summary. In real mode, this would be generated using OpenAI's GPT-4o-mini model.]*`;
+          
+          this.aiSummary.innerHTML = window.marked ? marked.parse(mockSummary) : mockSummary;
+        } catch (err) {
+          console.error('Error in simulation mode:', err);
+          this.aiSummary.innerHTML = '<span style="color:red">Error generating simulated summary.</span>';
         }
-      } catch (err) {
-        console.error('Error generating summary:', err);
-        if (this.isUsingDeveloperKey) {
-          this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own OpenAI API key in settings.</span>';
-        } else {
-          this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key.</span>';
+      } else {
+        // Real API mode
+        if (!this.openAIApiKey) {
+          this.aiSummary.innerHTML = '<span style="color:red">OpenAI API key required.</span>';
+          this.generateSummaryBtn.disabled = false;
+          return;
+        }
+        
+        try {
+          const prompt = `Summarize the following notes and transcript. Highlight key topics, phrases, and any due dates. Format the output in rich markdown.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.openAIApiKey}`
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: 'You are a helpful assistant that summarizes notes and transcripts in rich markdown.' },
+                { role: 'user', content: prompt }
+              ],
+              max_tokens: 256,
+              temperature: 0.3
+            })
+          });
+          const data = await response.json();
+          const summary = data.choices?.[0]?.message?.content?.trim();
+          if (summary) {
+            this.aiSummary.innerHTML = window.marked ? marked.parse(summary) : summary;
+          } else {
+            this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
+          }
+        } catch (err) {
+          console.error('Error generating summary:', err);
+          if (this.isUsingDeveloperKey) {
+            this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own OpenAI API key in settings or enable simulation mode.</span>';
+          } else {
+            this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key or enable simulation mode.</span>';
+          }
         }
       }
       this.generateSummaryBtn.disabled = false;
@@ -703,6 +734,82 @@ class ScribeCatApp {
     
     // Update theme preview swatches
     this.updateThemePreview();
+  }
+
+  async toggleSimulationMode(enabled) {
+    this.simulationMode = enabled;
+    await window.electronAPI.storeSet('simulation-mode', enabled);
+    
+    // Show notification about the mode change
+    this.showNotification(
+      enabled ? 'Simulation mode enabled' : 'Simulation mode disabled - using real APIs',
+      enabled ? 'success' : 'warning'
+    );
+    
+    // Update status indicators to reflect current mode
+    this.updateStatusIndicators();
+    
+    console.log(`Simulation mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 16px',
+      backgroundColor: type === 'success' ? 'var(--success)' : type === 'warning' ? '#f39c12' : 'var(--primary-color)',
+      color: 'white',
+      borderRadius: '6px',
+      boxShadow: 'var(--shadow-lg)',
+      zIndex: '9999',
+      opacity: '0',
+      transform: 'translateX(100%)',
+      transition: 'all 0.3s ease'
+    });
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateX(0)';
+    });
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  updateStatusIndicators() {
+    // Update transcription status chip to show simulation mode
+    const transcriptionStatus = document.getElementById('transcription-status');
+    if (transcriptionStatus) {
+      const indicator = transcriptionStatus.querySelector('.status-indicator');
+      const span = transcriptionStatus.querySelector('span');
+      if (this.simulationMode) {
+        indicator.style.backgroundColor = '#f39c12'; // Orange for simulation
+        span.textContent = 'AI (Sim)';
+        transcriptionStatus.title = 'AI Status - Currently in simulation mode';
+      } else {
+        indicator.style.backgroundColor = 'var(--success)'; // Green for real mode
+        span.textContent = 'AI (Live)';
+        transcriptionStatus.title = 'AI Status - Using real API connections';
+      }
+    }
   }
 
   updateThemePreview() {
@@ -1865,21 +1972,61 @@ class ScribeCatApp {
   }
 
   async getAIResponse(question, notesContent, transcriptionContent) {
-    // Simulate AI response - in real implementation, this would call OpenAI API
-    const responses = [
-      "Based on your notes, here's what I found...",
-      "Looking at the transcription, it seems like...",
-      "That's a great question! From what I can see in your content...",
-      "Let me help you with that based on your recorded information...",
-      "According to your notes and transcription..."
-    ];
-    
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using OpenAI's API to provide contextual answers.]`;
+    if (this.simulationMode) {
+      // Simulate AI response
+      const responses = [
+        "Based on your notes, here's what I found...",
+        "Looking at the transcription, it seems like...",
+        "That's a great question! From what I can see in your content...",
+        "Let me help you with that based on your recorded information...",
+        "According to your notes and transcription..."
+      ];
+      
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using OpenAI's API to provide contextual answers.]`;
+    } else {
+      // Real OpenAI API implementation
+      try {
+        const context = `Notes: ${notesContent}\n\nTranscription: ${transcriptionContent}`;
+        
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.openAIApiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.'
+              },
+              {
+                role: 'user',
+                content: `Context: ${context}\n\nQuestion: ${question}`
+              }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+      } catch (error) {
+        console.error('Error calling OpenAI API:', error);
+        return `Error: Could not connect to OpenAI API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
+      }
+    }
   }
 }
 

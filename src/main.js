@@ -98,23 +98,55 @@ ipcMain.handle('drive:ensure-target', async (event, targetPath) => {
 let transcriptionSession = null;
 
 ipcMain.handle('transcription:start-vosk', async () => {
-  setTimeout(() => {
-    if (mainWindow) {
-      mainWindow.webContents.send('transcription:vosk-result', { text: 'Simulated Vosk transcription.' });
-    }
-  }, 2000);
-  transcriptionSession = 'vosk-session';
-  return transcriptionSession;
+  const simulationMode = store.get('simulation-mode', true); // Default to true if not set
+  
+  if (simulationMode) {
+    setTimeout(() => {
+      if (mainWindow) {
+        mainWindow.webContents.send('transcription:vosk-result', { text: 'Simulated Vosk transcription.' });
+      }
+    }, 2000);
+    transcriptionSession = 'vosk-session';
+    return transcriptionSession;
+  } else {
+    // Real Vosk implementation would go here
+    // For now, return an error indicating real Vosk is not implemented
+    setTimeout(() => {
+      if (mainWindow) {
+        mainWindow.webContents.send('transcription:vosk-result', { 
+          text: 'Real Vosk transcription not implemented yet. Please enable simulation mode in Developer Settings.' 
+        });
+      }
+    }, 1000);
+    transcriptionSession = 'vosk-session-real';
+    return transcriptionSession;
+  }
 });
 
 ipcMain.handle('transcription:start-whisper', async () => {
-  setTimeout(() => {
-    if (mainWindow) {
-      mainWindow.webContents.send('transcription:whisper-result', { text: 'Simulated Whisper transcription.' });
-    }
-  }, 2000);
-  transcriptionSession = 'whisper-session';
-  return transcriptionSession;
+  const simulationMode = store.get('simulation-mode', true); // Default to true if not set
+  
+  if (simulationMode) {
+    setTimeout(() => {
+      if (mainWindow) {
+        mainWindow.webContents.send('transcription:whisper-result', { text: 'Simulated Whisper transcription.' });
+      }
+    }, 2000);
+    transcriptionSession = 'whisper-session';
+    return transcriptionSession;
+  } else {
+    // Real Whisper implementation would go here
+    // For now, return an error indicating real Whisper is not implemented
+    setTimeout(() => {
+      if (mainWindow) {
+        mainWindow.webContents.send('transcription:whisper-result', { 
+          text: 'Real Whisper transcription not implemented yet. Please enable simulation mode in Developer Settings.' 
+        });
+      }
+    }, 1000);
+    transcriptionSession = 'whisper-session-real';
+    return transcriptionSession;
+  }
 });
 
 ipcMain.handle('transcription:stop', async () => {
