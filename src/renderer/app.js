@@ -1644,7 +1644,7 @@ class ScribeCatApp {
       `${index + 1}. ${course.courseNumber} - ${course.courseTitle}`
     ).join('\n');
     
-    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'scrape' to attempt Canvas course scraping\n4. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
+    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'import' to import from Canvas browser extension\n4. Enter 'scrape' to attempt Canvas course scraping\n5. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
     
     if (action) {
       if (action.startsWith('add:')) {
@@ -1674,11 +1674,96 @@ class ScribeCatApp {
         } else {
           alert('Invalid course index.');
         }
+      } else if (action === 'import') {
+        await this.importCoursesFromExtension();
       } else if (action === 'scrape') {
         await this.attemptCanvasScraping();
       } else {
-        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, or scrape');
+        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, import, or scrape');
       }
+    }
+  }
+
+  async importCoursesFromExtension() {
+    const jsonData = prompt(`Paste the JSON data from ScribeCat Canvas Browser Extension:\n\n(Copy the data from the extension's "Copy for ScribeCat" feature)`);
+    
+    if (!jsonData) {
+      return; // User canceled
+    }
+    
+    try {
+      // Parse the JSON data
+      const importData = JSON.parse(jsonData);
+      
+      // Validate the data structure
+      if (!importData.courses || !Array.isArray(importData.courses)) {
+        throw new Error('Invalid import data format. Missing courses array.');
+      }
+      
+      if (importData.source && !importData.source.includes('ScribeCat')) {
+        const confirmProceed = confirm('Warning: This data may not be from the ScribeCat Canvas extension. Continue anyway?');
+        if (!confirmProceed) {
+          return;
+        }
+      }
+      
+      // Get existing courses
+      const existingCourses = await window.electronAPI.storeGet('predefined-courses') || [];
+      
+      // Process imported courses
+      let importedCount = 0;
+      let skippedCount = 0;
+      
+      for (const importedCourse of importData.courses) {
+        // Validate required fields
+        if (!importedCourse.courseTitle && !importedCourse.courseNumber) {
+          skippedCount++;
+          continue;
+        }
+        
+        // Check for duplicates (by course number or title)
+        const isDuplicate = existingCourses.some(existing => 
+          (existing.courseNumber && importedCourse.courseNumber && 
+           existing.courseNumber.toLowerCase() === importedCourse.courseNumber.toLowerCase()) ||
+          (existing.courseTitle && importedCourse.courseTitle &&
+           existing.courseTitle.toLowerCase() === importedCourse.courseTitle.toLowerCase())
+        );
+        
+        if (isDuplicate) {
+          skippedCount++;
+          continue;
+        }
+        
+        // Add the course
+        const newCourse = {
+          id: importedCourse.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          courseNumber: importedCourse.courseNumber || '',
+          courseTitle: importedCourse.courseTitle || 'Imported Course',
+          source: 'canvas_extension',
+          imported: new Date().toISOString()
+        };
+        
+        existingCourses.push(newCourse);
+        importedCount++;
+      }
+      
+      // Save the updated courses
+      await window.electronAPI.storeSet('predefined-courses', existingCourses);
+      await this.loadPredefinedCourses();
+      
+      // Show results
+      let message = `Import completed!\n\n`;
+      message += `✅ Imported: ${importedCount} courses\n`;
+      if (skippedCount > 0) {
+        message += `⚠️ Skipped: ${skippedCount} courses (duplicates or invalid data)\n`;
+      }
+      message += `\nTotal courses: ${existingCourses.length}`;
+      
+      alert(message);
+      
+    } catch (error) {
+      console.error('Import failed:', error);
+      alert(`Import failed: ${error.message}\n\nPlease ensure you're pasting valid JSON data from the ScribeCat Canvas browser extension.`);
     }
   }
 
@@ -1689,7 +1774,7 @@ class ScribeCatApp {
       return;
     }
 
-    alert(`Canvas Course Scraping Methods:\n\n1. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n2. Browser Extension:\n   - Create Chrome/Firefox extension\n   - Inject content script into Canvas pages\n   - Parse course list from DOM elements\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nFor now, use the manual course management or consider implementing Canvas API integration.`);
+    alert(`Canvas Course Scraping Methods:\n\n1. Browser Extension (NEW!):\n   - Install the ScribeCat Canvas browser extension\n   - Automatically collects course data from Canvas dashboard\n   - Use "import" in course management to import collected data\n\n2. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nTry the new browser extension first! Install it from the browser-extension folder and use "import" in course management.`);
   }
 
   /* 
