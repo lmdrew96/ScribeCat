@@ -16,6 +16,15 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+/* Custom fonts */
+@font-face {
+  font-family: 'GalaxyCaterpillar';
+  src: url('../../assets/fonts/GalaxyCaterpillar.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Dark theme */
 [data-theme="dark"] {
   --background: #0f172a;
@@ -199,7 +208,7 @@ body {
 
 /* Header */
 .app-header {
-  height: 60px;
+  height: 90px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -238,13 +247,13 @@ body {
 }
 
 .logo {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
   border-radius: 6px;
 }
 
 .app-title {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--primary-color);
   font-family: 'GalaxyCaterpillar', 'Inter', sans-serif;
@@ -980,6 +989,16 @@ body {
   
   .app-header {
     padding: 0 12px;
+    height: 75px; /* Slightly smaller on tablets */
+  }
+  
+  .logo {
+    width: 48px; /* Smaller logo on tablets */
+    height: 48px;
+  }
+  
+  .app-title {
+    font-size: 24px; /* Smaller title on tablets */
   }
   
   .header-left .app-title {
@@ -995,6 +1014,19 @@ body {
   
   .recording-controls {
     padding: 12px;
+  }
+  
+  .app-header {
+    height: 60px; /* Compact height on mobile */
+  }
+  
+  .logo {
+    width: 36px; /* Even smaller logo on mobile */
+    height: 36px;
+  }
+  
+  .app-title {
+    font-size: 20px; /* Compact title on mobile */
   }
   
   .clock {

@@ -38,7 +38,7 @@ function createWindow() {
     },
     titleBarStyle: 'hiddenInset',
     show: false,
-    icon: path.join(__dirname, '..', 'assets', 'images', 'icon.png')
+    icon: path.join(__dirname, '..', 'assets', 'images', 'nugget.png')
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
