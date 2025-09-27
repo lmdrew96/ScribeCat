@@ -60,7 +60,7 @@
                 <div class="sidebar-section">
                     <h3>Themes</h3>
                     <div class="theme-selector">
-                        <select id="theme-select">
+                        <select id="theme-select" title="Change application theme">
                             <option value="default">Default</option>
                             <option value="dark">Dark</option>
                             <option value="blue">Ocean Blue</option>
@@ -118,12 +118,12 @@
                         <div class="drive-folder-setting" style="margin-bottom: 12px;">
                             <label style="font-weight: bold; margin-bottom: 4px; display: block;">Notes Folder:</label>
                             <input type="text" id="notes-drive-folder" placeholder="Select Drive folder for notes" class="input-field" readonly>
-                            <button id="select-notes-drive-folder" class="btn btn-small">Select Folder</button>
+                            <button id="select-notes-drive-folder" class="btn btn-small" title="Choose where to save your notes files">Select Folder</button>
                         </div>
                         <div class="drive-folder-setting">
                             <label style="font-weight: bold; margin-bottom: 4px; display: block;">Transcription Folder:</label>
                             <input type="text" id="transcription-drive-folder" placeholder="Select Drive folder for transcriptions" class="input-field" readonly>
-                            <button id="select-transcription-drive-folder" class="btn btn-small">Select Folder</button>
+                            <button id="select-transcription-drive-folder" class="btn btn-small" title="Choose where to save your transcription files">Select Folder</button>
                         </div>
                     </div>
                 </div>
@@ -147,17 +147,17 @@
                         <div class="local-folder-settings" style="margin-bottom: 12px;">
                             <label>Local Audio Folder:</label>
                             <input type="text" id="local-audio-folder" placeholder="Select local folder for audio files" class="input-field" readonly>
-                            <button id="select-local-audio-folder" class="btn btn-small">Select Folder</button>
+                            <button id="select-local-audio-folder" class="btn btn-small" title="Choose where to save your audio recording files">Select Folder</button>
                         </div>
                         <label>
-                            <input type="checkbox" id="vocal-isolation"> Vocal Isolation
+                            <input type="checkbox" id="vocal-isolation" title="Isolate vocals from background noise"> Vocal Isolation
                         </label>
-                        <select id="microphone-select" class="input-field">
+                        <select id="microphone-select" class="input-field" title="Select audio input device">
                             <option value="">Select Microphone</option>
                         </select>
                         <div style="margin-top:12px">
                             <label for="transcription-backend">Transcription Backend:</label>
-                            <select id="transcription-backend" class="input-field">
+                            <select id="transcription-backend" class="input-field" title="Choose between offline Vosk or online Whisper transcription">
                                 <option value="vosk">Vosk (Offline)</option>
                                 <option value="whisper">Whisper (Optional)</option>
                             </select>
@@ -172,7 +172,7 @@
                             Using developer key by default. Optionally provide your own key for guaranteed access.
                         </p>
                         <input type="text" id="openai-key" placeholder="Your OpenAI API Key (optional)" class="input-field">
-                        <button id="save-openai-key" class="btn btn-small">Save Your Key</button>
+                        <button id="save-openai-key" class="btn btn-small" title="Save your OpenAI API key for AI features">Save Your Key</button>
                     </div>
                 </div>
                 </div>
@@ -182,7 +182,7 @@
             <main class="main-content" id="main-content">
                 <!-- Recording Controls -->
                 <div class="recording-controls">
-                    <button id="record-btn" class="btn btn-primary record-btn">
+                    <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription">
                         <svg class="record-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10"/>
                         </svg>
@@ -198,10 +198,10 @@
                         </div>
                     </div>
                     
-                    <button id="pause-btn" class="btn" disabled>Pause</button>
-                    <button id="resume-btn" class="btn" disabled>Resume</button>
-                    <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
-                    <button id="save-btn" class="btn btn-success" disabled>Save</button>
+                    <button id="pause-btn" class="btn" disabled title="Pause current recording">Pause</button>
+                    <button id="resume-btn" class="btn" disabled title="Resume paused recording">Resume</button>
+                    <button id="stop-btn" class="btn btn-danger" disabled title="Stop recording and enable save">Stop</button>
+                    <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription">Save</button>
                 </div>
 
                 <!-- Content Container -->
@@ -212,7 +212,7 @@
                             <h2>Notes</h2>
                         </div>
                         <div class="formatting-toolbar">
-                            <select id="font-family" class="font-selector">
+                            <select id="font-family" class="font-selector" title="Change font family for notes editor">
                                 <optgroup label="Traditional Serif">
                                     <option value="Times New Roman">Times New Roman</option>
                                     <option value="Georgia">Georgia</option>
@@ -285,7 +285,7 @@
                         <div id="notes-editor" class="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>
                         <div id="ai-summary-container" style="margin-top:24px;">
-                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;">Generate AI Summary</button>
+                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;" title="Generate AI summary of notes and transcription">Generate AI Summary</button>
                             <div id="ai-summary" class="notes-editor" style="min-height:80px;background:#f8fafc;border:1px solid #e2e8f0;"></div>
                         </div>
                     </div>
@@ -295,7 +295,7 @@
                         <div class="transcription-header">
                             <h2>Live Transcription</h2>
                             <div class="transcription-controls">
-                                <button id="clear-transcription" class="btn btn-small">Clear</button>
+                                <button id="clear-transcription" class="btn btn-small" title="Clear all transcription text">Clear</button>
                                 <button id="jump-latest" class="btn btn-small" title="Scroll to latest">Jump to Latest</button>
                             </div>
                         </div>
@@ -304,10 +304,10 @@
                 </div>
 
                 <!-- AI Chat Window -->
-                <div class="ai-chat" id="ai-chat">
+                <div class="ai-chat collapsed" id="ai-chat">
                     <div class="chat-header">
                         <h3>Ask AI</h3>
-                        <button id="toggle-chat" class="chat-toggle">
+                        <button id="toggle-chat" class="chat-toggle" title="Expand or collapse Ask AI chat">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="18,15 12,9 6,15"></polyline>
                             </svg>
@@ -317,7 +317,7 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-container">
                             <input type="text" id="chat-input" placeholder="Ask about your notes or transcription..." class="chat-input">
-                            <button id="send-chat" class="btn btn-primary btn-small">Send</button>
+                            <button id="send-chat" class="btn btn-primary btn-small" title="Send message to AI assistant">Send</button>
                         </div>
                     </div>
                 </div>
