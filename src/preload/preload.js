@@ -20,8 +20,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // File dialogs
   showFolderDialog: () => ipcRenderer.invoke('show-folder-dialog'),
-  showCanvasImportDialog: () => ipcRenderer.invoke('show-canvas-import-dialog'),
-  parseCanvasImport: (data) => ipcRenderer.invoke('parse-canvas-import', data),
 
   // Audio file operations
   saveAudioFile: (data) => ipcRenderer.invoke('save-audio-file', data),
