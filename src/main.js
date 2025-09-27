@@ -279,6 +279,107 @@ ipcMain.handle('show-folder-dialog', async () => {
   return result;
 });
 
+// Canvas extension import dialog
+ipcMain.handle('show-canvas-import-dialog', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'CSV Files', extensions: ['csv'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
+  
+  if (!result.canceled && result.filePaths.length > 0) {
+    try {
+      const filePath = result.filePaths[0];
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const fileExtension = path.extname(filePath).toLowerCase();
+      
+      return {
+        success: true,
+        filePath: filePath,
+        fileName: path.basename(filePath),
+        content: fileContent,
+        type: fileExtension === '.csv' ? 'csv' : 'json'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to read file: ${error.message}`
+      };
+    }
+  }
+  
+  return { success: false, canceled: true };
+});
+
+// Parse Canvas extension data
+ipcMain.handle('parse-canvas-import', async (event, { content, type }) => {
+  try {
+    let courses = [];
+    
+    if (type === 'json') {
+      const data = JSON.parse(content);
+      
+      // Handle ScribeCat extension format
+      if (data.type === 'canvas-courses' && data.courses) {
+        courses = data.courses.map(course => ({
+          id: course.id || `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          courseNumber: course.courseNumber || '',
+          courseTitle: course.courseTitle || course.title || '',
+          source: 'canvas-extension'
+        }));
+      }
+      // Handle generic export format
+      else if (data.courses && Array.isArray(data.courses)) {
+        courses = data.courses.map(course => ({
+          id: course.id || `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          courseNumber: course.courseNumber || course.course_code || '',
+          courseTitle: course.courseTitle || course.name || course.title || '',
+          source: 'canvas-extension'
+        }));
+      }
+      // Handle direct array format
+      else if (Array.isArray(data)) {
+        courses = data.map(course => ({
+          id: course.id || `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          courseNumber: course.courseNumber || course.course_code || '',
+          courseTitle: course.courseTitle || course.name || course.title || '',
+          source: 'canvas-extension'
+        }));
+      }
+    } else if (type === 'csv') {
+      // Parse CSV format: Course Number,Course Title,Canvas ID,URL
+      const lines = content.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+        if (values.length >= 2) {
+          courses.push({
+            id: values[2] || `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            courseNumber: values[0] || '',
+            courseTitle: values[1] || '',
+            source: 'canvas-extension'
+          });
+        }
+      }
+    }
+    
+    return {
+      success: true,
+      courses: courses,
+      count: courses.length
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to parse import data: ${error.message}`
+    };
+  }
+});
+
 // Audio file saving
 ipcMain.handle('save-audio-file', async (event, { audioData, fileName, folderPath }) => {
   try {

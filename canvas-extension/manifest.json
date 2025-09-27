@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "ScribeCat Canvas Integration",
+  "version": "1.0.0",
+  "description": "Collect Canvas course data for ScribeCat desktop app",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.instructure.com/*",
+    "https://*.canvas.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "ScribeCat Canvas Integration",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.instructure.com/*",
+        "https://*.canvas.com/*"
+      ],
+      "js": ["scripts/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
