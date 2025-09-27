@@ -338,18 +338,19 @@ body {
 /* Sidebar as floating overlay */
 .sidebar {
   position: fixed;
-  top: 12px;
-  left: 12px;
-  height: calc(100vh - 24px);
-  width: 44px; /* collapsed width */
+  top: 30px; /* centered vertically in 90px header */
+  left: 25px; /* center positioned 40px from left edge (40px - 15px for center) */
+  height: auto;
+  max-height: calc(100vh - 40px);
+  width: 30px; /* collapsed square */
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  z-index: 900;
-  padding: 8px; /* collapsed padding */
-  transition: width 0.25s ease, padding 0.25s ease;
+  z-index: 1200;
+  padding: 0; /* collapsed has no padding */
+  transition: width 0.25s ease, max-height 0.25s ease, padding 0.25s ease;
 }
 
 /* Collapsed state shows a simple icon */
@@ -375,6 +376,58 @@ body {
   width: 320px;
   padding: 20px;
   overflow-y: auto;
+}
+
+/* Sidebar close button */
+.sidebar-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: none;
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar.open .sidebar-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Scrim behind open sidebar */
+.sidebar-scrim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1100;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.sidebar-scrim.show {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sidebar-section {

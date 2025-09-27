@@ -53,6 +53,7 @@ class ScribeCatApp {
     // Sidebar
     this.sidebar = document.getElementById('sidebar');
     this.sidebarToggle = document.getElementById('sidebar-toggle');
+    this.sidebarScrim = document.getElementById('sidebar-scrim');
     
     // Settings elements
     this.saveOpenAIKeyBtn = document.getElementById('save-openai-key');
@@ -161,8 +162,24 @@ class ScribeCatApp {
       this.sidebar.addEventListener('click', (e) => {
         if (!this.sidebar.classList.contains('open')) {
           e.stopPropagation();
-          this.sidebar.classList.add('open');
+          this.openSidebar();
         }
+      });
+    }
+    
+    // Close button handler
+    const sidebarCloseBtn = this.sidebar?.querySelector('.sidebar-close');
+    if (sidebarCloseBtn) {
+      sidebarCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.closeSidebar();
+      });
+    }
+    
+    // Scrim click to close
+    if (this.sidebarScrim) {
+      this.sidebarScrim.addEventListener('click', () => {
+        this.closeSidebar();
       });
     }
     if (this.recordBtn) {
@@ -289,7 +306,7 @@ class ScribeCatApp {
     if (mainContent) {
       mainContent.addEventListener('click', () => {
         if (this.sidebar && this.sidebar.classList.contains('open')) {
-          this.sidebar.classList.remove('open');
+          this.closeSidebar();
         }
       });
     }
@@ -322,6 +339,31 @@ class ScribeCatApp {
 
   toggleSidebar() {
     this.sidebar.classList.toggle('open');
+    this.updateSidebarScrim();
+  }
+  
+  openSidebar() {
+    if (this.sidebar) {
+      this.sidebar.classList.add('open');
+      this.updateSidebarScrim();
+    }
+  }
+  
+  closeSidebar() {
+    if (this.sidebar) {
+      this.sidebar.classList.remove('open');
+      this.updateSidebarScrim();
+    }
+  }
+  
+  updateSidebarScrim() {
+    if (this.sidebarScrim) {
+      if (this.sidebar && this.sidebar.classList.contains('open')) {
+        this.sidebarScrim.classList.add('show');
+      } else {
+        this.sidebarScrim.classList.remove('show');
+      }
+    }
   }
 
   async loadSettings() {
