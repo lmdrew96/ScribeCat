@@ -53,139 +53,136 @@
             </div>
         </header>
 
-        <!-- Main Content -->
-        <div class="app-body">
-            <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <button class="sidebar-close">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-                <div class="sidebar-section">
-                    <h3>Themes</h3>
-                    <div class="theme-selector">
-                        <select id="theme-select">
-                            <option value="default">Default</option>
-                            <option value="dark">Dark</option>
-                            <option value="blue">Ocean Blue</option>
-                            <option value="forest">Forest Green</option>
-                            <option value="sunset">Sunset Orange</option>
-                            <option value="purple">Purple</option>
-                            <option value="rose">Rose</option>
-                            <option value="teal">Teal</option>
-                            <option value="indigo">Indigo</option>
-                            <option value="amber">Amber</option>
-                            <option value="emerald">Emerald</option>
-                            <option value="cyan">Cyan</option>
-                            <option value="pink">Pink</option>
-                            <option value="slate">Slate</option>
-                            <option value="midnight">Midnight</option>
+        <!-- Floating Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="sidebar-section">
+                <h3>Themes</h3>
+                <div class="theme-selector">
+                    <select id="theme-select">
+                        <option value="default">Default</option>
+                        <option value="dark">Dark</option>
+                        <option value="blue">Ocean Blue</option>
+                        <option value="forest">Forest Green</option>
+                        <option value="sunset">Sunset Orange</option>
+                        <option value="purple">Purple</option>
+                        <option value="rose">Rose</option>
+                        <option value="teal">Teal</option>
+                        <option value="indigo">Indigo</option>
+                        <option value="amber">Amber</option>
+                        <option value="emerald">Emerald</option>
+                        <option value="cyan">Cyan</option>
+                        <option value="pink">Pink</option>
+                        <option value="slate">Slate</option>
+                        <option value="midnight">Midnight</option>
+                    </select>
+                    <div class="theme-preview" id="theme-preview">
+                        <div class="theme-swatch primary"></div>
+                        <div class="theme-swatch surface"></div>
+                        <div class="theme-swatch background"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Canvas Integration</h3>
+                <div class="canvas-settings">
+                    <input type="text" id="canvas-url" placeholder="Canvas URL" class="input-field">
+                    <div class="course-selection">
+                        <select id="course-select" class="input-field">
+                            <option value="">Select Course</option>
+                            <option value="other">Other (Manual Entry)</option>
                         </select>
-                        <div class="theme-preview" id="theme-preview">
-                            <div class="theme-swatch primary"></div>
-                            <div class="theme-swatch surface"></div>
-                            <div class="theme-swatch background"></div>
+                        <div id="manual-course-fields" class="manual-course-fields" style="display: none;">
+                            <input type="text" id="course-number" placeholder="Course Number" class="input-field">
+                            <input type="text" id="course-title" placeholder="Course Title" class="input-field">
                         </div>
+                    </div>
+                    <div class="canvas-buttons">
+                        <button id="save-canvas" class="btn btn-small">Save</button>
+                        <button id="manage-courses" class="btn btn-small">Manage Courses</button>
                     </div>
                 </div>
+            </div>
 
-                <div class="sidebar-section">
-                    <h3>Canvas Integration</h3>
-                    <div class="canvas-settings">
-                        <input type="text" id="canvas-url" placeholder="Canvas URL" class="input-field">
-                        <div class="course-selection">
-                            <select id="course-select" class="input-field">
-                                <option value="">Select Course</option>
-                                <option value="other">Other (Manual Entry)</option>
-                            </select>
-                            <div id="manual-course-fields" class="manual-course-fields" style="display: none;">
-                                <input type="text" id="course-number" placeholder="Course Number" class="input-field">
-                                <input type="text" id="course-title" placeholder="Course Title" class="input-field">
-                            </div>
-                        </div>
-                        <div class="canvas-buttons">
-                            <button id="save-canvas" class="btn btn-small">Save</button>
-                            <button id="manage-courses" class="btn btn-small">Manage Courses</button>
-                        </div>
+            <div class="sidebar-section">
+                <h3>Google Drive</h3>
+                <div class="drive-setup-info" style="margin-bottom: 12px;">
+                    <p style="font-size: 12px; color: #666; margin: 0 0 8px 0;">
+                        Need Google Drive for Desktop? 
+                        <a href="#" id="drive-download-link" style="color: #1a73e8;">Download here</a>
+                    </p>
+                </div>
+                <div class="drive-settings">
+                    <div class="drive-folder-setting" style="margin-bottom: 12px;">
+                        <label style="font-weight: bold; margin-bottom: 4px; display: block;">Notes Folder:</label>
+                        <input type="text" id="notes-drive-folder" placeholder="Select Drive folder for notes" class="input-field" readonly>
+                        <button id="select-notes-drive-folder" class="btn btn-small">Select Folder</button>
+                    </div>
+                    <div class="drive-folder-setting">
+                        <label style="font-weight: bold; margin-bottom: 4px; display: block;">Transcription Folder:</label>
+                        <input type="text" id="transcription-drive-folder" placeholder="Select Drive folder for transcriptions" class="input-field" readonly>
+                        <button id="select-transcription-drive-folder" class="btn btn-small">Select Folder</button>
                     </div>
                 </div>
+            </div>
 
-                <div class="sidebar-section">
-                    <h3>Google Drive</h3>
-                    <div class="drive-setup-info" style="margin-bottom: 12px;">
-                        <p style="font-size: 12px; color: #666; margin: 0 0 8px 0;">
-                            Need Google Drive for Desktop? 
-                            <a href="#" id="drive-download-link" style="color: #1a73e8;">Download here</a>
-                        </p>
-                    </div>
-                    <div class="drive-settings">
-                        <div class="drive-folder-setting" style="margin-bottom: 12px;">
-                            <label style="font-weight: bold; margin-bottom: 4px; display: block;">Notes Folder:</label>
-                            <input type="text" id="notes-drive-folder" placeholder="Select Drive folder for notes" class="input-field" readonly>
-                            <button id="select-notes-drive-folder" class="btn btn-small">Select Folder</button>
-                        </div>
-                        <div class="drive-folder-setting">
-                            <label style="font-weight: bold; margin-bottom: 4px; display: block;">Transcription Folder:</label>
-                            <input type="text" id="transcription-drive-folder" placeholder="Select Drive folder for transcriptions" class="input-field" readonly>
-                            <button id="select-transcription-drive-folder" class="btn btn-small">Select Folder</button>
+            <div class="sidebar-section">
+                <h3>Audio Settings</h3>
+                <div class="audio-settings">
+                    <div class="audio-destination" style="margin-bottom: 16px;">
+                        <label style="font-weight: bold; margin-bottom: 8px; display: block;">Audio File Destination:</label>
+                        <div style="margin-bottom: 8px;">
+                            <label style="display: flex; align-items: center; margin-bottom: 4px;">
+                                <input type="radio" name="audio-destination" value="local" id="audio-dest-local" style="margin-right: 8px;">
+                                <span>Download to Local Folder</span>
+                            </label>
+                            <label style="display: flex; align-items: center;">
+                                <input type="radio" name="audio-destination" value="drive" id="audio-dest-drive" style="margin-right: 8px;">
+                                <span>Upload to Google Drive</span>
+                            </label>
                         </div>
                     </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <h3>Audio Settings</h3>
-                    <div class="audio-settings">
-                        <div class="audio-destination" style="margin-bottom: 16px;">
-                            <label style="font-weight: bold; margin-bottom: 8px; display: block;">Audio File Destination:</label>
-                            <div style="margin-bottom: 8px;">
-                                <label style="display: flex; align-items: center; margin-bottom: 4px;">
-                                    <input type="radio" name="audio-destination" value="local" id="audio-dest-local" style="margin-right: 8px;">
-                                    <span>Download to Local Folder</span>
-                                </label>
-                                <label style="display: flex; align-items: center;">
-                                    <input type="radio" name="audio-destination" value="drive" id="audio-dest-drive" style="margin-right: 8px;">
-                                    <span>Upload to Google Drive</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="local-folder-settings" style="margin-bottom: 12px;">
-                            <label>Local Audio Folder:</label>
-                            <input type="text" id="local-audio-folder" placeholder="Select local folder for audio files" class="input-field" readonly>
-                            <button id="select-local-audio-folder" class="btn btn-small">Select Folder</button>
-                        </div>
-                        <label>
-                            <input type="checkbox" id="vocal-isolation"> Vocal Isolation
-                        </label>
-                        <select id="microphone-select" class="input-field">
-                            <option value="">Select Microphone</option>
+                    <div class="local-folder-settings" style="margin-bottom: 12px;">
+                        <label>Local Audio Folder:</label>
+                        <input type="text" id="local-audio-folder" placeholder="Select local folder for audio files" class="input-field" readonly>
+                        <button id="select-local-audio-folder" class="btn btn-small">Select Folder</button>
+                    </div>
+                    <label>
+                        <input type="checkbox" id="vocal-isolation"> Vocal Isolation
+                    </label>
+                    <select id="microphone-select" class="input-field">
+                        <option value="">Select Microphone</option>
+                    </select>
+                    <div style="margin-top:12px">
+                        <label for="transcription-backend">Transcription Backend:</label>
+                        <select id="transcription-backend" class="input-field">
+                            <option value="vosk">Vosk (Offline)</option>
+                            <option value="whisper">Whisper (Optional)</option>
                         </select>
-                        <div style="margin-top:12px">
-                            <label for="transcription-backend">Transcription Backend:</label>
-                            <select id="transcription-backend" class="input-field">
-                                <option value="vosk">Vosk (Offline)</option>
-                                <option value="whisper">Whisper (Optional)</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="sidebar-section">
-                    <h3>OpenAI API</h3>
-                    <div class="openai-settings">
-                        <p style="font-size:12px;color:#666;margin-bottom:8px;">
-                            Using developer key by default. Optionally provide your own key for guaranteed access.
-                        </p>
-                        <input type="text" id="openai-key" placeholder="Your OpenAI API Key (optional)" class="input-field">
-                        <button id="save-openai-key" class="btn btn-small">Save Your Key</button>
-                    </div>
+            <div class="sidebar-section">
+                <h3>OpenAI API</h3>
+                <div class="openai-settings">
+                    <p style="font-size:12px;color:#666;margin-bottom:8px;">
+                        Using developer key by default. Optionally provide your own key for guaranteed access.
+                    </p>
+                    <input type="text" id="openai-key" placeholder="Your OpenAI API Key (optional)" class="input-field">
+                    <button id="save-openai-key" class="btn btn-small">Save Your Key</button>
                 </div>
-                </div>
-            </aside>
+            </div>
+        </aside>
 
-            <!-- Main Content Area -->
-            <main class="main-content" id="main-content">
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
                 <!-- Recording Controls -->
                 <div class="recording-controls">
                     <button id="record-btn" class="btn btn-primary record-btn">
@@ -328,7 +325,6 @@
                     </div>
                 </div>
             </main>
-        </div>
 
         <!-- Version Info -->
         <div class="version-info" id="version-info">v1.0.0</div>

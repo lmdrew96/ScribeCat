@@ -330,12 +330,7 @@ body {
   margin-top: 2px;
 }
 
-/* Main body */
-.app-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
+
 
 /* Sidebar as floating overlay */
 .sidebar {
