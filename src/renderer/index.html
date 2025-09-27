@@ -53,6 +53,7 @@
             </div>
         </header>
 
+
         <!-- Floating Sidebar -->
         <aside class="sidebar" id="sidebar">
             <button class="sidebar-close">
@@ -85,6 +86,7 @@
                         <div class="theme-swatch primary"></div>
                         <div class="theme-swatch surface"></div>
                         <div class="theme-swatch background"></div>
+
                     </div>
                 </div>
             </div>
@@ -128,6 +130,7 @@
                         <label style="font-weight: bold; margin-bottom: 4px; display: block;">Transcription Folder:</label>
                         <input type="text" id="transcription-drive-folder" placeholder="Select Drive folder for transcriptions" class="input-field" readonly>
                         <button id="select-transcription-drive-folder" class="btn btn-small">Select Folder</button>
+
                     </div>
                 </div>
             </div>
@@ -165,6 +168,7 @@
                             <option value="vosk">Vosk (Offline)</option>
                             <option value="whisper">Whisper (Optional)</option>
                         </select>
+
                     </div>
                 </div>
             </div>
@@ -185,7 +189,7 @@
         <main class="main-content" id="main-content">
                 <!-- Recording Controls -->
                 <div class="recording-controls">
-                    <button id="record-btn" class="btn btn-primary record-btn">
+                    <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription">
                         <svg class="record-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10"/>
                         </svg>
@@ -201,10 +205,10 @@
                         </div>
                     </div>
                     
-                    <button id="pause-btn" class="btn" disabled>Pause</button>
-                    <button id="resume-btn" class="btn" disabled>Resume</button>
-                    <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
-                    <button id="save-btn" class="btn btn-success" disabled>Save</button>
+                    <button id="pause-btn" class="btn" disabled title="Pause current recording">Pause</button>
+                    <button id="resume-btn" class="btn" disabled title="Resume paused recording">Resume</button>
+                    <button id="stop-btn" class="btn btn-danger" disabled title="Stop recording and enable save">Stop</button>
+                    <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription">Save</button>
                 </div>
 
                 <!-- Content Container -->
@@ -216,7 +220,7 @@
                         </div>
                         <div class="formatting-toolbar">
                             <!-- Font and Size Controls -->
-                            <select id="font-family" class="font-selector" title="Font Family">
+                            <select id="font-family" class="font-selector" title="Change font family for notes editor" title="Font Family">
                                 <optgroup label="Traditional Serif">
                                     <option value="Times New Roman">Times New Roman</option>
                                     <option value="Georgia">Georgia</option>
@@ -331,7 +335,7 @@
                         <div id="notes-editor" class="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>
                         <div id="ai-summary-container" style="margin-top:24px;">
-                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;">Generate AI Summary</button>
+                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;" title="Generate AI summary of notes and transcription">Generate AI Summary</button>
                             <div id="ai-summary" class="notes-editor" style="min-height:80px;background:#f8fafc;border:1px solid #e2e8f0;"></div>
                         </div>
                     </div>
@@ -341,7 +345,7 @@
                         <div class="transcription-header">
                             <h2>Live Transcription</h2>
                             <div class="transcription-controls">
-                                <button id="clear-transcription" class="btn btn-small">Clear</button>
+                                <button id="clear-transcription" class="btn btn-small" title="Clear all transcription text">Clear</button>
                                 <button id="jump-latest" class="btn btn-small" title="Scroll to latest">Jump to Latest</button>
                             </div>
                         </div>
@@ -353,7 +357,7 @@
                 <div class="ai-chat collapsed" id="ai-chat">
                     <div class="chat-header">
                         <h3>Ask AI</h3>
-                        <button id="toggle-chat" class="chat-toggle">
+                        <button id="toggle-chat" class="chat-toggle" title="Expand or collapse Ask AI chat">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="6,9 12,15 18,9"></polyline>
                             </svg>
@@ -363,7 +367,7 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-container">
                             <input type="text" id="chat-input" placeholder="Ask about your notes or transcription..." class="chat-input">
-                            <button id="send-chat" class="btn btn-primary btn-small">Send</button>
+                            <button id="send-chat" class="btn btn-primary btn-small" title="Send message to AI assistant">Send</button>
                         </div>
                     </div>
                 </div>
