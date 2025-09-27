@@ -58,7 +58,7 @@ class ScribeCatApp {
     // Settings elements
     this.saveOpenAIKeyBtn = document.getElementById('save-openai-key');
     this.openAIKeyInput = document.getElementById('openai-key');
-    this.themeSelect = document.getElementById('theme-select');
+    this.themeGrid = document.getElementById('theme-grid');
     this.canvasUrl = document.getElementById('canvas-url');
     this.courseSelect = document.getElementById('course-select');
     this.manualCourseFields = document.getElementById('manual-course-fields');
@@ -226,8 +226,15 @@ class ScribeCatApp {
         if ((backend === 'whisper') && result && result.text) this.addTranscriptionEntry(result.text);
       });
     }
-    if (this.themeSelect) {
-      this.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
+    if (this.themeGrid) {
+      this.themeGrid.addEventListener('click', (e) => {
+        const themeCard = e.target.closest('.theme-swatch-card');
+        if (themeCard) {
+          const theme = themeCard.getAttribute('data-theme');
+          this.changeTheme(theme);
+          this.updateActiveTheme(theme);
+        }
+      });
     }
     if (this.saveCanvasBtn) {
       this.saveCanvasBtn.addEventListener('click', () => this.saveCanvasSettings());
@@ -386,9 +393,8 @@ class ScribeCatApp {
     // Load theme
     const savedTheme = await window.electronAPI.storeGet('theme') || 'default';
     this.changeTheme(savedTheme);
-    this.themeSelect.value = savedTheme;
-    // Update theme preview on load
-    this.updateThemePreview();
+    this.updateActiveTheme(savedTheme);
+
     // Load Canvas settings
     const canvasSettings = await window.electronAPI.storeGet('canvas-settings') || {};
     if (canvasSettings.url) this.canvasUrl.value = canvasSettings.url;
@@ -631,37 +637,23 @@ class ScribeCatApp {
     this.currentTheme = theme;
     document.documentElement.setAttribute('data-theme', theme);
     window.electronAPI.storeSet('theme', theme);
-    
-    // Update theme preview swatches
-    this.updateThemePreview();
   }
 
-  updateThemePreview() {
-    const preview = document.getElementById('theme-preview');
-    if (preview) {
-      // Force a repaint to get the latest CSS custom property values
-      setTimeout(() => {
-        const primarySwatch = preview.querySelector('.theme-swatch.primary');
-        const surfaceSwatch = preview.querySelector('.theme-swatch.surface');
-        const backgroundSwatch = preview.querySelector('.theme-swatch.background');
-        
-        if (primarySwatch) {
-          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-          primarySwatch.style.backgroundColor = primaryColor;
-        }
-        
-        if (surfaceSwatch) {
-          const surfaceColor = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
-          surfaceSwatch.style.backgroundColor = surfaceColor;
-        }
-        
-        if (backgroundSwatch) {
-          const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
-          backgroundSwatch.style.backgroundColor = backgroundColor;
-        }
-      }, 50);
+  updateActiveTheme(theme) {
+    // Remove active class from all theme cards
+    if (this.themeGrid) {
+      const allCards = this.themeGrid.querySelectorAll('.theme-swatch-card');
+      allCards.forEach(card => card.classList.remove('active'));
+      
+      // Add active class to selected theme
+      const activeCard = this.themeGrid.querySelector(`[data-theme="${theme}"]`);
+      if (activeCard) {
+        activeCard.classList.add('active');
+      }
     }
   }
+
+
 
   initializeClock() {
     this.updateClock();

@@ -64,29 +64,134 @@
             </button>
             <div class="sidebar-section">
                 <h3>Themes</h3>
-                <div class="theme-selector">
-                    <select id="theme-select">
-                        <option value="default">Default</option>
-                        <option value="dark">Dark</option>
-                        <option value="blue">Ocean Blue</option>
-                        <option value="forest">Forest Green</option>
-                        <option value="sunset">Sunset Orange</option>
-                        <option value="purple">Purple</option>
-                        <option value="rose">Rose</option>
-                        <option value="teal">Teal</option>
-                        <option value="indigo">Indigo</option>
-                        <option value="amber">Amber</option>
-                        <option value="emerald">Emerald</option>
-                        <option value="cyan">Cyan</option>
-                        <option value="pink">Pink</option>
-                        <option value="slate">Slate</option>
-                        <option value="midnight">Midnight</option>
-                    </select>
-                    <div class="theme-preview" id="theme-preview">
-                        <div class="theme-swatch primary"></div>
-                        <div class="theme-swatch surface"></div>
-                        <div class="theme-swatch background"></div>
-
+                <div class="theme-grid" id="theme-grid">
+                    <div class="theme-swatch-card" data-theme="default" title="Default">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #6366f1;"></div>
+                            <div class="color-dot" style="background: #f8fafc;"></div>
+                            <div class="color-dot" style="background: #ffffff;"></div>
+                        </div>
+                        <span class="theme-name">Default</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="sunrise-burst" title="Sunrise Burst">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #ff6b35;"></div>
+                            <div class="color-dot" style="background: #ffe4d1;"></div>
+                            <div class="color-dot" style="background: #ffd700;"></div>
+                        </div>
+                        <span class="theme-name">Sunrise</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="ocean-breeze" title="Ocean Breeze">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #00cec9;"></div>
+                            <div class="color-dot" style="background: #e6fffa;"></div>
+                            <div class="color-dot" style="background: #ff7675;"></div>
+                        </div>
+                        <span class="theme-name">Ocean</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="spring-meadow" title="Spring Meadow">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #00b894;"></div>
+                            <div class="color-dot" style="background: #e6ffee;"></div>
+                            <div class="color-dot" style="background: #ffd93d;"></div>
+                        </div>
+                        <span class="theme-name">Spring</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="cherry-blossom" title="Cherry Blossom">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #fd79a8;"></div>
+                            <div class="color-dot" style="background: #fce7f3;"></div>
+                            <div class="color-dot" style="background: #a4de6c;"></div>
+                        </div>
+                        <span class="theme-name">Blossom</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="golden-hour" title="Golden Hour">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #fdcb6e;"></div>
+                            <div class="color-dot" style="background: #fef5e7;"></div>
+                            <div class="color-dot" style="background: #ff7675;"></div>
+                        </div>
+                        <span class="theme-name">Golden</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="tropical-vibes" title="Tropical Vibes">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #55efc4;"></div>
+                            <div class="color-dot" style="background: #e6ffee;"></div>
+                            <div class="color-dot" style="background: #fd79a8;"></div>
+                        </div>
+                        <span class="theme-name">Tropical</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="electric-dreams" title="Electric Dreams">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #6c5ce7;"></div>
+                            <div class="color-dot" style="background: #f3e8ff;"></div>
+                            <div class="color-dot" style="background: #ff6b9d;"></div>
+                        </div>
+                        <span class="theme-name">Electric</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="citrus-fresh" title="Citrus Fresh">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #a4de6c;"></div>
+                            <div class="color-dot" style="background: #f0fff0;"></div>
+                            <div class="color-dot" style="background: #ff9f43;"></div>
+                        </div>
+                        <span class="theme-name">Citrus</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="cosmic-joy" title="Cosmic Joy">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #0984e3;"></div>
+                            <div class="color-dot" style="background: #eff6ff;"></div>
+                            <div class="color-dot" style="background: #ffd700;"></div>
+                        </div>
+                        <span class="theme-name">Cosmic</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="candy-pop" title="Candy Pop">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #ff7675;"></div>
+                            <div class="color-dot" style="background: #fed7d7;"></div>
+                            <div class="color-dot" style="background: #74b9ff;"></div>
+                        </div>
+                        <span class="theme-name">Candy</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="forest-dance" title="Forest Dance">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #00b894;"></div>
+                            <div class="color-dot" style="background: #dcfce7;"></div>
+                            <div class="color-dot" style="background: #f59e0b;"></div>
+                        </div>
+                        <span class="theme-name">Forest</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="arctic-aurora" title="Arctic Aurora">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #74b9ff;"></div>
+                            <div class="color-dot" style="background: #eff6ff;"></div>
+                            <div class="color-dot" style="background: #55efc4;"></div>
+                        </div>
+                        <span class="theme-name">Aurora</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="sunset-glow" title="Sunset Glow">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #e17055;"></div>
+                            <div class="color-dot" style="background: #ffe4d1;"></div>
+                            <div class="color-dot" style="background: #fdcb6e;"></div>
+                        </div>
+                        <span class="theme-name">Sunset</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="rainbow-joy" title="Rainbow Joy">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #fd79a8;"></div>
+                            <div class="color-dot" style="background: #fce7f3;"></div>
+                            <div class="color-dot" style="background: #00cec9;"></div>
+                        </div>
+                        <span class="theme-name">Rainbow</span>
+                    </div>
+                    <div class="theme-swatch-card" data-theme="midnight-magic" title="Midnight Magic">
+                        <div class="theme-colors">
+                            <div class="color-dot" style="background: #6c5ce7;"></div>
+                            <div class="color-dot" style="background: #16213e;"></div>
+                            <div class="color-dot" style="background: #74b9ff;"></div>
+                        </div>
+                        <span class="theme-name">Midnight</span>
                     </div>
                 </div>
             </div>
@@ -190,7 +295,7 @@
                 <!-- Recording Controls -->
                 <div class="recording-controls">
                     <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription">
-                        <svg class="record-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <svg class="record-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10"/>
                         </svg>
                         Start Recording
@@ -205,10 +310,10 @@
                         </div>
                     </div>
                     
-                    <button id="pause-btn" class="btn" disabled title="Pause current recording">Pause</button>
-                    <button id="resume-btn" class="btn" disabled title="Resume paused recording">Resume</button>
-                    <button id="stop-btn" class="btn btn-danger" disabled title="Stop recording and enable save">Stop</button>
-                    <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription">Save</button>
+                    <button id="pause-btn" class="btn btn-sm" disabled title="Pause current recording">Pause</button>
+                    <button id="resume-btn" class="btn btn-sm" disabled title="Resume paused recording">Resume</button>
+                    <button id="stop-btn" class="btn btn-danger btn-sm" disabled title="Stop recording and enable save">Stop</button>
+                    <button id="save-btn" class="btn btn-success btn-sm" disabled title="Save recording, notes, and transcription">Save</button>
                 </div>
 
                 <!-- Content Container -->
