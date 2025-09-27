@@ -12,6 +12,7 @@
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
+  --accent: #10b981; /* Default accent color for cohesive theming */
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   
@@ -20,7 +21,8 @@
   --container-max-width: 100vw; /* Full viewport width */
   --card-min-width: 0; /* No minimum, allow full flexibility */
   --card-gap: 12px; /* Standard gap */
-  --container-padding: 12px; /* Standard container padding */
+  --container-padding-max: 12px; /* Maximum container padding */
+  --container-padding-min: 6px; /* Minimum container padding */
   --transition-speed: 0.3s;
 }
 
@@ -431,6 +433,7 @@ body {
   font-weight: 700;
   color: var(--primary-color);
   font-family: 'GalaxyCaterpillar', 'Inter', sans-serif;
+  text-shadow: 0 1px 2px var(--accent); /* Subtle accent shadow */
 }
 
 /* Status chips */
@@ -550,21 +553,22 @@ body {
   animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Sidebar close button */
+/* Sidebar close button - Fixed click area */
 .sidebar-close {
   position: absolute;
   top: 4px;
   right: 4px;
-  background: none;
-  border: none;
+  background: transparent;
+  border: 2px solid transparent; /* Visible border for debugging */
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 8px;
+  padding: 0; /* Remove padding to ensure full area is clickable */
   border-radius: 6px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: none;
   width: 36px;
   height: 36px;
+  z-index: 1000; /* Ensure it's on top */
 }
 
 .sidebar.open .sidebar-close {
@@ -574,15 +578,18 @@ body {
 }
 
 .sidebar-close:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
+  background: var(--accent); /* Use accent color for contrast */
+  color: white;
+  border-color: var(--primary-color); /* Primary border on hover */
   transform: scale(1.05);
 }
 
 .sidebar-close svg {
   width: 16px;
   height: 16px;
-  pointer-events: none; /* Ensures clicks go to button, not SVG */
+  pointer-events: none;
+  position: relative;
+  z-index: -1; /* Ensure SVG is behind button */
 }
 
 /* Scrim behind open sidebar */
@@ -612,8 +619,10 @@ body {
 .sidebar-section h3 {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--primary-color); /* Use primary color for section headers */
   margin-bottom: 12px;
+  border-bottom: 2px solid var(--accent); /* Accent color underline */
+  padding-bottom: 4px;
 }
 
 /* Theme grid */
@@ -644,9 +653,10 @@ body {
 }
 
 .theme-swatch-card.active {
-  border-color: var(--primary-color);
-  background: var(--primary-color);
+  border-color: var(--accent); /* Use accent color for active theme */
+  background: var(--accent);
   color: white;
+  box-shadow: 0 0 0 2px var(--primary-color); /* Primary color outline */
 }
 
 .theme-swatch-card.active .theme-name {
@@ -701,7 +711,8 @@ body {
 
 .input-field:focus, .font-selector:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: var(--accent); /* Use accent color for focus states */
+  box-shadow: 0 0 0 2px var(--primary-color); /* Primary color glow */
 }
 
 .font-selector {
@@ -752,12 +763,12 @@ body {
 }
 
 .btn-success {
-  background: var(--success-color);
+  background: var(--accent); /* Use theme accent color */
   color: white;
 }
 
 .btn-success:hover {
-  background: #059669;
+  background: var(--success-color); /* Hover uses success color */
 }
 
 .btn-small {
@@ -780,21 +791,23 @@ body {
   width: 100vw; /* Full viewport width */
   min-height: 0;
   box-sizing: border-box;
+  background: var(--background); /* Use theme background */
 }
 
-/* Recording controls - Full width with dynamic sizing */
+/* Recording controls - Enhanced with tri-color contrast */
 .recording-controls {
-  padding: 10px 20px; /* Consistent padding */
+  padding: 10px 20px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border: 2px solid var(--primary-color); /* Primary border */
+  border-top: 2px solid var(--accent); /* Accent top border for tri-color effect */
   border-radius: 8px;
-  margin: 12px; /* Minor padding from window edges */
-  box-shadow: var(--shadow-sm);
+  margin: clamp(var(--container-padding-min), 2vw, var(--container-padding-max));
+  box-shadow: var(--shadow-sm), 0 2px 0 var(--border); /* Additional border shadow */
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  width: calc(100% - 24px); /* Full width minus margin */
+  width: calc(100% - 2 * clamp(var(--container-padding-min), 2vw, var(--container-padding-max)));
   box-sizing: border-box;
 }
 
@@ -895,7 +908,7 @@ body {
 
 .vu-bar {
   height: 100%;
-  background: linear-gradient(to right, #10b981 0%, #f59e0b 70%, #ef4444 90%);
+  background: linear-gradient(to right, var(--accent) 0%, var(--warning-color) 70%, var(--danger-color) 90%);
   border-radius: 3px;
   width: 0%;
   transition: width 0.1s ease-out;
@@ -913,35 +926,39 @@ body {
   border-radius: 1px;
 }
 
-/* Content container - Full width side-by-side layout */
+/* Content container - Persistent margin enforcement (6px-12px) */
 .content-container {
   flex: 1;
   display: flex;
-  justify-content: flex-start; /* Align to start, not center */
+  justify-content: flex-start;
   align-items: flex-start;
-  gap: 12px; /* Fixed gap between cards */
-  padding: 12px; /* Minor padding from window edges */
+  gap: 12px;
+  padding-top: clamp(var(--container-padding-min), 2vw, var(--container-padding-max));
+  padding-bottom: clamp(var(--container-padding-min), 2vw, var(--container-padding-max));
+  padding-left: clamp(var(--container-padding-min), 2vw, var(--container-padding-max));
+  padding-right: clamp(var(--container-padding-min), 2vw, var(--container-padding-max));
   overflow: hidden;
-  min-height: 0; /* Allow flex shrinking */
+  min-height: 0;
   width: 100%;
   box-sizing: border-box;
   transition: all var(--transition-speed) ease;
-  container-type: inline-size; /* Enable container queries where supported */
+  container-type: inline-size;
 }
 
-/* Editor section - Dynamic full-width sizing, always side-by-side */
+/* Editor section - Enhanced color contrast with accent borders */
 .editor-section {
-  flex: 1; /* Take equal share of available space */
-  min-width: 0; /* Allow shrinking below content size */
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--accent); /* Accent color border for pop */
   border-radius: 12px;
   padding: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--primary-color); /* Primary color glow */
   overflow: hidden;
   transition: all var(--transition-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  margin: 0;
 }
 
 .editor-header {
@@ -991,8 +1008,16 @@ body {
 }
 
 .format-btn.active {
-  background: var(--primary-color);
+  background: var(--accent); /* Use accent color for active format buttons */
   color: white;
+  border-color: var(--primary-color); /* Primary color border */
+}
+
+.format-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  pointer-events: none;
 }
 
 .toolbar-separator {
@@ -1016,6 +1041,36 @@ body {
   opacity: 0;
   position: absolute;
   pointer-events: none;
+}
+
+/* Enhanced toolbar selectors */
+.style-selector,
+.spacing-selector {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 120px;
+}
+
+.style-selector:focus,
+.spacing-selector:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.word-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  background: var(--surface);
+  border-radius: 4px;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
 }
 
 .color-btn {
@@ -1068,22 +1123,24 @@ body {
 }
 
 .notes-editor:focus {
-  border-color: var(--primary-color);
+  border-color: var(--accent); /* Use accent color for focus */
+  box-shadow: 0 0 0 2px var(--primary-color); /* Primary color glow */
 }
 
-/* Transcription section - Dynamic full-width sizing, always side-by-side */
+/* Transcription section - Enhanced color contrast with primary borders */
 .transcription-section {
-  flex: 1; /* Take equal share of available space */
-  min-width: 0; /* Allow shrinking below content size */
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--primary-color); /* Primary color border for contrast */
   border-radius: 12px;
   padding: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--accent); /* Accent color glow */
   overflow: hidden;
   transition: all var(--transition-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  margin: 0;
 }
 
 .transcription-header {
@@ -1118,9 +1175,12 @@ body {
 .transcript-entry {
   margin-bottom: 12px;
   padding: 8px;
-  border-left: 3px solid var(--primary-color);
-  background: var(--background);
+  border-left: 3px solid var(--accent); /* Use accent color for transcript border */
+  background: var(--surface); /* Use surface for better visibility */
   border-radius: 0 4px 4px 0;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .transcript-timestamp {
@@ -1139,7 +1199,12 @@ body {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 400px;
+  width: 320px; /* Reduced by 20% from 400px */
+  min-width: 280px; /* Minimum resize width */
+  max-width: 600px; /* Maximum resize width */
+  height: 400px; /* Add fixed height for resizing, reduced by 20% from 500px */
+  min-height: 250px; /* Minimum resize height */
+  max-height: 700px; /* Maximum resize height */
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1147,19 +1212,216 @@ body {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   transform-origin: bottom right;
+  resize: none; /* Disable default resize, we'll add custom resize handle */
+  overflow: hidden; /* Prevent content overflow during resize */
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-chat.collapsed {
+  height: auto !important;
+  min-height: auto !important;
 }
 
 .ai-chat.collapsed .chat-content {
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: opacity 0.3s ease, max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: none;
 }
 
 .ai-chat:not(.collapsed) .chat-content {
-  opacity: 1;
-  max-height: 500px;
-  transition: opacity 0.3s ease 0.1s, max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Custom resize handle - top left corner */
+.ai-chat-resize-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nw-resize;
+  z-index: 10;
+  background: transparent;
+  border-top-left-radius: 12px;
+}
+
+.ai-chat-resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 12px;
+  height: 12px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--text-secondary) 0px,
+    var(--text-secondary) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  border-radius: 2px;
+}
+
+.ai-chat-resize-handle:hover::before {
+  opacity: 0.8;
+}
+
+/* Advanced toolbar modals */
+.toolbar-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 20px;
+  z-index: 10000;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.toolbar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.toolbar-modal h3 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.toolbar-modal .form-group {
+  margin-bottom: 12px;
+}
+
+.toolbar-modal label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.toolbar-modal input,
+.toolbar-modal select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.toolbar-modal input:focus,
+.toolbar-modal select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.toolbar-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.toolbar-modal .btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-modal .btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.toolbar-modal .btn-primary:hover {
+  background: var(--primary-color-dark);
+}
+
+.toolbar-modal .btn-secondary {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.toolbar-modal .btn-secondary:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* Find/Replace panel */
+.find-replace-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  z-index: 1000;
+  min-width: 250px;
+}
+
+.find-replace-panel .form-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.find-replace-panel input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.find-replace-panel .btn {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+/* Table grid selector */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 8px;
+}
+
+.table-grid-cell {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.table-grid-cell:hover,
+.table-grid-cell.active {
+  background: var(--accent);
 }
 
 .chat-header {
@@ -1168,13 +1430,48 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
+  background: var(--surface);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .chat-header h3 {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.chat-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.chat-toggle-btn:hover {
+  background-color: var(--surface-hover);
+}
+
+.chat-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--text-secondary);
+  transition: fill 0.2s ease;
+}
+
+.chat-toggle-btn:hover svg {
+  fill: var(--text-primary);
 }
 
 .chat-toggle {
@@ -1273,12 +1570,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--primary-color); /* Use primary color for scroll thumb */
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--accent); /* Use accent color on hover */
 }
 
 /* Enhanced Responsive Design for Dynamic UI */
@@ -1300,20 +1597,24 @@ body {
 /* Large Screens - Standard layout */
 @media (max-width: 1400px) {
   .content-container {
-    max-width: 90%;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0 0 0 0;
   }
   
   .ai-chat {
-    width: 320px;
+    width: 256px; /* Reduced by 20% from 320px */
+    height: 320px; /* Reduced by 20% from 400px */
   }
 }
 
-/* Medium-Large Screens - Always side-by-side, adjust padding */
+/* Medium-Large Screens - Dynamic margins: 12px -> 10px */
 @media (max-width: 1200px) {
   .content-container {
     gap: 10px;
-    padding: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
   
   .recording-controls {
@@ -1324,11 +1625,12 @@ body {
   
   .editor-section,
   .transcription-section {
-    padding: 10px; /* Reduced padding on smaller screens */
+    padding: 10px;
   }
   
   .ai-chat {
-    width: 350px;
+    width: 280px; /* Reduced by 20% from 350px */
+    height: 350px; /* Reduced by 20% from approximately 437px */
   }
   
   .header-right .clock-section {
@@ -1341,11 +1643,14 @@ body {
   }
 }
 
-/* Medium Screens - Maintain side-by-side, compact layout */
+/* Medium Screens - Dynamic margins: 10px -> 8px */
 @media (max-width: 900px) {
   .content-container {
     gap: 8px;
-    padding: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
   
   .recording-controls {
@@ -1358,7 +1663,7 @@ body {
   
   .editor-section,
   .transcription-section {
-    padding: 8px; /* More compact padding */
+    padding: 8px;
   }
   
   .sidebar.open {
@@ -1412,17 +1717,19 @@ body {
   }
 }
 
-/* Small Screens - Mobile optimized, maintain side-by-side */
+/* Small Screens - Dynamic margins: 8px -> 6px (minimum) */
 @media (max-width: 600px) {
   .content-container {
-    padding: 6px;
     gap: 6px;
-    /* Keep flex-direction: row to maintain side-by-side */
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 6px; /* Minimum margin */
+    padding-right: 6px; /* Minimum margin */
   }
   
   .editor-section,
   .transcription-section {
-    padding: 6px; /* Minimal padding on mobile */
+    padding: 6px;
   }
   
   .recording-controls {
@@ -1434,17 +1741,17 @@ body {
   }
   
   .app-header {
-    height: 60px; /* Compact height on mobile */
+    height: 60px;
     padding: 0 8px;
   }
   
   .logo {
-    width: 36px; /* Even smaller logo on mobile */
+    width: 36px;
     height: 36px;
   }
   
   .app-title {
-    font-size: 20px; /* Compact title on mobile */
+    font-size: 20px;
   }
   
   .theme-grid {

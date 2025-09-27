@@ -98,12 +98,21 @@ class ScribeCatApp {
     this.fontColorSelector = document.getElementById('font-color');
     this.fontColorBtn = document.getElementById('font-color-btn');
     this.highlightColorSelector = document.getElementById('highlight-color');
+    // New Word-style toolbar elements
+    this.textStyleSelector = document.getElementById('text-style');
+    this.lineSpacingSelector = document.getElementById('line-spacing');
+    this.insertLinkBtn = document.getElementById('insert-link');
+    this.insertTableBtn = document.getElementById('insert-table');
+    this.insertImageBtn = document.getElementById('insert-image');
+    this.findReplaceBtn = document.getElementById('find-replace');
+    this.wordCountDisplay = document.getElementById('word-count');
     // Chat elements
     this.aiChat = document.getElementById('ai-chat');
     this.chatInput = document.getElementById('chat-input');
     this.chatMessages = document.getElementById('chat-messages');
     this.toggleChatBtn = document.getElementById('toggle-chat');
     this.sendChatBtn = document.getElementById('send-chat');
+    this.aiChatResizeHandle = document.getElementById('ai-chat-resize-handle');
   }
 
   async init() {
@@ -312,18 +321,55 @@ class ScribeCatApp {
     if (this.highlightColorSelector) {
       this.highlightColorSelector.addEventListener('change', (e) => this.changeHighlightColor(e.target.value));
     }
+
+    // New Word-style toolbar event listeners
+    if (this.textStyleSelector) {
+      this.textStyleSelector.addEventListener('change', (e) => this.applyTextStyle(e.target.value));
+    }
+    if (this.lineSpacingSelector) {
+      this.lineSpacingSelector.addEventListener('change', (e) => this.applyLineSpacing(e.target.value));
+    }
+    if (this.insertLinkBtn) {
+      this.insertLinkBtn.addEventListener('click', () => this.showInsertLinkModal());
+    }
+    if (this.insertTableBtn) {
+      this.insertTableBtn.addEventListener('click', () => this.showInsertTableModal());
+    }
+    if (this.insertImageBtn) {
+      this.insertImageBtn.addEventListener('click', () => this.showInsertImageModal());
+    }
+    if (this.findReplaceBtn) {
+      this.findReplaceBtn.addEventListener('click', () => this.toggleFindReplacePanel());
+    }
     
     // Add keyboard event listener for notes editor
     if (this.notesEditor) {
       this.notesEditor.addEventListener('keydown', (e) => this.handleKeyDown(e));
-      this.notesEditor.addEventListener('keyup', () => this.updateFormattingState());
+      this.notesEditor.addEventListener('keyup', () => {
+        this.updateFormattingState();
+        this.updateWordCount();
+      });
       this.notesEditor.addEventListener('mouseup', () => this.updateFormattingState());
+      this.notesEditor.addEventListener('input', () => this.updateWordCount());
     }
     if (this.toggleChatBtn) {
       this.toggleChatBtn.addEventListener('click', () => this.toggleChat());
     }
     if (this.sendChatBtn) {
       this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
+    }
+    
+    // AI Chat resize handle
+    if (this.aiChatResizeHandle) {
+      this.setupChatResize();
+    }
+    if (this.chatInput) {
+      this.chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          this.sendChatMessage();
+        }
+      });
     }
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
@@ -458,6 +504,12 @@ class ScribeCatApp {
     // Load notes draft
     const notesDraft = await window.electronAPI.storeGet('notes-draft');
     if (notesDraft) this.notesEditor.innerHTML = notesDraft;
+    
+    // Initialize word count
+    this.updateWordCount();
+    
+    // Initialize chat state
+    this.initializeChatState();
     
     // Update drive status chip after all settings are loaded
     this.updateDriveStatusChip();
@@ -1825,7 +1877,19 @@ class ScribeCatApp {
   }
 
   toggleChat() {
-    this.aiChat.classList.toggle('collapsed');
+    const isCollapsed = this.aiChat.classList.toggle('collapsed');
+    
+    // Rotate the toggle button SVG based on state
+    const toggleSvg = this.toggleChatBtn.querySelector('svg');
+    if (toggleSvg) {
+      toggleSvg.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+      toggleSvg.style.transition = 'transform 0.3s ease';
+    }
+    
+    // Show/hide resize handle based on collapsed state
+    if (this.aiChatResizeHandle) {
+      this.aiChatResizeHandle.style.display = isCollapsed ? 'none' : 'block';
+    }
   }
 
   async sendChatMessage() {
@@ -1872,6 +1936,476 @@ class ScribeCatApp {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using OpenAI's API to provide contextual answers.]`;
+  }
+
+  // Word-style toolbar functions
+  applyTextStyle(style) {
+    if (!style) return;
+    
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) return;
+    
+    // Create new element based on style
+    const element = document.createElement(style);
+    
+    // Apply default styling based on element type
+    switch(style) {
+      case 'h1':
+        element.style.fontSize = '2em';
+        element.style.fontWeight = 'bold';
+        element.style.marginTop = '0.5em';
+        element.style.marginBottom = '0.5em';
+        break;
+      case 'h2':
+        element.style.fontSize = '1.5em';
+        element.style.fontWeight = 'bold';
+        element.style.marginTop = '0.4em';
+        element.style.marginBottom = '0.4em';
+        break;
+      case 'h3':
+        element.style.fontSize = '1.25em';
+        element.style.fontWeight = 'bold';
+        element.style.marginTop = '0.3em';
+        element.style.marginBottom = '0.3em';
+        break;
+      case 'h4':
+        element.style.fontSize = '1.1em';
+        element.style.fontWeight = 'bold';
+        break;
+      case 'blockquote':
+        element.style.borderLeft = '4px solid var(--accent)';
+        element.style.paddingLeft = '16px';
+        element.style.margin = '16px 0';
+        element.style.fontStyle = 'italic';
+        element.style.color = 'var(--text-secondary)';
+        break;
+      case 'pre':
+        element.style.backgroundColor = 'var(--surface)';
+        element.style.padding = '12px';
+        element.style.borderRadius = '4px';
+        element.style.fontFamily = 'monospace';
+        element.style.border = '1px solid var(--border)';
+        element.style.overflow = 'auto';
+        break;
+    }
+    
+    try {
+      range.surroundContents(element);
+    } catch (error) {
+      const contents = range.extractContents();
+      element.appendChild(contents);
+      range.insertNode(element);
+    }
+    
+    selection.removeAllRanges();
+    this.saveNotesDraft();
+  }
+
+  applyLineSpacing(spacing) {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const container = range.commonAncestorContainer;
+      const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+      
+      // Apply to selected element or closest block element
+      let targetElement = element.closest('p, div, h1, h2, h3, h4, h5, h6, blockquote, pre') || element;
+      targetElement.style.lineHeight = spacing;
+    } else {
+      // Apply to entire editor if no selection
+      this.notesEditor.style.lineHeight = spacing;
+    }
+    this.saveNotesDraft();
+  }
+
+  updateWordCount() {
+    if (!this.wordCountDisplay || !this.notesEditor) return;
+    
+    const text = this.notesEditor.textContent || '';
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+    const wordCount = words.length;
+    
+    this.wordCountDisplay.textContent = `${wordCount} words`;
+  }
+
+  showInsertLinkModal() {
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    
+    this.showModal('Insert Link', `
+      <div class="form-group">
+        <label for="link-text">Link Text:</label>
+        <input type="text" id="link-text" value="${selectedText}" placeholder="Enter link text">
+      </div>
+      <div class="form-group">
+        <label for="link-url">URL:</label>
+        <input type="url" id="link-url" placeholder="https://example.com">
+      </div>
+    `, () => {
+      const text = document.getElementById('link-text').value;
+      const url = document.getElementById('link-url').value;
+      
+      if (text && url) {
+        this.insertLink(text, url);
+      }
+    });
+  }
+
+  insertLink(text, url) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.textContent = text;
+    link.target = '_blank';
+    link.style.color = 'var(--accent)';
+    link.style.textDecoration = 'underline';
+    
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(link);
+      selection.removeAllRanges();
+    } else {
+      // Insert at cursor position
+      document.execCommand('insertHTML', false, link.outerHTML);
+    }
+    
+    this.saveNotesDraft();
+  }
+
+  showInsertTableModal() {
+    this.showModal('Insert Table', `
+      <div class="form-group">
+        <label for="table-rows">Rows:</label>
+        <input type="number" id="table-rows" value="3" min="1" max="20">
+      </div>
+      <div class="form-group">
+        <label for="table-cols">Columns:</label>
+        <input type="number" id="table-cols" value="3" min="1" max="10">
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="table-header"> Include header row
+        </label>
+      </div>
+    `, () => {
+      const rows = parseInt(document.getElementById('table-rows').value) || 3;
+      const cols = parseInt(document.getElementById('table-cols').value) || 3;
+      const hasHeader = document.getElementById('table-header').checked;
+      
+      this.insertTable(rows, cols, hasHeader);
+    });
+  }
+
+  insertTable(rows, cols, hasHeader) {
+    const table = document.createElement('table');
+    table.style.border = '1px solid var(--border)';
+    table.style.borderCollapse = 'collapse';
+    table.style.width = '100%';
+    table.style.margin = '16px 0';
+    
+    for (let i = 0; i < rows; i++) {
+      const row = document.createElement('tr');
+      
+      for (let j = 0; j < cols; j++) {
+        const cell = document.createElement(hasHeader && i === 0 ? 'th' : 'td');
+        cell.style.border = '1px solid var(--border)';
+        cell.style.padding = '8px';
+        cell.style.textAlign = hasHeader && i === 0 ? 'center' : 'left';
+        cell.style.fontWeight = hasHeader && i === 0 ? 'bold' : 'normal';
+        cell.textContent = hasHeader && i === 0 ? `Header ${j + 1}` : `Cell ${i + 1}-${j + 1}`;
+        row.appendChild(cell);
+      }
+      
+      table.appendChild(row);
+    }
+    
+    // Insert table at cursor position
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(table);
+      selection.removeAllRanges();
+    } else {
+      this.notesEditor.appendChild(table);
+    }
+    
+    this.saveNotesDraft();
+  }
+
+  showInsertImageModal() {
+    this.showModal('Insert Image', `
+      <div class="form-group">
+        <label for="image-url">Image URL:</label>
+        <input type="url" id="image-url" placeholder="https://example.com/image.jpg">
+      </div>
+      <div class="form-group">
+        <label for="image-alt">Alt Text:</label>
+        <input type="text" id="image-alt" placeholder="Description of the image">
+      </div>
+      <div class="form-group">
+        <label for="image-width">Width (optional):</label>
+        <input type="number" id="image-width" placeholder="Auto" min="1" max="1000">
+      </div>
+    `, () => {
+      const url = document.getElementById('image-url').value;
+      const alt = document.getElementById('image-alt').value;
+      const width = document.getElementById('image-width').value;
+      
+      if (url) {
+        this.insertImage(url, alt, width);
+      }
+    });
+  }
+
+  insertImage(url, alt, width) {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = alt || 'Inserted image';
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+    img.style.margin = '8px 0';
+    img.style.borderRadius = '4px';
+    
+    if (width) {
+      img.style.width = width + 'px';
+    }
+    
+    // Insert image at cursor position
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(img);
+      selection.removeAllRanges();
+    } else {
+      this.notesEditor.appendChild(img);
+    }
+    
+    this.saveNotesDraft();
+  }
+
+  toggleFindReplacePanel() {
+    let panel = document.getElementById('find-replace-panel');
+    
+    if (panel) {
+      panel.remove();
+      return;
+    }
+    
+    panel = document.createElement('div');
+    panel.id = 'find-replace-panel';
+    panel.className = 'find-replace-panel';
+    panel.innerHTML = `
+      <div class="form-row">
+        <input type="text" id="find-input" placeholder="Find...">
+        <button class="btn btn-primary" id="find-next">Next</button>
+        <button class="btn btn-secondary" id="find-prev">Prev</button>
+      </div>
+      <div class="form-row">
+        <input type="text" id="replace-input" placeholder="Replace...">
+        <button class="btn btn-primary" id="replace-next">Replace</button>
+        <button class="btn btn-secondary" id="replace-all">All</button>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-secondary" id="close-find">Close</button>
+      </div>
+    `;
+    
+    // Position panel relative to the find button
+    this.findReplaceBtn.parentElement.appendChild(panel);
+    
+    // Add event listeners
+    panel.querySelector('#find-next').addEventListener('click', () => this.findNext());
+    panel.querySelector('#find-prev').addEventListener('click', () => this.findPrev());
+    panel.querySelector('#replace-next').addEventListener('click', () => this.replaceNext());
+    panel.querySelector('#replace-all').addEventListener('click', () => this.replaceAll());
+    panel.querySelector('#close-find').addEventListener('click', () => panel.remove());
+    
+    // Focus find input
+    panel.querySelector('#find-input').focus();
+  }
+
+  findNext() {
+    const findInput = document.getElementById('find-input');
+    if (!findInput) return;
+    
+    const searchTerm = findInput.value;
+    if (!searchTerm) return;
+    
+    // Use browser's built-in find functionality
+    window.find(searchTerm, false, false, true);
+  }
+
+  findPrev() {
+    const findInput = document.getElementById('find-input');
+    if (!findInput) return;
+    
+    const searchTerm = findInput.value;
+    if (!searchTerm) return;
+    
+    // Use browser's built-in find functionality (backwards)
+    window.find(searchTerm, false, true, true);
+  }
+
+  replaceNext() {
+    const findInput = document.getElementById('find-input');
+    const replaceInput = document.getElementById('replace-input');
+    
+    if (!findInput || !replaceInput) return;
+    
+    const searchTerm = findInput.value;
+    const replaceTerm = replaceInput.value;
+    
+    if (!searchTerm) return;
+    
+    // This is a simplified implementation
+    // In a real application, you'd want more sophisticated text replacement
+    const content = this.notesEditor.innerHTML;
+    const newContent = content.replace(new RegExp(searchTerm, 'i'), replaceTerm);
+    this.notesEditor.innerHTML = newContent;
+    this.saveNotesDraft();
+  }
+
+  replaceAll() {
+    const findInput = document.getElementById('find-input');
+    const replaceInput = document.getElementById('replace-input');
+    
+    if (!findInput || !replaceInput) return;
+    
+    const searchTerm = findInput.value;
+    const replaceTerm = replaceInput.value;
+    
+    if (!searchTerm) return;
+    
+    const content = this.notesEditor.innerHTML;
+    const newContent = content.replace(new RegExp(searchTerm, 'gi'), replaceTerm);
+    this.notesEditor.innerHTML = newContent;
+    this.saveNotesDraft();
+  }
+
+  showModal(title, content, onConfirm) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'toolbar-modal-overlay';
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'toolbar-modal';
+    modal.innerHTML = `
+      <h3>${title}</h3>
+      ${content}
+      <div class="toolbar-modal-buttons">
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm">OK</button>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    modal.querySelector('#modal-cancel').addEventListener('click', () => {
+      overlay.remove();
+      modal.remove();
+    });
+    
+    modal.querySelector('#modal-confirm').addEventListener('click', () => {
+      if (onConfirm) onConfirm();
+      overlay.remove();
+      modal.remove();
+    });
+    
+    overlay.addEventListener('click', () => {
+      overlay.remove();
+      modal.remove();
+    });
+    
+    // Focus first input
+    const firstInput = modal.querySelector('input');
+    if (firstInput) firstInput.focus();
+  }
+
+  setupChatResize() {
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight, startBottom, startRight;
+
+    this.aiChatResizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const chatRect = this.aiChat.getBoundingClientRect();
+      startWidth = chatRect.width;
+      startHeight = chatRect.height;
+      startBottom = window.innerHeight - chatRect.bottom;
+      startRight = window.innerWidth - chatRect.right;
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      // Prevent text selection during resize
+      document.body.style.userSelect = 'none';
+      this.aiChat.style.transition = 'none';
+      
+      e.preventDefault();
+    });
+
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      // Calculate deltas (negative because we're dragging top-left)
+      const deltaX = startX - e.clientX;
+      const deltaY = startY - e.clientY;
+      
+      // Calculate new dimensions
+      const newWidth = Math.min(Math.max(startWidth + deltaX, 280), 600);
+      const newHeight = Math.min(Math.max(startHeight + deltaY, 250), 700);
+      
+      // Apply new dimensions
+      this.aiChat.style.width = newWidth + 'px';
+      this.aiChat.style.height = newHeight + 'px';
+      
+      // Adjust position to keep bottom-right corner fixed
+      const currentRight = startRight;
+      const currentBottom = startBottom;
+      
+      this.aiChat.style.right = currentRight + 'px';
+      this.aiChat.style.bottom = currentBottom + 'px';
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing) {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        
+        // Restore transitions and text selection
+        document.body.style.userSelect = '';
+        this.aiChat.style.transition = '';
+      }
+    };
+  }
+
+  initializeChatState() {
+    // Set initial state based on collapsed class
+    const isCollapsed = this.aiChat.classList.contains('collapsed');
+    
+    // Set initial SVG rotation
+    const toggleSvg = this.toggleChatBtn?.querySelector('svg');
+    if (toggleSvg) {
+      toggleSvg.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+      toggleSvg.style.transition = 'transform 0.3s ease';
+    }
+    
+    // Show/hide resize handle based on initial state
+    if (this.aiChatResizeHandle) {
+      this.aiChatResizeHandle.style.display = isCollapsed ? 'none' : 'block';
+    }
   }
 }
 
