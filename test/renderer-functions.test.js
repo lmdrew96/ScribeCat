@@ -378,6 +378,12 @@ async function main() {
   });
 
   await harness.testAsync('generateAISummary fetches and writes output', async () => {
+    // Explicitly set simulation mode off for this test to use mocked fetch
+    app.simulationMode = false;
+    
+    // Make sure button is not disabled from previous tests
+    app.generateSummaryBtn.disabled = false;
+    
     app.openAIApiKey = 'k';
     app.generateSummaryBtn.style.display = 'block';
     app.notesEditor.textContent = 'Note A';
@@ -385,6 +391,30 @@ async function main() {
     app.addTranscriptionEntry('Transcript A');
     await app.generateAISummary();
     if (!app.aiSummary.innerHTML.includes('Test summary output')) throw new Error('No summary');
+  });
+
+  await harness.testAsync('simulation mode toggle works correctly', async () => {
+    // Test simulation mode enabled
+    app.simulationMode = true;
+    app.generateSummaryBtn.style.display = 'block';
+    app.notesEditor.textContent = 'Note A';
+    app.transcriptionDisplay.innerHTML = '';
+    app.addTranscriptionEntry('Transcript A');
+    
+    // Start the async operation
+    const summaryPromise = app.generateAISummary();
+    
+    // Wait for the simulated delay (1.5 seconds) plus some buffer
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Wait for the promise to complete
+    await summaryPromise;
+    
+    if (!app.aiSummary.innerHTML.includes('Simulation Mode Note')) throw new Error('Simulation summary not generated');
+    
+    // Test generateAIBlurb simulation
+    const blurb = await app.generateAIBlurb();
+    if (blurb !== 'Simulated_Session_Notes') throw new Error('Simulation blurb not generated');
   });
 
   await harness.testAsync('saveOpenAIKey saves and clears input', async () => {

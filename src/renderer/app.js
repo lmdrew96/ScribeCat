@@ -27,6 +27,8 @@ class ScribeCatApp {
     this.openAIApiKey = null;
     this.isUsingDeveloperKey = false;
     this.currentTheme = 'default';
+    this.simulationMode = true; // Default to simulation mode enabled
+    this.simulatedTranscriptionInterval = null;
     // Audio analysis for VU meter
     this.audioContext = null;
     this.analyserNode = null;
@@ -100,6 +102,9 @@ class ScribeCatApp {
     this.chatMessages = document.getElementById('chat-messages');
     this.toggleChatBtn = document.getElementById('toggle-chat');
     this.sendChatBtn = document.getElementById('send-chat');
+    
+    // Developer Settings
+    this.simulationModeToggle = document.getElementById('simulation-mode-toggle');
   }
 
   async init() {
@@ -224,6 +229,9 @@ class ScribeCatApp {
     }
     if (this.themeSelect) {
       this.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
+    }
+    if (this.simulationModeToggle) {
+      this.simulationModeToggle.addEventListener('change', (e) => this.toggleSimulationMode(e.target.checked));
     }
     if (this.saveCanvasBtn) {
       this.saveCanvasBtn.addEventListener('click', () => this.saveCanvasSettings());
@@ -437,6 +445,19 @@ class ScribeCatApp {
     const notesDraft = await window.electronAPI.storeGet('notes-draft');
     if (notesDraft) this.notesEditor.innerHTML = notesDraft;
     
+    // Load simulation mode setting
+    this.simulationMode = await window.electronAPI.storeGet('simulation-mode');
+    if (this.simulationMode === null || this.simulationMode === undefined) {
+      this.simulationMode = true; // Default to simulation mode enabled
+      await window.electronAPI.storeSet('simulation-mode', this.simulationMode);
+    }
+    if (this.simulationModeToggle) {
+      this.simulationModeToggle.checked = this.simulationMode;
+    }
+    
+    // Update status indicators to reflect simulation mode
+    this.updateSimulationModeIndicators();
+    
     // Update drive status chip after all settings are loaded
     this.updateDriveStatusChip();
   }
@@ -449,6 +470,32 @@ class ScribeCatApp {
     async generateAISummary() {
       // Prevent duplicate requests
       if (this.generateSummaryBtn.disabled) return;
+      
+      // Check if simulation mode is enabled
+      if (this.simulationMode) {
+        this.generateSummaryBtn.disabled = true;
+        this.aiSummary.innerHTML = '<em>Generating summary (simulation)...</em>';
+        
+        // Simulate API delay with a proper Promise
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const simulatedSummary = `
+## Summary (Simulated)
+**Key Topics:**
+- Sample topic from transcription
+- Important points discussed
+- Action items identified
+
+**Simulation Mode Note:** This is a test response. Enable real mode in Developer Settings to use actual OpenAI API.
+            `;
+            this.aiSummary.innerHTML = window.marked ? marked.parse(simulatedSummary) : simulatedSummary;
+            this.generateSummaryBtn.disabled = false;
+            resolve();
+          }, 1500);
+        });
+      }
+      
+      // Real API mode - existing functionality
       // Gather context from notes and transcription
       const notesContent = this.notesEditor.textContent || '';
       const transcriptContent = Array.from(this.transcriptionDisplay.children)
@@ -497,6 +544,13 @@ class ScribeCatApp {
     }
 
     async generateAIBlurb() {
+      // Check if simulation mode is enabled
+      if (this.simulationMode) {
+        console.log('Simulation mode: Using fallback blurb generation');
+        return 'Simulated_Session_Notes';
+      }
+      
+      // Real API mode - existing functionality
       // Generate a brief 1-6 word blurb based on notes and transcription for file naming
       const notesContent = this.notesEditor.textContent || '';
       const transcriptContent = Array.from(this.transcriptionDisplay.children)
@@ -568,6 +622,78 @@ class ScribeCatApp {
       console.error('Error saving OpenAI key:', error);
       alert('Error saving API key. Please try again.');
     }
+  }
+
+  async toggleSimulationMode(enabled) {
+    this.simulationMode = enabled;
+    await window.electronAPI.storeSet('simulation-mode', this.simulationMode);
+    
+    // Update status indicators
+    this.updateSimulationModeIndicators();
+    
+    // Show notification to user
+    this.showModeChangeNotification(enabled);
+    
+    console.log(`Simulation mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  updateSimulationModeIndicators() {
+    // Update status chips to reflect current mode
+    const statusChips = document.querySelectorAll('.status-chip');
+    const mode = this.simulationMode ? 'simulation' : 'real';
+    
+    statusChips.forEach(chip => {
+      // Remove existing mode classes
+      chip.classList.remove('simulation-mode', 'real-mode');
+      // Add current mode class
+      chip.classList.add(`${mode}-mode`);
+    });
+
+    // Update AI status chip with simulation indicator
+    const transcriptionStatus = document.getElementById('transcription-status');
+    if (transcriptionStatus) {
+      const span = transcriptionStatus.querySelector('span');
+      if (span) {
+        span.textContent = this.simulationMode ? 'AI (Sim)' : 'AI';
+      }
+    }
+  }
+
+  showModeChangeNotification(simulationEnabled) {
+    // Create a temporary notification
+    const notification = document.createElement('div');
+    notification.className = 'mode-change-notification';
+    notification.innerHTML = simulationEnabled 
+      ? '🔧 Simulation mode enabled - Using test responses'
+      : '🚀 Real mode enabled - Connecting to live services';
+    
+    // Add styles for the notification
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${simulationEnabled ? 'var(--warning-color)' : 'var(--success-color)'};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 10000;
+      box-shadow: var(--shadow-lg);
+      animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
   }
 
   changeTheme(theme) {
@@ -1014,7 +1140,15 @@ class ScribeCatApp {
 
   async startVoskTranscription(stream) {
     this.updateStatusChip('transcription', 'active');
-    // Vosk integration via preload (IPC)
+    
+    if (this.simulationMode) {
+      // Simulate transcription in development mode
+      console.log('Simulation mode: Using simulated Vosk transcription');
+      this.startSimulatedTranscription();
+      return;
+    }
+    
+    // Real Vosk integration
     this.transcriptionSession = await window.electronAPI.startVoskTranscription({ stream, modelPath: this.voskModelPath });
     window.electronAPI.onVoskResult((event, result) => {
       if (result && result.text) {
@@ -1025,7 +1159,15 @@ class ScribeCatApp {
 
   async startWhisperTranscription(stream) {
     this.updateStatusChip('transcription', 'active');
-    // Whisper integration via preload (IPC)
+    
+    if (this.simulationMode) {
+      // Simulate transcription in development mode
+      console.log('Simulation mode: Using simulated Whisper transcription');
+      this.startSimulatedTranscription();
+      return;
+    }
+    
+    // Real Whisper integration
     this.transcriptionSession = await window.electronAPI.startWhisperTranscription({ stream });
     window.electronAPI.onWhisperResult((event, result) => {
       if (result && result.text) {
@@ -1034,7 +1176,34 @@ class ScribeCatApp {
     });
   }
 
+  startSimulatedTranscription() {
+    const simulatedTexts = [
+      "This is a simulated transcription.",
+      "The simulation mode is working correctly.",
+      "These are test phrases to demonstrate functionality.",
+      "Real transcription would connect to Vosk or Whisper services.",
+      "Switch to real mode in Developer Settings to use actual APIs."
+    ];
+    
+    let textIndex = 0;
+    this.simulatedTranscriptionInterval = setInterval(() => {
+      if (this.isRecording && textIndex < simulatedTexts.length) {
+        this.addTranscriptionEntry(simulatedTexts[textIndex]);
+        textIndex++;
+      } else if (this.isRecording) {
+        textIndex = 0; // Loop back to beginning
+      }
+    }, 3000); // Add new text every 3 seconds
+  }
+
   stopLiveTranscription() {
+    // Stop simulated transcription if running
+    if (this.simulatedTranscriptionInterval) {
+      clearInterval(this.simulatedTranscriptionInterval);
+      this.simulatedTranscriptionInterval = null;
+    }
+    
+    // Stop real transcription if running
     if (this.transcriptionSession) {
       window.electronAPI.stopTranscription(this.transcriptionSession);
       this.transcriptionSession = null;
