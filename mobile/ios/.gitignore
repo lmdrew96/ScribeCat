@@ -1,0 +1,45 @@
+# SwiftUI and iOS Development
+
+# Xcode files
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata/
+*.xcodeproj
+
+# Build artifacts
+build/
+DerivedData/
+*.app
+*.ipa
+*.dSYM
+*.hmap
+
+# Swift Package Manager files
+/.build/
+Package.resolved
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# Simulator files
+*.simulator/
+*.device/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.DS_Store
+*.swp
+*.swo
+*.lock
+
+# Other exclusions
+*.log
+*.tgz
+*.zip
