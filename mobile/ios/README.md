@@ -497,6 +497,120 @@ The test suite includes performance benchmarks:
    -com.apple.CoreData.CloudKitDebug 1
    ```
 
+---
+
+## 📋 M4 Setup Guide
+
+### Google Drive Integration Setup
+
+1. **Google Cloud Console Setup**
+   ```
+   1. Go to https://console.cloud.google.com/
+   2. Create new project or select existing
+   3. Enable Google Drive API
+   4. Enable Google Sign-In API
+   5. Create OAuth 2.0 client ID for iOS
+   6. Note your client ID for app configuration
+   ```
+
+2. **iOS App Configuration**
+   ```swift
+   // Add to your app configuration
+   // In production, add Google Sign-In SDK:
+   // .package(url: "https://github.com/google/GoogleSignIn-iOS")
+   // .package(url: "https://github.com/google/google-api-objectivec-client-for-rest")
+   ```
+
+3. **URL Schemes Configuration**
+   ```xml
+   <!-- Add to Info.plist -->
+   <key>CFBundleURLTypes</key>
+   <array>
+       <dict>
+           <key>CFBundleURLName</key>
+           <string>REVERSED_CLIENT_ID</string>
+           <key>CFBundleURLSchemes</key>
+           <array>
+               <string>YOUR_REVERSED_CLIENT_ID</string>
+           </array>
+       </dict>
+   </array>
+   ```
+
+### AskAI Lite Setup
+
+1. **OpenAI API Setup**
+   - Visit [OpenAI Platform](https://platform.openai.com/)
+   - Create account and generate API key
+   - Set up billing (required for API usage)
+   - Note usage limits and costs
+
+2. **In-App Configuration**
+   - Open Settings → AskAI Lite
+   - Enter your OpenAI API key
+   - Key is stored securely in iOS Keychain
+   - Monitor usage to avoid unexpected charges
+
+### Cache Configuration
+
+The app automatically manages cache with sensible defaults:
+- **Total Cache Limit**: 200MB (configurable)
+- **Per Session Limit**: 50-75MB soft cap
+- **Eviction Policy**: Least Recently Used (LRU)
+- **Background Cleanup**: Automatic on app start and idle
+- **Manual Controls**: Available in Settings → Cache Settings
+
+### Sync Behavior Configuration
+
+**Default Sync Settings:**
+- Automatic sync only on Wi-Fi + charging
+- Manual sync available anytime
+- Exponential backoff for failed syncs
+- Network and battery state monitoring
+
+**Customization Options:**
+- Allow sync on cellular data
+- Sync without charging requirement
+- Adjust sync frequency
+- Configure in Settings → Sync Preferences
+
+## 🔧 Production Deployment Notes
+
+### Required SDK Dependencies
+```swift
+// Add these to Package.swift for production
+.package(url: "https://github.com/google/GoogleSignIn-iOS", from: "7.0.0"),
+.package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "3.0.0")
+```
+
+### Environment Variables
+```
+GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_here
+OPENAI_PROXY_URL=optional_proxy_endpoint
+```
+
+### Privacy Considerations
+- API keys stored in iOS Keychain
+- Usage tracking stored locally only
+- No session data sent to external services without explicit consent
+- Clear user controls for data management
+
+## 🧪 M4 Testing
+
+### Mock Features (Development)
+- Google Drive sync uses mock responses
+- AskAI uses mock AI responses  
+- Real network and battery monitoring
+- Real cache management and LRU eviction
+- Real usage counter tracking
+
+### Production Integration
+- Replace GoogleDriveManager mock methods with real SDK calls
+- Replace AskAIManager mock responses with OpenAI API calls
+- Configure real OAuth flow
+- Set up proper error handling and retry logic
+
 3. **Memory Issues**
    - Use Instruments to profile memory usage
    - Watch for retain cycles in Combine publishers

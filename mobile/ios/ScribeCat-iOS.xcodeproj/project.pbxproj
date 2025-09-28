@@ -18,6 +18,7 @@
 		88E8333D508145A0BF6A63B0 /* AskAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E8333D508145A0BF6A63AF /* AskAIManager.swift */; };
 		F4883C3FE6BB4E37B3F5D77A /* CacheSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4883C3FE6BB4E37B3F5D779 /* CacheSettingsView.swift */; };
 		FF156AEAB49B408FA889DAF9 /* AskAISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF156AEAB49B408FA889DAF8 /* AskAISettingsView.swift */; };
+		DBC307ED3A9C48548A6E7ACB /* AskAISessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC307ED3A9C48548A6E7ACA /* AskAISessionView.swift */; };
 		5A1A1A2A2A5A1A1A0A5A1A1A /* RecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */; };
 		5A1A1A2C2A5A1A1A0A5A1A1A /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */; };
 		5A1A1A2E2A5A1A1A0A5A1A1A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */; };
@@ -62,6 +63,7 @@
 		88E8333D508145A0BF6A63AF /* AskAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAIManager.swift; sourceTree = "<group>"; };
 		F4883C3FE6BB4E37B3F5D779 /* CacheSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheSettingsView.swift; sourceTree = "<group>"; };
 		FF156AEAB49B408FA889DAF8 /* AskAISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAISettingsView.swift; sourceTree = "<group>"; };
+		DBC307ED3A9C48548A6E7ACA /* AskAISessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAISessionView.swift; sourceTree = "<group>"; };
 		5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordView.swift; sourceTree = "<group>"; };
 		5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 				88E8333D508145A0BF6A63AF /* AskAIManager.swift */,
 				F4883C3FE6BB4E37B3F5D779 /* CacheSettingsView.swift */,
 				FF156AEAB49B408FA889DAF8 /* AskAISettingsView.swift */,
+				DBC307ED3A9C48548A6E7ACA /* AskAISessionView.swift */,
 				5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */,
 				5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */,
 				5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */,
@@ -318,6 +321,7 @@
 				88E8333D508145A0BF6A63B0 /* AskAIManager.swift in Sources */,
 				F4883C3FE6BB4E37B3F5D77A /* CacheSettingsView.swift in Sources */,
 				FF156AEAB49B408FA889DAF9 /* AskAISettingsView.swift in Sources */,
+				DBC307ED3A9C48548A6E7ACB /* AskAISessionView.swift in Sources */,
 				5A1A1A302A5A1A1A0A5A1A1A /* DataModel.swift in Sources */,
 				5A1A1A342A5A1A1A0A5A1A1A /* MockAPI.swift in Sources */,
 				5A1A1A2E2A5A1A1A0A5A1A1A /* SettingsView.swift in Sources */,
