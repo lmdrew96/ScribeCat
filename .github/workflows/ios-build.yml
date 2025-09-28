@@ -15,7 +15,7 @@ on:
 env:
   XCODE_VERSION: '15.0'
   IOS_SIMULATOR_DEVICE: 'iPhone 15'
-  IOS_SIMULATOR_OS: '17.0'
+  IOS_SIMULATOR_OS: '17.0'  # iOS 16+ compatible
   
 jobs:
   build-and-test:

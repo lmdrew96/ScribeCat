@@ -34,16 +34,48 @@ Welcome to the ScribeCat iOS mobile companion app! This SwiftUI-based applicatio
    - Select a simulator or connected device
    - Press `Cmd+R` to build and run
 
+## 🔧 M4 Features Deep Dive
+
+### Google Drive Sync
+- **OAuth Integration**: Secure Google account authentication
+- **Session Management**: Browse and download sessions from Drive
+- **Real-time Sync Status**: Online/offline indicators with last sync timestamp
+- **Manual Sync**: "Sync Now" button for on-demand synchronization
+- **Conflict Resolution**: Handles offline changes and sync conflicts
+
+### Smart Caching System
+- **LRU Eviction**: Automatically removes least recently used sessions
+- **Configurable Limits**: 200MB total cache, 50-75MB per session soft caps
+- **Background Cleanup**: Automatic maintenance on app start and idle
+- **Cache Analytics**: Detailed usage statistics and health indicators
+- **Manual Management**: User-controlled cache clearing and cleanup
+
+### AskAI Lite
+- **Session Analysis**: AI-powered questions about your recorded sessions
+- **Usage Limits**: 100 queries/month (hard), 10 queries/day (soft)
+- **Secure Storage**: OpenAI API keys stored in iOS Keychain
+- **Usage Tracking**: Client-side counters with automatic monthly reset
+- **Privacy First**: No session data stored by OpenAI, anonymous queries
+
+### Battery & Network Optimization
+- **Smart Gating**: Sync only on Wi-Fi + charging by default
+- **Network Monitoring**: Real-time Wi-Fi/cellular detection
+- **Battery Awareness**: Charging state monitoring
+- **Background Tasks**: Efficient background sync with exponential backoff
+- **Manual Override**: User can sync anytime regardless of conditions
+
 ## 📱 App Architecture
 
 ### Technology Stack
 
 - **SwiftUI** - Modern declarative UI framework
 - **Combine** - Reactive programming for data flow
-- **Core Data** - Local data persistence
-- **CloudKit** - Cross-device synchronization
-- **AVFoundation** - Audio recording and processing
-- **Swift Package Manager** - Dependency management
+- **Core Data** - Local data persistence and caching
+- **CloudKit** - User preferences and app data sync
+- **Network Framework** - Wi-Fi/cellular monitoring
+- **Security Framework** - Keychain storage for API keys
+- **BackgroundTasks** - Efficient background sync scheduling
+- **Swift Package Manager** - Dependency management (Google Drive SDK ready)
 
 ### Project Structure
 
@@ -76,12 +108,13 @@ ScribeCat-iOS/
 
 ### Key Features
 
-- **📱 Native iOS Interface** - TabView with Home, Record, Notes, and Settings
-- **🎙️ Background Audio Recording** - Power-optimized recording with AVAudioSession
-- **☁️ CloudKit Sync** - Seamless synchronization across devices
-- **💾 Core Data Storage** - Local data persistence with CloudKit integration
+- **📱 Native iOS Interface** - TabView with Home, Sessions/Notes, Settings, Help/About
+- **☁️ Google Drive Sync** - OAuth authentication and Drive SDK integration for session sync
+- **📊 Smart Caching** - LRU cache with configurable size limits (200MB total, 50-75MB per session)
+- **🤖 AskAI Lite** - AI-powered session analysis with usage limits (100/month, 10/day)
+- **🔋 Battery-Aware Sync** - Wi-Fi + charging gated background sync with manual override
+- **💾 Core Data Storage** - Local data persistence with CloudKit integration for preferences
 - **🌍 Multi-language Support** - English, Spanish, and Romanian
-- **🔄 Mock API Integration** - Ready to switch to real ScribeCat API
 - **🧪 Comprehensive Testing** - Unit tests and UI tests included
 - **🚀 CI/CD Ready** - GitHub Actions and Fastlane configuration
 
@@ -464,6 +497,120 @@ The test suite includes performance benchmarks:
    -com.apple.CoreData.CloudKitDebug 1
    ```
 
+---
+
+## 📋 M4 Setup Guide
+
+### Google Drive Integration Setup
+
+1. **Google Cloud Console Setup**
+   ```
+   1. Go to https://console.cloud.google.com/
+   2. Create new project or select existing
+   3. Enable Google Drive API
+   4. Enable Google Sign-In API
+   5. Create OAuth 2.0 client ID for iOS
+   6. Note your client ID for app configuration
+   ```
+
+2. **iOS App Configuration**
+   ```swift
+   // Add to your app configuration
+   // In production, add Google Sign-In SDK:
+   // .package(url: "https://github.com/google/GoogleSignIn-iOS")
+   // .package(url: "https://github.com/google/google-api-objectivec-client-for-rest")
+   ```
+
+3. **URL Schemes Configuration**
+   ```xml
+   <!-- Add to Info.plist -->
+   <key>CFBundleURLTypes</key>
+   <array>
+       <dict>
+           <key>CFBundleURLName</key>
+           <string>REVERSED_CLIENT_ID</string>
+           <key>CFBundleURLSchemes</key>
+           <array>
+               <string>YOUR_REVERSED_CLIENT_ID</string>
+           </array>
+       </dict>
+   </array>
+   ```
+
+### AskAI Lite Setup
+
+1. **OpenAI API Setup**
+   - Visit [OpenAI Platform](https://platform.openai.com/)
+   - Create account and generate API key
+   - Set up billing (required for API usage)
+   - Note usage limits and costs
+
+2. **In-App Configuration**
+   - Open Settings → AskAI Lite
+   - Enter your OpenAI API key
+   - Key is stored securely in iOS Keychain
+   - Monitor usage to avoid unexpected charges
+
+### Cache Configuration
+
+The app automatically manages cache with sensible defaults:
+- **Total Cache Limit**: 200MB (configurable)
+- **Per Session Limit**: 50-75MB soft cap
+- **Eviction Policy**: Least Recently Used (LRU)
+- **Background Cleanup**: Automatic on app start and idle
+- **Manual Controls**: Available in Settings → Cache Settings
+
+### Sync Behavior Configuration
+
+**Default Sync Settings:**
+- Automatic sync only on Wi-Fi + charging
+- Manual sync available anytime
+- Exponential backoff for failed syncs
+- Network and battery state monitoring
+
+**Customization Options:**
+- Allow sync on cellular data
+- Sync without charging requirement
+- Adjust sync frequency
+- Configure in Settings → Sync Preferences
+
+## 🔧 Production Deployment Notes
+
+### Required SDK Dependencies
+```swift
+// Add these to Package.swift for production
+.package(url: "https://github.com/google/GoogleSignIn-iOS", from: "7.0.0"),
+.package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "3.0.0")
+```
+
+### Environment Variables
+```
+GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_here
+OPENAI_PROXY_URL=optional_proxy_endpoint
+```
+
+### Privacy Considerations
+- API keys stored in iOS Keychain
+- Usage tracking stored locally only
+- No session data sent to external services without explicit consent
+- Clear user controls for data management
+
+## 🧪 M4 Testing
+
+### Mock Features (Development)
+- Google Drive sync uses mock responses
+- AskAI uses mock AI responses  
+- Real network and battery monitoring
+- Real cache management and LRU eviction
+- Real usage counter tracking
+
+### Production Integration
+- Replace GoogleDriveManager mock methods with real SDK calls
+- Replace AskAIManager mock responses with OpenAI API calls
+- Configure real OAuth flow
+- Set up proper error handling and retry logic
+
 3. **Memory Issues**
    - Use Instruments to profile memory usage
    - Watch for retain cycles in Combine publishers
@@ -471,24 +618,31 @@ The test suite includes performance benchmarks:
 
 ## 📝 Changelog
 
-### Version 1.0.0 (Scaffold)
+### Version 1.0.0 (M4 Scaffold)
 
 **Features:**
-- ✅ SwiftUI TabView with Home, Record, Notes, Settings
+- ✅ SwiftUI TabView with Home, Sessions/Notes, Settings, Help/About
 - ✅ Core Data + CloudKit integration
-- ✅ Background audio recording with power optimizations
-- ✅ Mock API implementation ready for real integration
+- ✅ Google Drive sync for session content (OAuth + Drive SDK)
+- ✅ Wi-Fi + charging gated background sync with manual override
+- ✅ LRU cache with configurable size limits (200MB total, 50-75MB per session)
+- ✅ AskAI Lite with usage limits (100/month, 10/day)
 - ✅ Multi-language support (EN, ES, RO)
 - ✅ Comprehensive test suite (unit + UI tests)
 - ✅ GitHub Actions CI/CD pipeline
 - ✅ Fastlane deployment automation
 - ✅ Privacy-focused design with user controls
 
+**Coming in M5:**
+- 🔄 Background audio recording with AVFoundation
+- 🔄 Apple Speech framework transcription
+- 🔄 Core ML Whisper integration
+
 **Technical Notes:**
-- iOS 15.0+ deployment target for broad compatibility
+- iOS 16.0+ deployment target for modern iOS features
 - Swift Package Manager for dependency management
 - CloudKit container: `iCloud.com.scribecat.ScribeCat-iOS`
-- Background modes: `audio` for recording capabilities
+- No background audio modes in M4 (recording/transcription in M5)
 - Entitlements: CloudKit, App Groups, Push Notifications
 
 ---

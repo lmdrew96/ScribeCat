@@ -9,17 +9,20 @@ import SwiftUI
 import CloudKit
 
 struct SettingsView: View {
-    @AppStorage("realtimeTranscription") private var realtimeTranscription = true
-    @AppStorage("audioQuality") private var audioQuality = "High"
+    @StateObject private var driveManager = GoogleDriveManager()
+    @StateObject private var cacheManager = CacheManager(context: PersistenceController.shared.container.viewContext)
+    @StateObject private var askAIManager = AskAIManager()
+    
     @AppStorage("syncEnabled") private var syncEnabled = true
     @AppStorage("analyticsEnabled") private var analyticsEnabled = false
     @AppStorage("selectedLanguage") private var selectedLanguage = "en"
+    @AppStorage("syncOnlyOnWiFiAndCharging") private var syncOnlyOnWiFiAndCharging = true
     
-    @State private var cloudKitStatus = "Checking..."
-    @State private var storageUsed = "Calculating..."
     @State private var showingLanguagePicker = false
     @State private var showingPrivacyPolicy = false
     @State private var showingAbout = false
+    @State private var showingAskAISettings = false
+    @State private var showingCacheSettings = false
     
     let languages = [
         ("en", "English"),
@@ -27,70 +30,165 @@ struct SettingsView: View {
         ("ro", "Română")
     ]
     
-    let qualityOptions = ["Low", "Medium", "High"]
-    
     var body: some View {
         NavigationView {
             List {
-                // Sync & Storage Section
-                Section("Sync & Storage") {
+                // Google Drive Sync Section
+                Section("Google Drive Sync") {
                     HStack {
-                        Label("CloudKit Sync", systemImage: "icloud")
+                        Label("Drive Sync", systemImage: "icloud")
                         Spacer()
                         Toggle("", isOn: $syncEnabled)
                             .labelsHidden()
                     }
                     
-                    HStack {
-                        Text("Sync Status")
-                        Spacer()
-                        Text(cloudKitStatus)
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    }
-                    
-                    HStack {
-                        Text("Storage Used")
-                        Spacer()
-                        Text(storageUsed)
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    }
-                    
-                    Button("Sync Now") {
-                        performSync()
-                    }
-                    .disabled(!syncEnabled)
-                }
-                
-                // Recording Settings Section  
-                Section("Recording Settings") {
-                    HStack {
-                        Label("Real-time Transcription", systemImage: "waveform.path")
-                        Spacer()
-                        Toggle("", isOn: $realtimeTranscription)
-                            .labelsHidden()
-                    }
-                    
-                    HStack {
-                        Text("Audio Quality")
-                        Spacer()
-                        Picker("Audio Quality", selection: $audioQuality) {
-                            ForEach(qualityOptions, id: \.self) { quality in
-                                Text(quality).tag(quality)
+                    if syncEnabled {
+                        if driveManager.isSignedIn {
+                            HStack {
+                                Text("Status")
+                                Spacer()
+                                Text(driveManager.syncStatus.displayText)
+                                    .foregroundColor(driveManager.syncStatus == .online ? .green : .secondary)
+                                    .font(.caption)
+                            }
+                            
+                            if let lastSync = driveManager.lastSyncDate {
+                                HStack {
+                                    Text("Last Sync")
+                                    Spacer()
+                                    Text(lastSync, style: .relative)
+                                        .foregroundColor(.secondary)
+                                        .font(.caption)
+                                }
+                            }
+                            
+                            Button(driveManager.isManualSyncInProgress ? "Syncing..." : "Sync Now") {
+                                driveManager.performManualSync()
+                            }
+                            .disabled(driveManager.isManualSyncInProgress)
+                            
+                            Button("Sign Out") {
+                                driveManager.signOut()
+                            }
+                            .foregroundColor(.red)
+                        } else {
+                            HStack {
+                                Text("Status")
+                                Spacer()
+                                Text("Not signed in")
+                                    .foregroundColor(.orange)
+                                    .font(.caption)
+                            }
+                            
+                            Button("Sign in to Google Drive") {
+                                driveManager.signIn()
+                            }
+                            .foregroundColor(.blue)
+                        }
+                        
+                        if let error = driveManager.syncError {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .foregroundColor(.red)
+                                Text(error)
+                                    .font(.caption)
+                                    .foregroundColor(.red)
                             }
                         }
-                        .pickerStyle(MenuPickerStyle())
+                    }
+                }
+                
+                // Sync Preferences Section
+                if syncEnabled {
+                    Section("Sync Preferences") {
+                        HStack {
+                            Label("Wi-Fi + Charging Only", systemImage: "wifi")
+                            Spacer()
+                            Toggle("", isOn: $syncOnlyOnWiFiAndCharging)
+                                .labelsHidden()
+                        }
+                        
+                        if !syncOnlyOnWiFiAndCharging {
+                            HStack {
+                                Image(systemName: "info.circle")
+                                    .foregroundColor(.orange)
+                                Text("Background sync will use mobile data and battery")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+                
+                // Cache Management Section
+                Section("Cache Management") {
+                    NavigationLink("Cache Settings") {
+                        CacheSettingsView(cacheManager: cacheManager)
                     }
                     
-                    if !realtimeTranscription {
+                    HStack {
+                        Text("Cache Usage")
+                        Spacer()
+                        Text(cacheManager.totalCacheSize > 0 ? 
+                             ByteCountFormatter.string(fromByteCount: cacheManager.totalCacheSize, countStyle: .file) : 
+                             "Empty")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    }
+                    
+                    HStack {
+                        Text("Cached Sessions")
+                        Spacer()
+                        Text("\(cacheManager.sessionCount)")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    }
+                    
+                    if cacheManager.isCleaningUp {
                         HStack {
-                            Image(systemName: "info.circle")
-                                .foregroundColor(.blue)
-                            Text("Disabling real-time transcription saves battery")
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Cleaning up cache...")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
+                    } else {
+                        Button("Clear Cache") {
+                            cacheManager.clearAllCache()
+                        }
+                        .foregroundColor(.red)
+                    }
+                }
+                
+                // AskAI Lite Section
+                Section("AskAI Lite") {
+                    NavigationLink("AskAI Settings") {
+                        AskAISettingsView(askAIManager: askAIManager)
+                    }
+                    
+                    HStack {
+                        Text("API Key")
+                        Spacer()
+                        Text(askAIManager.hasAPIKey ? "Configured" : "Not set")
+                            .foregroundColor(askAIManager.hasAPIKey ? .green : .orange)
+                            .font(.caption)
+                    }
+                    
+                    let usageInfo = askAIManager.getUsageInfo()
+                    HStack {
+                        Text("Monthly Usage")
+                        Spacer()
+                        Text("\(usageInfo.monthlyUsage)/\(usageInfo.monthlyLimit)")
+                            .foregroundColor(usageInfo.monthlyUsage >= usageInfo.monthlyLimit ? .red : .secondary)
+                            .font(.caption)
+                    }
+                    
+                    HStack {
+                        Text("Daily Usage")
+                        Spacer()
+                        Text("\(usageInfo.dailyUsage)/\(usageInfo.dailyLimit)")
+                            .foregroundColor(usageInfo.dailyUsage >= usageInfo.dailyLimit ? .red : .secondary)
+                            .font(.caption)
                     }
                 }
                 
@@ -132,31 +230,28 @@ struct SettingsView: View {
                     }
                 }
                 
-                // Debug Section (for scaffold)
+                // Debug Section (for M4 development)
                 Section("Debug & Development") {
                     Button("Add Sample Data") {
                         addSampleData()
                     }
                     .foregroundColor(.blue)
                     
-                    Button("Clear All Data") {
-                        clearAllData()
-                    }
-                    .foregroundColor(.red)
-                    
                     HStack {
                         Text("API Endpoint")
                         Spacer()
-                        Text("Mock API")
-                            .foregroundColor(.orange)
+                        Text("Google Drive + Mock AI")
+                            .foregroundColor(.blue)
                             .font(.caption)
                     }
                     
-                    Button("Switch to Real API") {
-                        // Placeholder for switching to real API
-                        print("Switch to real API - see README for instructions")
+                    HStack {
+                        Text("Recording Features")
+                        Spacer()
+                        Text("Available in M5")
+                            .foregroundColor(.orange)
+                            .font(.caption)
                     }
-                    .foregroundColor(.blue)
                 }
                 
                 // About Section
@@ -169,7 +264,15 @@ struct SettingsView: View {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0.0 (Scaffold)")
+                        Text("1.0.0 (M4)")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    }
+                    
+                    HStack {
+                        Text("iOS Requirement")
+                        Spacer()
+                        Text("iOS 16.0+")
                             .foregroundColor(.secondary)
                             .font(.caption)
                     }
@@ -178,8 +281,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
-                checkCloudKitStatus()
-                calculateStorageUsed()
+                cacheManager.updateCacheStats()
             }
             .actionSheet(isPresented: $showingLanguagePicker) {
                 ActionSheet(
@@ -200,61 +302,25 @@ struct SettingsView: View {
         }
     }
     
-    private func performSync() {
-        cloudKitStatus = "Syncing..."
-        
-        // Mock sync operation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            cloudKitStatus = "Last synced: Now"
-        }
-    }
-    
-    private func checkCloudKitStatus() {
-        // Mock CloudKit status check
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            cloudKitStatus = syncEnabled ? "Available" : "Disabled"
-        }
-    }
-    
-    private func calculateStorageUsed() {
-        // Mock storage calculation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            storageUsed = "1.2 MB"
-        }
-    }
-    
     private func addSampleData() {
         // Add sample data for testing
         let context = PersistenceController.shared.container.viewContext
         
         let sampleSession = Session(context: context)
         sampleSession.id = UUID()
-        sampleSession.title = "Sample Recording"
+        sampleSession.title = "Sample M4 Session"
         sampleSession.timestamp = Date()
         sampleSession.duration = 120
-        sampleSession.hasAudio = true
+        sampleSession.hasAudio = false // No audio in M4
         sampleSession.hasNotes = true
-        sampleSession.transcription = "This is a sample transcription for testing purposes."
-        sampleSession.notes = "These are sample notes that were taken during the recording session."
+        sampleSession.transcription = "This is a sample session for M4 testing. Recording and transcription will be available in M5."
+        sampleSession.notes = "Sample notes for M4. The app now focuses on Drive sync, caching, and AskAI Lite features."
         
         do {
             try context.save()
+            cacheManager.updateCacheStats()
         } catch {
             print("Error adding sample data: \(error)")
-        }
-    }
-    
-    private func clearAllData() {
-        // Clear all data - this is for development/testing
-        let context = PersistenceController.shared.container.viewContext
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Session.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        
-        do {
-            try context.execute(deleteRequest)
-            try context.save()
-        } catch {
-            print("Error clearing data: \(error)")
         }
     }
 }

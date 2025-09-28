@@ -3,13 +3,15 @@
 //  ScribeCat-iOS
 //
 //  Created by ScribeCat Team on 2024.
+//  NOTE: Recording functionality disabled in M4 - will be enabled in M5
 //
 
 import SwiftUI
 import AVFoundation
 
 struct RecordView: View {
-    @StateObject private var audioManager = AudioRecordingManager()
+    // Recording functionality commented out for M4
+    // @StateObject private var audioManager = AudioRecordingManager()
     @Environment(\.managedObjectContext) private var viewContext
     
     @State private var recordingTitle = ""
@@ -22,20 +24,88 @@ struct RecordView: View {
             VStack(spacing: 30) {
                 // Header
                 VStack(spacing: 8) {
-                    Text("Audio Recording")
+                    Text("Recording & Transcription")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text(audioManager.isRecording ? "Recording in progress..." : "Ready to record")
+                    Text("Coming in M5")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.orange)
                 }
                 
                 Spacer()
                 
-                // Waveform visualization placeholder
-                VStack {
-                    if audioManager.isRecording {
+                // M5 Coming Soon Message
+                VStack(spacing: 16) {
+                    Image(systemName: "waveform.circle")
+                        .font(.system(size: 80))
+                        .foregroundColor(.gray)
+                    
+                    Text("Recording & Transcription")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Text("Audio recording and transcription features will be available in M5 with:")
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("• AVFoundation background recording")
+                        Text("• Apple Speech framework transcription")  
+                        Text("• Core ML Whisper integration")
+                        Text("• Power-optimized audio processing")
+                        Text("• Real-time transcription toggle")
+                    }
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+                
+                Spacer()
+                
+                // Disabled recording button for visual consistency
+                Button(action: {
+                    // No action - disabled for M4
+                }) {
+                    HStack {
+                        Image(systemName: "record.circle")
+                        Text("Recording Available in M5")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.gray)
+                    .cornerRadius(25)
+                }
+                .disabled(true)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Record")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+    
+    // All recording functionality commented out for M4
+    /*
+    private func startRecording() {
+        // Will be implemented in M5
+    }
+    
+    private func stopRecording() {
+        // Will be implemented in M5
+    }
+    
+    private func saveRecording() {
+        // Will be implemented in M5
+    }
+    */
+}
                         WaveformView(isRecording: audioManager.isRecording, audioLevel: audioManager.audioLevel)
                             .frame(height: 100)
                     } else {
