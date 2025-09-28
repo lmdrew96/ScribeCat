@@ -12,7 +12,7 @@
     "build:mac": "electron-builder --mac",
     "dist": "electron-builder --publish=never",
     "pack": "electron-builder --dir",
-    "test": "node test/smoke-test.js && node test/renderer-functions.test.js && node test/e2e-boot.test.js",
+    "test": "node test/smoke-test.js && node test/renderer-functions.test.js && node test/error-monitoring.test.js && node test/e2e-boot.test.js",
     "test:e2e": "node test/e2e-boot.test.js"
   },
   "keywords": [
