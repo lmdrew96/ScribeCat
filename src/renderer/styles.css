@@ -224,6 +224,94 @@ body {
   -webkit-app-region: no-drag;
 }
 
+/* Error Notification Banner */
+.error-notification {
+  position: fixed;
+  top: 90px; /* Below header */
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, var(--warning-color), #fbbf24);
+  color: white;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+  animation: slideDown 0.3s ease-out;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 12px;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.notification-message {
+  flex-grow: 1;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-notification {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-notification.dismiss {
+  opacity: 0.8;
+  padding: 4px;
+}
+
+.btn-notification.dismiss:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-notification.primary {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-notification.primary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Adjust main content when notification is shown */
+.error-notification.shown ~ .main-content {
+  padding-top: 20px;
+}
+
 .sidebar-toggle {
   background: none;
   border: none;

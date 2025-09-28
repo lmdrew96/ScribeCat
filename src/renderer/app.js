@@ -117,6 +117,16 @@ class ScribeCatApp {
     this.userEmailInput = document.getElementById('user-email');
     this.createBugReportBtn = document.getElementById('create-bug-report');
     this.bugReportStatus = document.getElementById('bug-report-status');
+
+    // Error Notification elements
+    this.errorNotification = document.getElementById('error-notification');
+    this.errorNotificationText = document.getElementById('error-notification-text');
+    this.dismissErrorBtn = document.getElementById('dismiss-error');
+    this.reportErrorBugBtn = document.getElementById('report-error-bug');
+
+    // Error tracking
+    this.currentError = null;
+    this.errorHistory = [];
   }
 
   async init() {
@@ -124,6 +134,7 @@ class ScribeCatApp {
     this.cleanupDomArtifacts();
     this.initializeElements();
     this.setupEventListeners();
+    this.initializeErrorMonitoring(); // Add error monitoring
     await this.loadSettings();
     this.initializeClock();
     await this.initializeAudioDevices();
@@ -360,6 +371,14 @@ class ScribeCatApp {
     // Bug Reporter event listeners
     if (this.createBugReportBtn) {
       this.createBugReportBtn.addEventListener('click', () => this.createBugReport());
+    }
+
+    // Error Notification event listeners
+    if (this.dismissErrorBtn) {
+      this.dismissErrorBtn.addEventListener('click', () => this.dismissErrorNotification());
+    }
+    if (this.reportErrorBugBtn) {
+      this.reportErrorBugBtn.addEventListener('click', () => this.reportErrorAsBug());
     }
   }
 
@@ -2144,8 +2163,8 @@ class ScribeCatApp {
         this.createBugReportBtn.textContent = 'Reporting...';
       }
 
-      // Create comprehensive bug report
-      const bugReport = this.generateBugReportContent(title, description, email);
+      // Create comprehensive bug report with enhanced context
+      const bugReport = this.generateBugReportContentWithContext(title, description, email);
       
       // Try multiple reporting methods
       const success = await this.submitBugReport(bugReport, title);
@@ -2195,6 +2214,73 @@ ${description}
 
 ---
 *This bug report was submitted via ScribeCat's integrated bug reporter*`,
+      labels: ['bug', 'user-report', 'scribecat']
+    };
+  }
+
+  // Enhanced session context collection for manual bug reports
+  generateBugReportContentWithContext(title, description, email) {
+    // Get session context
+    const notesContent = this.notesEditor?.textContent || 'No notes';
+    const transcriptionContent = Array.from(this.transcriptionDisplay?.children || [])
+      .map(entry => entry.textContent)
+      .join('\n') || 'No transcription';
+
+    // Get recent errors if any
+    const recentErrors = this.errorHistory.slice(-3).map(err => 
+      `[${err.timestamp}] ${err.type}: ${err.message}`
+    ).join('\n');
+
+    const enhancedBody = `## Bug Report
+
+**Summary:** ${title}
+
+**Description:**
+${description}
+
+**User Details:**
+- Email: ${email || 'Not provided'}
+- App Version: ${window.appInfo?.version || 'Unknown'}
+- Platform: ${window.appInfo?.platform || 'Unknown'}
+- User Agent: ${navigator.userAgent}
+- Timestamp: ${new Date().toISOString()}
+
+**System Info:**
+- Screen Resolution: ${screen.width}x${screen.height}
+- Language: ${navigator.language}
+- Online: ${navigator.onLine}
+- Recording Status: ${this.isRecording ? 'Recording' : 'Not Recording'}
+- Backend: ${this.whisperEnabled ? 'Whisper' : 'Vosk'}
+- Simulation Mode: ${this.simulationMode ? 'Enabled' : 'Disabled'}
+
+**Session Context:**
+${notesContent.length > 0 ? `
+**Current Notes:**
+\`\`\`
+${notesContent.substring(0, 1000)}${notesContent.length > 1000 ? '...' : ''}
+\`\`\`
+` : '**Notes:** Empty'}
+
+${transcriptionContent.length > 0 ? `
+**Current Transcription:**
+\`\`\`
+${transcriptionContent.substring(0, 1000)}${transcriptionContent.length > 1000 ? '...' : ''}
+\`\`\`
+` : '**Transcription:** Empty'}
+
+${recentErrors ? `
+**Recent Errors:**
+\`\`\`
+${recentErrors}
+\`\`\`
+` : ''}
+
+---
+*This bug report was submitted via ScribeCat's integrated bug reporter*`;
+
+    return {
+      title: `[User Report] ${title}`,
+      body: enhancedBody,
       labels: ['bug', 'user-report', 'scribecat']
     };
   }
@@ -2255,6 +2341,196 @@ ${description}
         }
       }, 5000);
     }
+  }
+
+  // Error Monitoring and Notification System
+  initializeErrorMonitoring() {
+    // Global error handler
+    window.addEventListener('error', (event) => {
+      this.handleGlobalError({
+        message: event.message,
+        filename: event.filename,
+        line: event.lineno,
+        column: event.colno,
+        error: event.error,
+        type: 'javascript'
+      });
+    });
+
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', (event) => {
+      this.handleGlobalError({
+        message: event.reason?.message || 'Unhandled promise rejection',
+        error: event.reason,
+        type: 'promise'
+      });
+    });
+
+    // Console error monitoring
+    this.originalConsoleError = console.error;
+    console.error = (...args) => {
+      this.originalConsoleError.apply(console, args);
+      
+      // Only show notification for significant errors, not warnings
+      const errorMessage = args.join(' ');
+      if (this.isSignificantError(errorMessage)) {
+        this.handleGlobalError({
+          message: errorMessage,
+          type: 'console',
+          args: args
+        });
+      }
+    };
+  }
+
+  isSignificantError(message) {
+    // Filter out non-critical errors/warnings
+    const ignoredPatterns = [
+      'Failed to load resource',
+      'Resource was not loaded',
+      'Could not load link',
+      'Could not load script',
+      'AudioContext',
+      'webkitAudioContext'
+    ];
+    
+    return !ignoredPatterns.some(pattern => message.includes(pattern));
+  }
+
+  handleGlobalError(errorInfo) {
+    console.log('Handling global error:', errorInfo);
+    
+    // Store error for potential reporting
+    const errorData = {
+      ...errorInfo,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      appVersion: window.appInfo?.version || 'Unknown',
+      url: window.location.href
+    };
+    
+    this.errorHistory.push(errorData);
+    
+    // Keep only last 10 errors
+    if (this.errorHistory.length > 10) {
+      this.errorHistory.shift();
+    }
+    
+    // Set current error for reporting
+    this.currentError = errorData;
+    
+    // Show notification after a short delay to avoid overwhelming user
+    if (!this.errorNotificationShowing) {
+      setTimeout(() => {
+        this.showErrorNotification(errorInfo.message);
+      }, 1000);
+    }
+  }
+
+  showErrorNotification(customMessage = null) {
+    if (!this.errorNotification) return;
+    
+    this.errorNotificationShowing = true;
+    
+    // Update message if provided
+    if (customMessage && this.errorNotificationText) {
+      this.errorNotificationText.textContent = `${customMessage} - functionality may be affected`;
+    }
+    
+    // Show notification
+    this.errorNotification.style.display = 'block';
+    this.errorNotification.classList.add('shown');
+    
+    // Auto-hide after 10 seconds if not already dismissed
+    this.errorNotificationTimeout = setTimeout(() => {
+      this.dismissErrorNotification();
+    }, 10000);
+  }
+
+  dismissErrorNotification() {
+    if (!this.errorNotification) return;
+    
+    this.errorNotification.style.display = 'none';
+    this.errorNotification.classList.remove('shown');
+    this.errorNotificationShowing = false;
+    
+    if (this.errorNotificationTimeout) {
+      clearTimeout(this.errorNotificationTimeout);
+      this.errorNotificationTimeout = null;
+    }
+  }
+
+  reportErrorAsBug() {
+    if (!this.currentError) {
+      console.warn('No current error to report');
+      return;
+    }
+    
+    // Dismiss the notification
+    this.dismissErrorNotification();
+    
+    // Generate comprehensive error report
+    const errorReport = this.generateErrorBugReport(this.currentError);
+    
+    // Submit the bug report
+    this.submitBugReport(errorReport, 'Auto-detected Error');
+  }
+
+  generateErrorBugReport(errorData) {
+    // Get session context
+    const notesContent = this.notesEditor?.textContent || 'No notes';
+    const transcriptionContent = Array.from(this.transcriptionDisplay?.children || [])
+      .map(entry => entry.textContent)
+      .join('\n') || 'No transcription';
+
+    // Get recent console logs (from error history)
+    const recentErrors = this.errorHistory.slice(-5).map(err => 
+      `[${err.timestamp}] ${err.type}: ${err.message}`
+    ).join('\n');
+
+    const errorBody = `## Auto-Detected Error Report
+
+**Error Details:**
+- **Type:** ${errorData.type}
+- **Message:** ${errorData.message}
+- **Timestamp:** ${errorData.timestamp}
+- **File:** ${errorData.filename || 'N/A'}
+- **Line:** ${errorData.line || 'N/A'}
+
+**System Information:**
+- **App Version:** ${errorData.appVersion}
+- **Platform:** ${window.appInfo?.platform || 'Unknown'}
+- **User Agent:** ${errorData.userAgent}
+- **URL:** ${errorData.url}
+
+**Session Context:**
+- **Recording Status:** ${this.isRecording ? 'Recording' : 'Not Recording'}
+- **Backend:** ${this.whisperEnabled ? 'Whisper' : 'Vosk'} 
+- **Simulation Mode:** ${this.simulationMode ? 'Enabled' : 'Disabled'}
+
+**Current Session Notes:**
+\`\`\`
+${notesContent.substring(0, 500)}${notesContent.length > 500 ? '...' : ''}
+\`\`\`
+
+**Current Session Transcription:**
+\`\`\`
+${transcriptionContent.substring(0, 500)}${transcriptionContent.length > 500 ? '...' : ''}
+\`\`\`
+
+**Recent Error History:**
+\`\`\`
+${recentErrors}
+\`\`\`
+
+---
+*This bug report was auto-generated by ScribeCat's error detection system*`;
+
+    return {
+      title: `[Auto-Detected] ${errorData.type} Error: ${errorData.message.substring(0, 80)}`,
+      body: errorBody,
+      labels: ['bug', 'auto-detected', 'error-monitoring']
+    };
   }
 }
 
