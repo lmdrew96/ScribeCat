@@ -34,16 +34,48 @@ Welcome to the ScribeCat iOS mobile companion app! This SwiftUI-based applicatio
    - Select a simulator or connected device
    - Press `Cmd+R` to build and run
 
+## 🔧 M4 Features Deep Dive
+
+### Google Drive Sync
+- **OAuth Integration**: Secure Google account authentication
+- **Session Management**: Browse and download sessions from Drive
+- **Real-time Sync Status**: Online/offline indicators with last sync timestamp
+- **Manual Sync**: "Sync Now" button for on-demand synchronization
+- **Conflict Resolution**: Handles offline changes and sync conflicts
+
+### Smart Caching System
+- **LRU Eviction**: Automatically removes least recently used sessions
+- **Configurable Limits**: 200MB total cache, 50-75MB per session soft caps
+- **Background Cleanup**: Automatic maintenance on app start and idle
+- **Cache Analytics**: Detailed usage statistics and health indicators
+- **Manual Management**: User-controlled cache clearing and cleanup
+
+### AskAI Lite
+- **Session Analysis**: AI-powered questions about your recorded sessions
+- **Usage Limits**: 100 queries/month (hard), 10 queries/day (soft)
+- **Secure Storage**: OpenAI API keys stored in iOS Keychain
+- **Usage Tracking**: Client-side counters with automatic monthly reset
+- **Privacy First**: No session data stored by OpenAI, anonymous queries
+
+### Battery & Network Optimization
+- **Smart Gating**: Sync only on Wi-Fi + charging by default
+- **Network Monitoring**: Real-time Wi-Fi/cellular detection
+- **Battery Awareness**: Charging state monitoring
+- **Background Tasks**: Efficient background sync with exponential backoff
+- **Manual Override**: User can sync anytime regardless of conditions
+
 ## 📱 App Architecture
 
 ### Technology Stack
 
 - **SwiftUI** - Modern declarative UI framework
 - **Combine** - Reactive programming for data flow
-- **Core Data** - Local data persistence
-- **CloudKit** - Cross-device synchronization
-- **AVFoundation** - Audio recording and processing
-- **Swift Package Manager** - Dependency management
+- **Core Data** - Local data persistence and caching
+- **CloudKit** - User preferences and app data sync
+- **Network Framework** - Wi-Fi/cellular monitoring
+- **Security Framework** - Keychain storage for API keys
+- **BackgroundTasks** - Efficient background sync scheduling
+- **Swift Package Manager** - Dependency management (Google Drive SDK ready)
 
 ### Project Structure
 
@@ -76,12 +108,13 @@ ScribeCat-iOS/
 
 ### Key Features
 
-- **📱 Native iOS Interface** - TabView with Home, Record, Notes, and Settings
-- **🎙️ Background Audio Recording** - Power-optimized recording with AVAudioSession
-- **☁️ CloudKit Sync** - Seamless synchronization across devices
-- **💾 Core Data Storage** - Local data persistence with CloudKit integration
+- **📱 Native iOS Interface** - TabView with Home, Sessions/Notes, Settings, Help/About
+- **☁️ Google Drive Sync** - OAuth authentication and Drive SDK integration for session sync
+- **📊 Smart Caching** - LRU cache with configurable size limits (200MB total, 50-75MB per session)
+- **🤖 AskAI Lite** - AI-powered session analysis with usage limits (100/month, 10/day)
+- **🔋 Battery-Aware Sync** - Wi-Fi + charging gated background sync with manual override
+- **💾 Core Data Storage** - Local data persistence with CloudKit integration for preferences
 - **🌍 Multi-language Support** - English, Spanish, and Romanian
-- **🔄 Mock API Integration** - Ready to switch to real ScribeCat API
 - **🧪 Comprehensive Testing** - Unit tests and UI tests included
 - **🚀 CI/CD Ready** - GitHub Actions and Fastlane configuration
 
