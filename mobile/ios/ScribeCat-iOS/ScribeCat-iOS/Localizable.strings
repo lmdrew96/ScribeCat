@@ -1,0 +1,107 @@
+/* 
+  Localizable.strings
+  ScribeCat-iOS
+
+  Created by ScribeCat Team on 2024.
+*/
+
+// Tab Bar
+"tab.home" = "Home";
+"tab.record" = "Record";
+"tab.notes" = "Notes";
+"tab.settings" = "Settings";
+
+// Home View
+"home.welcome" = "Welcome to ScribeCat";
+"home.subtitle" = "Your mobile companion for transcription and note-taking";
+"home.sessions" = "Sessions";
+"home.notes" = "Notes";
+"home.recent_sessions" = "Recent Sessions";
+"home.see_all" = "See All";
+"home.no_sessions" = "No sessions yet";
+"home.no_sessions_subtitle" = "Tap the Record tab to start your first session";
+
+// Record View
+"record.title" = "Audio Recording";
+"record.ready" = "Ready to record";
+"record.recording" = "Recording in progress...";
+"record.live_transcription" = "Live Transcription";
+"record.title_prompt" = "Recording Title";
+"record.title_message" = "Give your recording a title";
+"record.enter_title" = "Enter title";
+"record.save" = "Save";
+"record.cancel" = "Cancel";
+
+// Notes View
+"notes.title" = "Notes & Sessions";
+"notes.search_placeholder" = "Search notes and transcriptions";
+"notes.no_notes" = "No notes yet";
+"notes.no_notes_subtitle" = "Your recorded sessions and notes will appear here";
+"notes.no_results" = "No results found";
+"notes.no_results_subtitle" = "Try searching with different keywords";
+"notes.audio_label" = "Audio";
+"notes.notes_label" = "Notes";
+"notes.transcription" = "Transcription";
+"notes.notes" = "Notes";
+"notes.no_notes_yet" = "No notes yet. Tap Edit to add notes.";
+"notes.edit" = "Edit";
+"notes.done" = "Done";
+"notes.close" = "Close";
+
+// Settings View
+"settings.title" = "Settings";
+"settings.sync_storage" = "Sync & Storage";
+"settings.cloudkit_sync" = "CloudKit Sync";
+"settings.sync_status" = "Sync Status";
+"settings.storage_used" = "Storage Used";
+"settings.sync_now" = "Sync Now";
+"settings.recording_settings" = "Recording Settings";
+"settings.realtime_transcription" = "Real-time Transcription";
+"settings.audio_quality" = "Audio Quality";
+"settings.language_localization" = "Language & Localization";
+"settings.app_language" = "App Language";
+"settings.privacy_analytics" = "Privacy & Analytics";
+"settings.analytics" = "Analytics";
+"settings.privacy_policy" = "Privacy Policy";
+"settings.debug_development" = "Debug & Development";
+"settings.add_sample_data" = "Add Sample Data";
+"settings.clear_all_data" = "Clear All Data";
+"settings.api_endpoint" = "API Endpoint";
+"settings.mock_api" = "Mock API";
+"settings.switch_to_real_api" = "Switch to Real API";
+"settings.about" = "About";
+"settings.about_scribecat" = "About ScribeCat";
+"settings.version" = "Version";
+
+// Quality Options
+"quality.low" = "Low";
+"quality.medium" = "Medium";
+"quality.high" = "High";
+
+// Status Messages
+"status.checking" = "Checking...";
+"status.calculating" = "Calculating...";
+"status.available" = "Available";
+"status.disabled" = "Disabled";
+"status.syncing" = "Syncing...";
+
+// Info Messages
+"info.realtime_transcription_disabled" = "Disabling real-time transcription saves battery";
+"info.analytics_enabled" = "Anonymous usage data helps improve the app";
+
+// Error Messages
+"error.microphone_permission" = "Microphone permission is required for recording";
+"error.recording_failed" = "Recording failed to start";
+"error.save_failed" = "Failed to save recording";
+
+// Duration Format
+"duration.format" = "%d:%02d";
+
+// Common
+"common.unknown" = "Unknown";
+"common.ok" = "OK";
+"common.cancel" = "Cancel";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+"common.done" = "Done";
