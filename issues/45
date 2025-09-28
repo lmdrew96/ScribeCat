@@ -1,0 +1,104 @@
+**Goal**
+
+Build the initial iOS SwiftUI scaffold for the ScribeCat mobile companion app on a new branch `mobile/ios-scaffold`. The scaffold should include a working Xcode project layout, basic UI flow, local storage + CloudKit sync placeholders, background-audio support (with low battery/memory impact), CI build, and tests. The scaffold will use mock endpoints for server interactions so real API integration can be done later.
+
+**High-level decisions (confirmed)**
+
+- **Branch:** `mobile/ios-scaffold`  
+- **Minimum iOS target:** iOS 15  
+- **Primary tech:** SwiftUI + Combine  
+- **Local storage + sync:** Core Data (local cache) + CloudKit (sync)  
+- **Auth:** Reuse existing desktop auth/API when available; scaffold uses mock endpoints for now  
+- **Sync for scaffold:** mock endpoints (real API integration later)  
+- **Background audio:** Include background recording permissions and a low-power recording pipeline  
+- **Dependency manager:** Swift Package Manager (SPM)  
+- **CI/CD:** GitHub Actions + Fastlane (skeleton + example workflow)  
+- **Localization:** English, Spanish, Romanian  
+- **Tests:** Unit tests and basic UI tests included  
+- **Analytics/privacy:** Include a privacy-policy placeholder and an analytics opt-out toggle  
+- **Cost constraint:** Prefer services that keep recurring costs ≤ $15/month for ~50 users (CloudKit chosen for sync)
+
+**Deliverables (initial scaffold)**
+
+- Create branch `mobile/ios-scaffold`  
+- Xcode project at `mobile/ios/ScribeCat-iOS.xcodeproj`  
+- SPM configuration (`Package.swift`) for shared packages if any  
+- App entry (SwiftUI App file) with a `TabView`: Home / Record / Notes / Settings  
+- Core Data model with `Note` and `Session` entities (fields: title, body, timestamps, audio reference, language, tags, speakerId)  
+- CloudKit entitlements and placeholder container config + notes on provisioning  
+- Local mock network layer (`mobile/ios/Network/MockAPI.swift`) implementing the later real-API interface  
+- Background audio scaffolding:  
+  - AVAudioSession setup and background mode entitlement hints  
+  - Efficient buffering and a minimal recording pipeline  
+  - In-code notes pointing to battery/memory optimizations  
+- Low-power defaults and settings:  
+  - Compressed audio default (AAC)  
+  - Conservative bitrate and buffer defaults  
+  - Toggle to disable realtime transcription  
+- Placeholder UI for auth and sync status that connects to mock endpoints  
+- Localization files: `Localizable.strings` for `en` / `es` / `ro`; Xcode project configured for these languages  
+- Unit test target with sample model + mock-network tests  
+- UI test target with basic navigation tests  
+- `README` at `mobile/ios/README.md` with:  
+  - Setup and run instructions  
+  - How to run tests  
+  - How to switch from mock endpoints to real API  
+  - Steps for provisioning CloudKit entitlements  
+- GitHub Actions workflow (`.github/workflows/ios-build.yml`) that:  
+  - Builds the app (simulator) via `xcodebuild`  
+  - Runs unit tests  
+  - Includes a placeholder Fastlane lane for TestFlight (requires secrets)  
+- Fastlane skeleton (`fastlane/Fastfile`) with commented lanes and setup notes  
+- Asset catalog with placeholder app icon and launch screen  
+- `CHANGELOG` entry documenting scaffold creation
+
+**Acceptance criteria**
+
+- Branch `mobile/ios-scaffold` exists and contains the Xcode project and files above  
+- `xcodebuild` can compile the project on CI (simulator build) and unit tests run  
+- App launches to the `TabView` (Home/Record/Notes/Settings) on simulator  
+- Recording UI can start/stop recording using mock endpoints and saves audio files locally  
+- Core Data store is created and seeded with at least one sample `Note` and `Session` via a debug menu  
+- CloudKit entitlements are present and documented for the maintainer to provision a container  
+- `Localizable.strings` exist for English, Spanish, and Romanian and README explains edits  
+- Tests included and passing on CI (unit + basic UI navigation)  
+- README documents switching from mock endpoints to the real desktop API
+
+**Checklist**
+
+- [ ] Create branch `mobile/ios-scaffold`  
+- [ ] Add Xcode project skeleton (App entry + TabView)  
+- [ ] Add Core Data model (Note, Session)  
+- [ ] Add CloudKit entitlements and placeholder config  
+- [ ] Add background audio scaffolding and permissions  
+- [ ] Implement mock network layer (MockAPI) and example calls  
+- [ ] Add localization files (en, es, ro)  
+- [ ] Add unit tests and UI tests  
+- [ ] Add GitHub Actions workflow to build + test  
+- [ ] Add Fastlane skeleton  
+- [ ] Add README with setup and switch-to-real-API steps  
+- [ ] Add asset catalog & placeholder icon  
+- [ ] Document battery/memory recommendations and toggles to further reduce impact  
+- [ ] Add privacy policy placeholder and analytics toggle in Settings
+
+**Open questions / follow-ups (for later)**
+
+- Desktop API details: endpoints, auth scheme, token exchange flow — required to replace mock endpoints  
+- CloudKit container ID and Apple Developer account to provision entitlements (placeholders for scaffold)  
+- Desktop auth integration approach: reuse desktop token endpoint vs separate OAuth flow?  
+- Preferred audio formats if different from AAC (current default: AAC for lower storage/battery)  
+- Confirm whether on-device transcription should be included in scaffold (current plan: placeholders only)  
+- Any design assets, colors, fonts, or icons to include (scaffold uses placeholders)
+
+**Notes on constraints and optimizations**
+
+- Prioritize low battery/memory impact for background recording:  
+  - Use compressed audio (AAC) by default  
+  - Stream audio to disk periodically instead of large in-memory buffers  
+  - Avoid continuous CPU-heavy transcription on device; defer or offload where possible  
+- Financial constraint: chosen CloudKit + Core Data should remain within the $15/mo budget at ~50 users; avoid paid third-party services in the scaffold.
+
+**Estimated effort**
+
+- Initial scaffold (branch + basic features): 1–2 weeks  
+- Full integration with real API and on-device transcription: additional 2–4 weeks
