@@ -471,24 +471,31 @@ The test suite includes performance benchmarks:
 
 ## 📝 Changelog
 
-### Version 1.0.0 (Scaffold)
+### Version 1.0.0 (M4 Scaffold)
 
 **Features:**
-- ✅ SwiftUI TabView with Home, Record, Notes, Settings
+- ✅ SwiftUI TabView with Home, Sessions/Notes, Settings, Help/About
 - ✅ Core Data + CloudKit integration
-- ✅ Background audio recording with power optimizations
-- ✅ Mock API implementation ready for real integration
+- ✅ Google Drive sync for session content (OAuth + Drive SDK)
+- ✅ Wi-Fi + charging gated background sync with manual override
+- ✅ LRU cache with configurable size limits (200MB total, 50-75MB per session)
+- ✅ AskAI Lite with usage limits (100/month, 10/day)
 - ✅ Multi-language support (EN, ES, RO)
 - ✅ Comprehensive test suite (unit + UI tests)
 - ✅ GitHub Actions CI/CD pipeline
 - ✅ Fastlane deployment automation
 - ✅ Privacy-focused design with user controls
 
+**Coming in M5:**
+- 🔄 Background audio recording with AVFoundation
+- 🔄 Apple Speech framework transcription
+- 🔄 Core ML Whisper integration
+
 **Technical Notes:**
-- iOS 15.0+ deployment target for broad compatibility
+- iOS 16.0+ deployment target for modern iOS features
 - Swift Package Manager for dependency management
 - CloudKit container: `iCloud.com.scribecat.ScribeCat-iOS`
-- Background modes: `audio` for recording capabilities
+- No background audio modes in M4 (recording/transcription in M5)
 - Entitlements: CloudKit, App Groups, Push Notifications
 
 ---

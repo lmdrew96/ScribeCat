@@ -16,22 +16,22 @@ struct ContentView: View {
                     Text("Home")
                 }
             
-            RecordView()
-                .tabItem {
-                    Image(systemName: "record.circle")
-                    Text("Record")
-                }
-            
             NotesView()
                 .tabItem {
                     Image(systemName: "note.text")
-                    Text("Notes")
+                    Text("Sessions/Notes")
                 }
             
             SettingsView()
                 .tabItem {
                     Image(systemName: "gear")
                     Text("Settings")
+                }
+            
+            HelpAboutView()
+                .tabItem {
+                    Image(systemName: "questionmark.circle")
+                    Text("Help/About")
                 }
         }
         .accentColor(.blue)
