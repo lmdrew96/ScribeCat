@@ -4,7 +4,7 @@
 *.xcworkspace
 *.xcuserstate
 *.xcuserdata/
-*.xcodeproj
+# *.xcodeproj  # Uncommented to include project file in scaffold
 
 # Build artifacts
 build/

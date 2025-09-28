@@ -1,0 +1,107 @@
+/* 
+  Localizable.strings (Romanian)
+  ScribeCat-iOS
+
+  Created by ScribeCat Team on 2024.
+*/
+
+// Tab Bar
+"tab.home" = "Acasă";
+"tab.record" = "Înregistrare";
+"tab.notes" = "Notițe";
+"tab.settings" = "Setări";
+
+// Home View
+"home.welcome" = "Bine ai venit la ScribeCat";
+"home.subtitle" = "Companionul tău mobil pentru transcriere și luarea de notițe";
+"home.sessions" = "Sesiuni";
+"home.notes" = "Notițe";
+"home.recent_sessions" = "Sesiuni Recente";
+"home.see_all" = "Vezi Tot";
+"home.no_sessions" = "Încă nu există sesiuni";
+"home.no_sessions_subtitle" = "Apasă pe tab-ul Înregistrare pentru a începe prima sesiune";
+
+// Record View
+"record.title" = "Înregistrare Audio";
+"record.ready" = "Gata pentru înregistrare";
+"record.recording" = "Înregistrare în curs...";
+"record.live_transcription" = "Transcriere Live";
+"record.title_prompt" = "Titlul Înregistrării";
+"record.title_message" = "Dă un titlu înregistrării tale";
+"record.enter_title" = "Introdu titlul";
+"record.save" = "Salvează";
+"record.cancel" = "Anulează";
+
+// Notes View
+"notes.title" = "Notițe și Sesiuni";
+"notes.search_placeholder" = "Caută notițe și transcrieri";
+"notes.no_notes" = "Încă nu există notițe";
+"notes.no_notes_subtitle" = "Sesiunile înregistrate și notițele vor apărea aici";
+"notes.no_results" = "Nu s-au găsit rezultate";
+"notes.no_results_subtitle" = "Încearcă să cauți cu cuvinte cheie diferite";
+"notes.audio_label" = "Audio";
+"notes.notes_label" = "Notițe";
+"notes.transcription" = "Transcriere";
+"notes.notes" = "Notițe";
+"notes.no_notes_yet" = "Încă nu există notițe. Apasă Editează pentru a adăuga notițe.";
+"notes.edit" = "Editează";
+"notes.done" = "Gata";
+"notes.close" = "Închide";
+
+// Settings View
+"settings.title" = "Setări";
+"settings.sync_storage" = "Sincronizare și Stocare";
+"settings.cloudkit_sync" = "Sincronizare CloudKit";
+"settings.sync_status" = "Starea Sincronizării";
+"settings.storage_used" = "Stocare Folosită";
+"settings.sync_now" = "Sincronizează Acum";
+"settings.recording_settings" = "Setări de Înregistrare";
+"settings.realtime_transcription" = "Transcriere în Timp Real";
+"settings.audio_quality" = "Calitatea Audio";
+"settings.language_localization" = "Limbă și Localizare";
+"settings.app_language" = "Limba Aplicației";
+"settings.privacy_analytics" = "Confidențialitate și Analiză";
+"settings.analytics" = "Analiză";
+"settings.privacy_policy" = "Politica de Confidențialitate";
+"settings.debug_development" = "Depanare și Dezvoltare";
+"settings.add_sample_data" = "Adaugă Date de Probă";
+"settings.clear_all_data" = "Șterge Toate Datele";
+"settings.api_endpoint" = "Punctul Final API";
+"settings.mock_api" = "API Simulat";
+"settings.switch_to_real_api" = "Schimbă la API Real";
+"settings.about" = "Despre";
+"settings.about_scribecat" = "Despre ScribeCat";
+"settings.version" = "Versiune";
+
+// Quality Options
+"quality.low" = "Scăzută";
+"quality.medium" = "Medie";
+"quality.high" = "Înaltă";
+
+// Status Messages
+"status.checking" = "Se verifică...";
+"status.calculating" = "Se calculează...";
+"status.available" = "Disponibil";
+"status.disabled" = "Dezactivat";
+"status.syncing" = "Se sincronizează...";
+
+// Info Messages
+"info.realtime_transcription_disabled" = "Dezactivarea transcrierii în timp real economisește bateria";
+"info.analytics_enabled" = "Datele anonime de utilizare ajută la îmbunătățirea aplicației";
+
+// Error Messages
+"error.microphone_permission" = "Permisiunea microfonului este necesară pentru înregistrare";
+"error.recording_failed" = "Înregistrarea nu a reușit să pornească";
+"error.save_failed" = "Nu s-a reușit salvarea înregistrării";
+
+// Duration Format
+"duration.format" = "%d:%02d";
+
+// Common
+"common.unknown" = "Necunoscut";
+"common.ok" = "OK";
+"common.cancel" = "Anulează";
+"common.save" = "Salvează";
+"common.delete" = "Șterge";
+"common.edit" = "Editează";
+"common.done" = "Gata";

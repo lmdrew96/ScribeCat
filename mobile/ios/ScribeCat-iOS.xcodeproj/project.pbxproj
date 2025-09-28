@@ -1,0 +1,657 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5A1A1A1A2A5A1A1A0A5A1A1A /* ScribeCat_iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A1A2A5A1A1A0A5A1A19 /* ScribeCat_iOSApp.swift */; };
+		5A1A1A1C2A5A1A1A0A5A1A1A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A1B2A5A1A1A0A5A1A1A /* ContentView.swift */; };
+		5A1A1A1E2A5A1A1A0A5A1A1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A1A1A1D2A5A1A1A0A5A1A1A /* Assets.xcassets */; };
+		5A1A1A212A5A1A1A0A5A1A1A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A1A1A202A5A1A1A0A5A1A1A /* Preview Assets.xcassets */; };
+		5A1A1A282A5A1A1A0A5A1A1A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A272A5A1A1A0A5A1A1A /* HomeView.swift */; };
+		5A1A1A2A2A5A1A1A0A5A1A1A /* RecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */; };
+		5A1A1A2C2A5A1A1A0A5A1A1A /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */; };
+		5A1A1A2E2A5A1A1A0A5A1A1A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */; };
+		5A1A1A302A5A1A1A0A5A1A1A /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2F2A5A1A1A0A5A1A1A /* DataModel.swift */; };
+		5A1A1A322A5A1A1A0A5A1A1A /* AudioRecordingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A312A5A1A1A0A5A1A1A /* AudioRecordingManager.swift */; };
+		5A1A1A342A5A1A1A0A5A1A1A /* MockAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A332A5A1A1A0A5A1A1A /* MockAPI.swift */; };
+		5A1A1A362A5A1A1A0A5A1A1A /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5A1A1A352A5A1A1A0A5A1A1A /* Localizable.strings */; };
+		5A1A1A3B2A5A1A1A0A5A1A1A /* ScribeCat_iOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A3A2A5A1A1A0A5A1A1A /* ScribeCat_iOSTests.swift */; };
+		5A1A1A452A5A1A1A0A5A1A1A /* ScribeCat_iOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A442A5A1A1A0A5A1A1A /* ScribeCat_iOSUITests.swift */; };
+		5A1A1A472A5A1A1A0A5A1A1A /* ScribeCat_iOSUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A462A5A1A1A0A5A1A1A /* ScribeCat_iOSUITestsLaunchTests.swift */; };
+		5A1A1A542A5A1A1A0A5A1A1A /* DataController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A532A5A1A1A0A5A1A1A /* DataController.swift */; };
+		5A1A1A562A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A552A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodeld */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5A1A1A372A5A1A1A0A5A1A1A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5A1A1A0E2A5A1A1A0A5A1A1A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A1A1A152A5A1A1A0A5A1A1A;
+			remoteInfo = "ScribeCat-iOS";
+		};
+		5A1A1A412A5A1A1A0A5A1A1A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5A1A1A0E2A5A1A1A0A5A1A1A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A1A1A152A5A1A1A0A5A1A1A;
+			remoteInfo = "ScribeCat-iOS";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5A1A1A162A5A1A1A0A5A1A1A /* ScribeCat-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ScribeCat-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A1A1A192A5A1A1A0A5A1A19 /* ScribeCat_iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribeCat_iOSApp.swift; sourceTree = "<group>"; };
+		5A1A1A1B2A5A1A1A0A5A1A1A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5A1A1A1D2A5A1A1A0A5A1A1A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5A1A1A202A5A1A1A0A5A1A1A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		5A1A1A272A5A1A1A0A5A1A1A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordView.swift; sourceTree = "<group>"; };
+		5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
+		5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5A1A1A2F2A5A1A1A0A5A1A1A /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
+		5A1A1A312A5A1A1A0A5A1A1A /* AudioRecordingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecordingManager.swift; sourceTree = "<group>"; };
+		5A1A1A332A5A1A1A0A5A1A1A /* MockAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAPI.swift; sourceTree = "<group>"; };
+		5A1A1A352A5A1A1A0A5A1A1A /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ScribeCat-iOS.entitlements"; sourceTree = "<group>"; };
+		5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ScribeCat-iOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A1A1A3A2A5A1A1A0A5A1A1A /* ScribeCat_iOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribeCat_iOSTests.swift; sourceTree = "<group>"; };
+		5A1A1A412A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ScribeCat-iOSUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A1A1A442A5A1A1A0A5A1A1A /* ScribeCat_iOSUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribeCat_iOSUITests.swift; sourceTree = "<group>"; };
+		5A1A1A462A5A1A1A0A5A1A1A /* ScribeCat_iOSUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribeCat_iOSUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		5A1A1A532A5A1A1A0A5A1A1A /* DataController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataController.swift; sourceTree = "<group>"; };
+		5A1A1A552A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ScribeCat.xcdatamodeld; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5A1A1A132A5A1A1A0A5A1A1A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A1A1A342A5A1A1A0A5A1A1A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A1A1A3E2A5A1A1A0A5A1A1A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5A1A1A0D2A5A1A1A0A5A1A1A = {
+			isa = PBXGroup;
+			children = (
+				5A1A1A182A5A1A1A0A5A1A1A /* ScribeCat-iOS */,
+				5A1A1A392A5A1A1A0A5A1A1A /* ScribeCat-iOSTests */,
+				5A1A1A432A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests */,
+				5A1A1A172A5A1A1A0A5A1A1A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5A1A1A172A5A1A1A0A5A1A1A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5A1A1A162A5A1A1A0A5A1A1A /* ScribeCat-iOS.app */,
+				5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOSTests.xctest */,
+				5A1A1A412A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5A1A1A182A5A1A1A0A5A1A1A /* ScribeCat-iOS */ = {
+			isa = PBXGroup;
+			children = (
+				5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOS.entitlements */,
+				5A1A1A192A5A1A1A0A5A1A19 /* ScribeCat_iOSApp.swift */,
+				5A1A1A1B2A5A1A1A0A5A1A1A /* ContentView.swift */,
+				5A1A1A272A5A1A1A0A5A1A1A /* HomeView.swift */,
+				5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */,
+				5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */,
+				5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */,
+				5A1A1A2F2A5A1A1A0A5A1A1A /* DataModel.swift */,
+				5A1A1A312A5A1A1A0A5A1A1A /* AudioRecordingManager.swift */,
+				5A1A1A332A5A1A1A0A5A1A1A /* MockAPI.swift */,
+				5A1A1A532A5A1A1A0A5A1A1A /* DataController.swift */,
+				5A1A1A552A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodeld */,
+				5A1A1A1D2A5A1A1A0A5A1A1A /* Assets.xcassets */,
+				5A1A1A352A5A1A1A0A5A1A1A /* Localizable.strings */,
+				5A1A1A1F2A5A1A1A0A5A1A1A /* Preview Content */,
+			);
+			path = "ScribeCat-iOS";
+			sourceTree = "<group>";
+		};
+		5A1A1A1F2A5A1A1A0A5A1A1A /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				5A1A1A202A5A1A1A0A5A1A1A /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		5A1A1A392A5A1A1A0A5A1A1A /* ScribeCat-iOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				5A1A1A3A2A5A1A1A0A5A1A1A /* ScribeCat_iOSTests.swift */,
+			);
+			path = "ScribeCat-iOSTests";
+			sourceTree = "<group>";
+		};
+		5A1A1A432A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests */ = {
+			isa = PBXGroup;
+			children = (
+				5A1A1A442A5A1A1A0A5A1A1A /* ScribeCat_iOSUITests.swift */,
+				5A1A1A462A5A1A1A0A5A1A1A /* ScribeCat_iOSUITestsLaunchTests.swift */,
+			);
+			path = "ScribeCat-iOSUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5A1A1A152A5A1A1A0A5A1A1A /* ScribeCat-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A1A1A4A2A5A1A1A0A5A1A1A /* Build configuration list for PBXNativeTarget "ScribeCat-iOS" */;
+			buildPhases = (
+				5A1A1A122A5A1A1A0A5A1A1A /* Sources */,
+				5A1A1A132A5A1A1A0A5A1A1A /* Frameworks */,
+				5A1A1A142A5A1A1A0A5A1A1A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ScribeCat-iOS";
+			productName = "ScribeCat-iOS";
+			productReference = 5A1A1A162A5A1A1A0A5A1A1A /* ScribeCat-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A1A1A4D2A5A1A1A0A5A1A1A /* Build configuration list for PBXNativeTarget "ScribeCat-iOSTests" */;
+			buildPhases = (
+				5A1A1A332A5A1A1A0A5A1A1A /* Sources */,
+				5A1A1A342A5A1A1A0A5A1A1A /* Frameworks */,
+				5A1A1A352A5A1A1A0A5A1A1A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5A1A1A382A5A1A1A0A5A1A1A /* PBXTargetDependency */,
+			);
+			name = "ScribeCat-iOSTests";
+			productName = "ScribeCat-iOSTests";
+			productReference = 5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5A1A1A402A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A1A1A502A5A1A1A0A5A1A1A /* Build configuration list for PBXNativeTarget "ScribeCat-iOSUITests" */;
+			buildPhases = (
+				5A1A1A3D2A5A1A1A0A5A1A1A /* Sources */,
+				5A1A1A3E2A5A1A1A0A5A1A1A /* Frameworks */,
+				5A1A1A3F2A5A1A1A0A5A1A1A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5A1A1A422A5A1A1A0A5A1A1A /* PBXTargetDependency */,
+			);
+			name = "ScribeCat-iOSUITests";
+			productName = "ScribeCat-iOSUITests";
+			productReference = 5A1A1A412A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5A1A1A0E2A5A1A1A0A5A1A1A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					5A1A1A152A5A1A1A0A5A1A1A = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					5A1A1A362A5A1A1A0A5A1A1A = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 5A1A1A152A5A1A1A0A5A1A1A;
+					};
+					5A1A1A402A5A1A1A0A5A1A1A = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 5A1A1A152A5A1A1A0A5A1A1A;
+					};
+				};
+			};
+			buildConfigurationList = 5A1A1A112A5A1A1A0A5A1A1A /* Build configuration list for PBXProject "ScribeCat-iOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				es,
+				ro,
+			);
+			mainGroup = 5A1A1A0D2A5A1A1A0A5A1A1A;
+			productRefGroup = 5A1A1A172A5A1A1A0A5A1A1A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5A1A1A152A5A1A1A0A5A1A1A /* ScribeCat-iOS */,
+				5A1A1A362A5A1A1A0A5A1A1A /* ScribeCat-iOSTests */,
+				5A1A1A402A5A1A1A0A5A1A1A /* ScribeCat-iOSUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5A1A1A142A5A1A1A0A5A1A1A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A1A1A212A5A1A1A0A5A1A1A /* Preview Assets.xcassets in Resources */,
+				5A1A1A1E2A5A1A1A0A5A1A1A /* Assets.xcassets in Resources */,
+				5A1A1A362A5A1A1A0A5A1A1A /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A1A1A352A5A1A1A0A5A1A1A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A1A1A3F2A5A1A1A0A5A1A1A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5A1A1A122A5A1A1A0A5A1A1A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A1A1A1C2A5A1A1A0A5A1A1A /* ContentView.swift in Sources */,
+				5A1A1A282A5A1A1A0A5A1A1A /* HomeView.swift in Sources */,
+				5A1A1A302A5A1A1A0A5A1A1A /* DataModel.swift in Sources */,
+				5A1A1A342A5A1A1A0A5A1A1A /* MockAPI.swift in Sources */,
+				5A1A1A2E2A5A1A1A0A5A1A1A /* SettingsView.swift in Sources */,
+				5A1A1A1A2A5A1A1A0A5A1A1A /* ScribeCat_iOSApp.swift in Sources */,
+				5A1A1A542A5A1A1A0A5A1A1A /* DataController.swift in Sources */,
+				5A1A1A2C2A5A1A1A0A5A1A1A /* NotesView.swift in Sources */,
+				5A1A1A562A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodeld in Sources */,
+				5A1A1A322A5A1A1A0A5A1A1A /* AudioRecordingManager.swift in Sources */,
+				5A1A1A2A2A5A1A1A0A5A1A1A /* RecordView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A1A1A332A5A1A1A0A5A1A1A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A1A1A3B2A5A1A1A0A5A1A1A /* ScribeCat_iOSTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A1A1A3D2A5A1A1A0A5A1A1A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A1A1A472A5A1A1A0A5A1A1A /* ScribeCat_iOSUITestsLaunchTests.swift in Sources */,
+				5A1A1A452A5A1A1A0A5A1A1A /* ScribeCat_iOSUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5A1A1A382A5A1A1A0A5A1A1A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A1A1A152A5A1A1A0A5A1A1A /* ScribeCat-iOS */;
+			targetProxy = 5A1A1A372A5A1A1A0A5A1A1A /* PBXContainerItemProxy */;
+		};
+		5A1A1A422A5A1A1A0A5A1A1A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A1A1A152A5A1A1A0A5A1A1A /* ScribeCat-iOS */;
+			targetProxy = 5A1A1A412A5A1A1A0A5A1A1A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5A1A1A482A5A1A1A0A5A1A1A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5A1A1A492A5A1A1A0A5A1A1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5A1A1A4B2A5A1A1A0A5A1A1A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ScribeCat-iOS/ScribeCat-iOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"ScribeCat-iOS/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ScribeCat";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ScribeCat needs microphone access to record audio for transcription.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5A1A1A4C2A5A1A1A0A5A1A1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ScribeCat-iOS/ScribeCat-iOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"ScribeCat-iOS/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ScribeCat";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ScribeCat needs microphone access to record audio for transcription.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		5A1A1A4E2A5A1A1A0A5A1A1A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ScribeCat-iOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ScribeCat-iOS";
+			};
+			name = Debug;
+		};
+		5A1A1A4F2A5A1A1A0A5A1A1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOSTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ScribeCat-iOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ScribeCat-iOS";
+			};
+			name = Release;
+		};
+		5A1A1A512A5A1A1A0A5A1A1A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOSUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "ScribeCat-iOS";
+			};
+			name = Debug;
+		};
+		5A1A1A522A5A1A1A0A5A1A1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOSUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "ScribeCat-iOS";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5A1A1A112A5A1A1A0A5A1A1A /* Build configuration list for PBXProject "ScribeCat-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A1A1A482A5A1A1A0A5A1A1A /* Debug */,
+				5A1A1A492A5A1A1A0A5A1A1A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5A1A1A4A2A5A1A1A0A5A1A1A /* Build configuration list for PBXNativeTarget "ScribeCat-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A1A1A4B2A5A1A1A0A5A1A1A /* Debug */,
+				5A1A1A4C2A5A1A1A0A5A1A1A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5A1A1A4D2A5A1A1A0A5A1A1A /* Build configuration list for PBXNativeTarget "ScribeCat-iOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A1A1A4E2A5A1A1A0A5A1A1A /* Debug */,
+				5A1A1A4F2A5A1A1A0A5A1A1A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5A1A1A502A5A1A1A0A5A1A1A /* Build configuration list for PBXNativeTarget "ScribeCat-iOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A1A1A512A5A1A1A0A5A1A1A /* Debug */,
+				5A1A1A522A5A1A1A0A5A1A1A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		5A1A1A552A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				5A1A1A572A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodel */,
+			);
+			currentVersion = 5A1A1A572A5A1A1A0A5A1A1A /* ScribeCat.xcdatamodel */;
+			name = ScribeCat.xcdatamodeld;
+			path = ScribeCat-iOS/ScribeCat.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = 5A1A1A0E2A5A1A1A0A5A1A1A /* Project object */;
+}

@@ -1,0 +1,292 @@
+# Fastfile for ScribeCat iOS
+# This file contains the fastlane.tools configuration for iOS deployment
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  # This will be the default lane for iOS
+  
+  # ============================================================================
+  # SETUP AND CONFIGURATION
+  # ============================================================================
+  
+  before_all do
+    # Ensure we're in the right directory
+    ensure_git_status_clean unless ENV['CI']
+    
+    # Set up environment
+    setup_ci if ENV['CI']
+    
+    # Print environment info
+    puts "🔧 Environment Info:"
+    puts "   Fastlane: #{Fastlane::VERSION}"
+    puts "   Ruby: #{RUBY_VERSION}"
+    puts "   Platform: #{platform}"
+    puts "   Working Directory: #{Dir.pwd}"
+  end
+  
+  # ============================================================================
+  # UTILITY LANES
+  # ============================================================================
+  
+  desc "Setup development environment"
+  lane :setup do
+    puts "🛠️ Setting up development environment..."
+    
+    # Ensure Xcode is properly configured
+    verify_xcode
+    
+    # Install or update certificates and provisioning profiles
+    # match(type: "development", readonly: true)
+    
+    puts "✅ Development environment setup complete"
+  end
+  
+  desc "Run tests"
+  lane :test do
+    puts "🧪 Running tests..."
+    
+    run_tests(
+      project: "ScribeCat-iOS.xcodeproj",
+      scheme: "ScribeCat-iOS",
+      device: "iPhone 15",
+      clean: true,
+      code_coverage: true,
+      skip_build: false,
+      output_directory: "./test_output",
+      output_types: "html,junit"
+    )
+    
+    puts "✅ Tests completed successfully"
+  end
+  
+  desc "Build for simulator (development)"
+  lane :build_simulator do
+    puts "📱 Building for iOS Simulator..."
+    
+    build_app(
+      project: "ScribeCat-iOS.xcodeproj",
+      scheme: "ScribeCat-iOS",
+      destination: "platform=iOS Simulator,name=iPhone 15",
+      configuration: "Debug",
+      skip_codesigning: true,
+      skip_package_ipa: true,
+      clean: true
+    )
+    
+    puts "✅ Simulator build completed"
+  end
+  
+  # ============================================================================
+  # DEPLOYMENT LANES
+  # ============================================================================
+  
+  desc "Build and deploy to TestFlight"
+  lane :beta do
+    puts "🚀 Preparing TestFlight deployment..."
+    
+    # Ensure we have the required environment variables
+    ensure_env_vars([
+      "FASTLANE_USER",
+      "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD"
+    ])
+    
+    # NOTE: These steps are commented out for the scaffold
+    # Uncomment and configure when ready for actual deployment
+    
+    # # Get certificates and provisioning profiles
+    # match(type: "appstore", readonly: true)
+    # 
+    # # Increment build number
+    # increment_build_number(
+    #   build_number: latest_testflight_build_number + 1
+    # )
+    # 
+    # # Build the app
+    # build_app(
+    #   project: "ScribeCat-iOS.xcodeproj",
+    #   scheme: "ScribeCat-iOS",
+    #   configuration: "Release",
+    #   export_method: "app-store",
+    #   clean: true,
+    #   output_directory: "./build",
+    #   output_name: "ScribeCat-iOS.ipa"
+    # )
+    # 
+    # # Upload to TestFlight
+    # upload_to_testflight(
+    #   skip_waiting_for_build_processing: false,
+    #   changelog: changelog_from_git_commits(
+    #     commits_count: 5,
+    #     pretty_format: "- %s"
+    #   )
+    # )
+    
+    puts "⚠️ TestFlight deployment is not configured yet."
+    puts "To enable TestFlight deployment:"
+    puts "1. Uncomment the deployment code above"
+    puts "2. Configure Apple Developer account and certificates"
+    puts "3. Set up Match for certificate management"
+    puts "4. Configure GitHub secrets for CI/CD"
+    
+    puts "✅ Beta deployment preparation completed"
+  end
+  
+  desc "Build and deploy to App Store"
+  lane :release do
+    puts "🏪 Preparing App Store release..."
+    
+    # NOTE: This is a placeholder for App Store deployment
+    # Configure when ready for production release
+    
+    puts "⚠️ App Store release is not configured yet."
+    puts "This would handle:"
+    puts "- Certificate and provisioning profile management"
+    puts "- Release build creation"
+    puts "- App Store metadata update"
+    puts "- Binary upload to App Store Connect"
+    puts "- Submission for review"
+  end
+  
+  # ============================================================================
+  # MAINTENANCE LANES
+  # ============================================================================
+  
+  desc "Clean build artifacts"
+  lane :clean do
+    puts "🧹 Cleaning build artifacts..."
+    
+    # Clean Xcode derived data
+    clean_build_artifacts
+    clear_derived_data
+    
+    # Remove fastlane artifacts
+    FileUtils.rm_rf("./test_output") if Dir.exist?("./test_output")
+    FileUtils.rm_rf("./build") if Dir.exist?("./build")
+    
+    puts "✅ Cleanup completed"
+  end
+  
+  desc "Update certificates and provisioning profiles"
+  lane :certificates do
+    puts "📋 Updating certificates and provisioning profiles..."
+    
+    # NOTE: Uncomment when Match is configured
+    # match(type: "development", force_for_new_devices: true)
+    # match(type: "appstore", force_for_new_devices: true)
+    
+    puts "⚠️ Certificate management is not configured yet."
+    puts "To enable certificate management:"
+    puts "1. Set up Match for certificate storage"
+    puts "2. Configure Apple Developer Team ID"
+    puts "3. Set up GitHub secrets for Match password"
+  end
+  
+  desc "Generate screenshots for App Store"
+  lane :screenshots do
+    puts "📸 Generating App Store screenshots..."
+    
+    # NOTE: Configure screenshot generation when UI is stable
+    # capture_screenshots(
+    #   scheme: "ScribeCat-iOS",
+    #   output_directory: "./screenshots",
+    #   clear_previous_screenshots: true,
+    #   devices: [
+    #     "iPhone 15 Pro Max",
+    #     "iPhone 15",
+    #     "iPad Pro (12.9-inch) (6th generation)"
+    #   ]
+    # )
+    
+    puts "⚠️ Screenshot generation is not configured yet."
+    puts "Configure UI tests and screenshot automation when ready."
+  end
+  
+  # ============================================================================
+  # ERROR HANDLING
+  # ============================================================================
+  
+  error do |lane, exception|
+    puts "❌ Error in lane #{lane}: #{exception.message}"
+    
+    # Send notification on error (configure as needed)
+    # slack(
+    #   message: "iOS build failed in lane #{lane}: #{exception.message}",
+    #   success: false
+    # )
+    
+    # Clean up on error
+    clean_build_artifacts
+  end
+  
+  after_all do |lane|
+    puts "✅ Lane #{lane} completed successfully"
+    
+    # Send success notification (configure as needed)
+    # slack(
+    #   message: "iOS lane #{lane} completed successfully! 🎉",
+    #   success: true
+    # )
+  end
+end
+
+# ============================================================================
+# HELPER METHODS
+# ============================================================================
+
+def ensure_env_vars(vars)
+  missing_vars = vars.select { |var| ENV[var].nil? || ENV[var].empty? }
+  
+  unless missing_vars.empty?
+    puts "❌ Missing required environment variables:"
+    missing_vars.each { |var| puts "   - #{var}" }
+    puts ""
+    puts "Set these variables in your environment or GitHub secrets."
+    UI.user_error!("Missing required environment variables: #{missing_vars.join(', ')}")
+  end
+end
+
+def verify_xcode
+  # Verify Xcode installation and version
+  xcode_select
+  
+  # Print Xcode info
+  sh("xcodebuild -version")
+  sh("xcrun simctl list devices available | head -20")
+end
+
+# ============================================================================
+# CONFIGURATION NOTES
+# ============================================================================
+
+# To fully configure this Fastfile for production use:
+#
+# 1. CERTIFICATES AND PROVISIONING:
+#    - Set up Match for certificate management
+#    - Configure Apple Developer Team ID
+#    - Set up provisioning profiles for App Store distribution
+#
+# 2. ENVIRONMENT VARIABLES (GitHub Secrets):
+#    - FASTLANE_USER: Apple ID email
+#    - FASTLANE_PASSWORD: Apple ID password (or app-specific password)
+#    - FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: App-specific password
+#    - MATCH_PASSWORD: Password for Match certificate storage
+#    - MATCH_GIT_URL: Git repository for Match certificate storage
+#    - DEVELOPER_TEAM_ID: Apple Developer Team ID
+#
+# 3. APP STORE CONNECT:
+#    - Configure app metadata
+#    - Set up TestFlight groups
+#    - Configure review information
+#
+# 4. NOTIFICATIONS (Optional):
+#    - Slack webhook for build notifications
+#    - Email notifications for deployment status
+#
+# 5. TESTING:
+#    - Configure UI tests for screenshot generation
+#    - Set up automated testing workflows
+#    - Configure code coverage reporting
