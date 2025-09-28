@@ -117,6 +117,16 @@ class ScribeCatApp {
     this.userEmailInput = document.getElementById('user-email');
     this.createBugReportBtn = document.getElementById('create-bug-report');
     this.bugReportStatus = document.getElementById('bug-report-status');
+
+    // Error Notification elements
+    this.errorNotification = document.getElementById('error-notification');
+    this.errorNotificationText = document.getElementById('error-notification-text');
+    this.dismissErrorBtn = document.getElementById('dismiss-error');
+    this.reportErrorBugBtn = document.getElementById('report-error-bug');
+
+    // Error tracking
+    this.currentError = null;
+    this.errorHistory = [];
   }
 
   async init() {
@@ -124,6 +134,7 @@ class ScribeCatApp {
     this.cleanupDomArtifacts();
     this.initializeElements();
     this.setupEventListeners();
+    this.initializeErrorMonitoring(); // Add error monitoring
     await this.loadSettings();
     this.initializeClock();
     await this.initializeAudioDevices();
@@ -360,6 +371,14 @@ class ScribeCatApp {
     // Bug Reporter event listeners
     if (this.createBugReportBtn) {
       this.createBugReportBtn.addEventListener('click', () => this.createBugReport());
+    }
+
+    // Error Notification event listeners
+    if (this.dismissErrorBtn) {
+      this.dismissErrorBtn.addEventListener('click', () => this.dismissErrorNotification());
+    }
+    if (this.reportErrorBugBtn) {
+      this.reportErrorBugBtn.addEventListener('click', () => this.reportErrorAsBug());
     }
   }
 
@@ -2070,8 +2089,16 @@ class ScribeCatApp {
   }
 
   async getAIResponse(question, notesContent, transcriptionContent) {
+    // First check if this might be a bug-related conversation
+    const bugDetected = this.detectBugInConversation(question, notesContent, transcriptionContent);
+    
     if (this.simulationMode) {
-      // Simulate AI response
+      // Enhanced simulation with bug detection
+      if (bugDetected.isBug) {
+        return await this.handleBugConversation(question, bugDetected, true);
+      }
+      
+      // Regular simulation responses
       const responses = [
         "Based on your notes, here's what I found...",
         "Looking at the transcription, it seems like...",
@@ -2087,9 +2114,16 @@ class ScribeCatApp {
       
       return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using OpenAI's API to provide contextual answers.]`;
     } else {
-      // Real OpenAI API implementation
+      // Real OpenAI API implementation with enhanced bug detection
       try {
         const context = `Notes: ${notesContent}\n\nTranscription: ${transcriptionContent}`;
+        
+        let systemPrompt = 'You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.';
+        
+        // Enhanced system prompt for bug detection
+        if (bugDetected.isBug) {
+          systemPrompt += ' The user appears to be experiencing a technical issue. If this seems like a bug or problem with ScribeCat functionality, offer to help them report it by asking if they would like you to help create a bug report.';
+        }
         
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -2102,7 +2136,7 @@ class ScribeCatApp {
             messages: [
               {
                 role: 'system',
-                content: 'You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.'
+                content: systemPrompt
               },
               {
                 role: 'user',
@@ -2119,12 +2153,209 @@ class ScribeCatApp {
         }
 
         const data = await response.json();
-        return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+        const aiResponse = data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+        
+        // If bug detected, add helpful suggestion
+        if (bugDetected.isBug) {
+          return await this.handleBugConversation(question, bugDetected, false, aiResponse);
+        }
+        
+        return aiResponse;
       } catch (error) {
         console.error('Error calling OpenAI API:', error);
         return `Error: Could not connect to OpenAI API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
       }
     }
+  }
+
+  // Enhanced bug detection in conversations
+  detectBugInConversation(question, notesContent, transcriptionContent) {
+    const bugKeywords = [
+      'not working', 'broken', 'error', 'crash', 'freeze', 'frozen',
+      'stuck', 'problem', 'issue', 'bug', 'fail', 'failed', 'failing',
+      'won\'t save', 'can\'t record', 'not saving', 'not recording',
+      'doesn\'t work', 'stopped working', 'not responding', 'hang', 'hanging'
+    ];
+
+    const functionKeywords = [
+      'record', 'recording', 'save', 'saving', 'transcri', 'notes',
+      'drive', 'export', 'audio', 'microphone', 'voice', 'playback'
+    ];
+
+    const questionLower = question.toLowerCase();
+    const hasBugKeyword = bugKeywords.some(keyword => questionLower.includes(keyword));
+    const hasFunctionKeyword = functionKeywords.some(keyword => questionLower.includes(keyword));
+
+    // Check for specific bug patterns
+    const specificPatterns = [
+      /my .+ (isn't|aren't|won't|can't|not) (working|saving|recording)/i,
+      /how do I fix/i,
+      /why (isn't|won't|can't|doesn't)/i,
+      /something (is|seems) wrong/i,
+      /having trouble with/i,
+      /keep getting (error|problem)/i
+    ];
+
+    const hasSpecificPattern = specificPatterns.some(pattern => pattern.test(question));
+
+    return {
+      isBug: (hasBugKeyword && hasFunctionKeyword) || hasSpecificPattern,
+      confidence: hasSpecificPattern ? 'high' : hasBugKeyword && hasFunctionKeyword ? 'medium' : 'low',
+      keywords: bugKeywords.filter(keyword => questionLower.includes(keyword)),
+      functions: functionKeywords.filter(keyword => questionLower.includes(keyword))
+    };
+  }
+
+  async handleBugConversation(question, bugInfo, isSimulation, aiResponse = null) {
+    // Start conversational bug reporting flow
+    if (!this.bugReportingFlow) {
+      this.bugReportingFlow = {
+        active: false,
+        stage: 'detection',
+        responses: {},
+        originalQuestion: question,
+        bugInfo: bugInfo
+      };
+    }
+
+    if (this.bugReportingFlow.stage === 'detection') {
+      // Offer to help with bug reporting
+      this.bugReportingFlow.active = true;
+      this.bugReportingFlow.stage = 'offer';
+      
+      const offerMessage = isSimulation 
+        ? `It sounds like you might be experiencing a technical issue with ScribeCat. I'd be happy to help you report this as a bug to the development team. Would you like me to guide you through creating a bug report? This will help get the issue fixed faster.
+
+Type "yes" or "help me report this" to start the bug reporting process, or continue with your question if you prefer.`
+        : `${aiResponse}
+
+It sounds like you might be experiencing a technical issue. Would you like me to help you create a bug report for the development team? I can guide you through a few questions to gather the necessary details.`;
+
+      return offerMessage;
+    }
+
+    return this.continueBugReportingFlow(question);
+  }
+
+  async continueBugReportingFlow(userInput) {
+    if (!this.bugReportingFlow || !this.bugReportingFlow.active) {
+      return "I'm not sure what you're referring to. Can you please rephrase your question?";
+    }
+
+    const inputLower = userInput.toLowerCase();
+    const isPositive = ['yes', 'yeah', 'sure', 'ok', 'okay', 'help', 'report'].some(word => inputLower.includes(word));
+    const isNegative = ['no', 'nope', 'skip', 'not now', 'later'].some(word => inputLower.includes(word));
+
+    switch (this.bugReportingFlow.stage) {
+      case 'offer':
+        if (isPositive) {
+          this.bugReportingFlow.stage = 'question1';
+          return "Great! I'll help you create a comprehensive bug report. Let's start with a few questions:\n\n**Question 1:** Can you describe exactly what you were trying to do when the problem occurred?";
+        } else if (isNegative) {
+          this.bugReportingFlow.active = false;
+          return "No problem! Feel free to ask me anything else about ScribeCat or continue with your original question.";
+        } else {
+          return "I didn't quite understand. Would you like me to help you report this issue as a bug? Please type 'yes' to continue or 'no' to skip.";
+        }
+
+      case 'question1':
+        this.bugReportingFlow.responses.whatTrying = userInput;
+        this.bugReportingFlow.stage = 'question2';
+        return "**Question 2:** What exactly happened? Did you see any error messages or unexpected behavior?";
+
+      case 'question2':
+        this.bugReportingFlow.responses.whatHappened = userInput;
+        this.bugReportingFlow.stage = 'question3';
+        return "**Question 3:** Had this feature been working correctly before, or is this the first time you tried it?";
+
+      case 'question3':
+        this.bugReportingFlow.responses.previouslyWorked = userInput;
+        this.bugReportingFlow.stage = 'question4';
+        return "**Question 4:** Are you able to reproduce this issue consistently, or does it happen randomly?";
+
+      case 'question4':
+        this.bugReportingFlow.responses.reproducible = userInput;
+        this.bugReportingFlow.stage = 'generate';
+        return "Perfect! I have enough information to create a comprehensive bug report. Let me generate it for you...\n\n" + 
+               await this.generateAIBugReport();
+
+      default:
+        this.bugReportingFlow.active = false;
+        return "Something went wrong with the bug reporting flow. Please try again or use the manual bug reporter in the sidebar.";
+    }
+  }
+
+  async generateAIBugReport() {
+    if (!this.bugReportingFlow || !this.bugReportingFlow.responses) {
+      return "Error: No bug report data available.";
+    }
+
+    const responses = this.bugReportingFlow.responses;
+    const bugInfo = this.bugReportingFlow.bugInfo;
+    
+    // Generate comprehensive title
+    const title = this.generateBugTitle(responses.whatTrying, responses.whatHappened);
+    
+    // Generate comprehensive description
+    const description = this.generateBugDescription(responses);
+    
+    // Create the bug report
+    const bugReport = this.generateBugReportContentWithContext(title, description, '');
+    
+    // Reset the flow
+    this.bugReportingFlow.active = false;
+    this.bugReportingFlow = null;
+    
+    // Submit the bug report
+    setTimeout(async () => {
+      const success = await this.submitBugReport(bugReport, title);
+      if (success) {
+        this.addChatMessage("✅ Bug report submitted successfully! The development team will review your report.", 'ai');
+      } else {
+        this.addChatMessage("❌ There was an issue submitting the bug report. You can try using the manual bug reporter in the sidebar.", 'ai');
+      }
+    }, 1000);
+    
+    return `Here's your bug report:\n\n**Title:** ${title}\n\n**Description:**\n${description}\n\nI'll submit this report to GitHub now. You should see a browser window open where you can review and finalize the submission.`;
+  }
+
+  generateBugTitle(whatTrying, whatHappened) {
+    // Extract key action and issue
+    const tryingWords = whatTrying.toLowerCase().split(' ');
+    const happenedWords = whatHappened.toLowerCase().split(' ');
+    
+    const actions = ['record', 'save', 'export', 'transcribe', 'play'];
+    const issues = ['not working', 'failed', 'error', 'crash', 'stuck'];
+    
+    const foundAction = actions.find(action => tryingWords.some(word => word.includes(action)));
+    const foundIssue = issues.find(issue => happenedWords.join(' ').includes(issue));
+    
+    if (foundAction && foundIssue) {
+      return `${foundAction.charAt(0).toUpperCase() + foundAction.slice(1)} ${foundIssue}`;
+    } else if (foundAction) {
+      return `Issue with ${foundAction}`;
+    } else {
+      return whatHappened.substring(0, 80);
+    }
+  }
+
+  generateBugDescription(responses) {
+    return `## User Report
+
+**What I was trying to do:**
+${responses.whatTrying}
+
+**What happened:**
+${responses.whatHappened}
+
+**Previous behavior:**
+${responses.previouslyWorked}
+
+**Reproducibility:**
+${responses.reproducible}
+
+**Additional Context:**
+This report was generated through an AI-guided conversation to help capture comprehensive details about the issue.`;
   }
 
   // Simple Bug Reporter Methods
@@ -2144,8 +2375,8 @@ class ScribeCatApp {
         this.createBugReportBtn.textContent = 'Reporting...';
       }
 
-      // Create comprehensive bug report
-      const bugReport = this.generateBugReportContent(title, description, email);
+      // Create comprehensive bug report with enhanced context
+      const bugReport = this.generateBugReportContentWithContext(title, description, email);
       
       // Try multiple reporting methods
       const success = await this.submitBugReport(bugReport, title);
@@ -2195,6 +2426,73 @@ ${description}
 
 ---
 *This bug report was submitted via ScribeCat's integrated bug reporter*`,
+      labels: ['bug', 'user-report', 'scribecat']
+    };
+  }
+
+  // Enhanced session context collection for manual bug reports
+  generateBugReportContentWithContext(title, description, email) {
+    // Get session context
+    const notesContent = this.notesEditor?.textContent || 'No notes';
+    const transcriptionContent = Array.from(this.transcriptionDisplay?.children || [])
+      .map(entry => entry.textContent)
+      .join('\n') || 'No transcription';
+
+    // Get recent errors if any
+    const recentErrors = this.errorHistory.slice(-3).map(err => 
+      `[${err.timestamp}] ${err.type}: ${err.message}`
+    ).join('\n');
+
+    const enhancedBody = `## Bug Report
+
+**Summary:** ${title}
+
+**Description:**
+${description}
+
+**User Details:**
+- Email: ${email || 'Not provided'}
+- App Version: ${window.appInfo?.version || 'Unknown'}
+- Platform: ${window.appInfo?.platform || 'Unknown'}
+- User Agent: ${navigator.userAgent}
+- Timestamp: ${new Date().toISOString()}
+
+**System Info:**
+- Screen Resolution: ${screen.width}x${screen.height}
+- Language: ${navigator.language}
+- Online: ${navigator.onLine}
+- Recording Status: ${this.isRecording ? 'Recording' : 'Not Recording'}
+- Backend: ${this.whisperEnabled ? 'Whisper' : 'Vosk'}
+- Simulation Mode: ${this.simulationMode ? 'Enabled' : 'Disabled'}
+
+**Session Context:**
+${notesContent.length > 0 ? `
+**Current Notes:**
+\`\`\`
+${notesContent.substring(0, 1000)}${notesContent.length > 1000 ? '...' : ''}
+\`\`\`
+` : '**Notes:** Empty'}
+
+${transcriptionContent.length > 0 ? `
+**Current Transcription:**
+\`\`\`
+${transcriptionContent.substring(0, 1000)}${transcriptionContent.length > 1000 ? '...' : ''}
+\`\`\`
+` : '**Transcription:** Empty'}
+
+${recentErrors ? `
+**Recent Errors:**
+\`\`\`
+${recentErrors}
+\`\`\`
+` : ''}
+
+---
+*This bug report was submitted via ScribeCat's integrated bug reporter*`;
+
+    return {
+      title: `[User Report] ${title}`,
+      body: enhancedBody,
       labels: ['bug', 'user-report', 'scribecat']
     };
   }
@@ -2255,6 +2553,196 @@ ${description}
         }
       }, 5000);
     }
+  }
+
+  // Error Monitoring and Notification System
+  initializeErrorMonitoring() {
+    // Global error handler
+    window.addEventListener('error', (event) => {
+      this.handleGlobalError({
+        message: event.message,
+        filename: event.filename,
+        line: event.lineno,
+        column: event.colno,
+        error: event.error,
+        type: 'javascript'
+      });
+    });
+
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', (event) => {
+      this.handleGlobalError({
+        message: event.reason?.message || 'Unhandled promise rejection',
+        error: event.reason,
+        type: 'promise'
+      });
+    });
+
+    // Console error monitoring
+    this.originalConsoleError = console.error;
+    console.error = (...args) => {
+      this.originalConsoleError.apply(console, args);
+      
+      // Only show notification for significant errors, not warnings
+      const errorMessage = args.join(' ');
+      if (this.isSignificantError(errorMessage)) {
+        this.handleGlobalError({
+          message: errorMessage,
+          type: 'console',
+          args: args
+        });
+      }
+    };
+  }
+
+  isSignificantError(message) {
+    // Filter out non-critical errors/warnings
+    const ignoredPatterns = [
+      'Failed to load resource',
+      'Resource was not loaded',
+      'Could not load link',
+      'Could not load script',
+      'AudioContext',
+      'webkitAudioContext'
+    ];
+    
+    return !ignoredPatterns.some(pattern => message.includes(pattern));
+  }
+
+  handleGlobalError(errorInfo) {
+    console.log('Handling global error:', errorInfo);
+    
+    // Store error for potential reporting
+    const errorData = {
+      ...errorInfo,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      appVersion: window.appInfo?.version || 'Unknown',
+      url: window.location.href
+    };
+    
+    this.errorHistory.push(errorData);
+    
+    // Keep only last 10 errors
+    if (this.errorHistory.length > 10) {
+      this.errorHistory.shift();
+    }
+    
+    // Set current error for reporting
+    this.currentError = errorData;
+    
+    // Show notification after a short delay to avoid overwhelming user
+    if (!this.errorNotificationShowing) {
+      setTimeout(() => {
+        this.showErrorNotification(errorInfo.message);
+      }, 1000);
+    }
+  }
+
+  showErrorNotification(customMessage = null) {
+    if (!this.errorNotification) return;
+    
+    this.errorNotificationShowing = true;
+    
+    // Update message if provided
+    if (customMessage && this.errorNotificationText) {
+      this.errorNotificationText.textContent = `${customMessage} - functionality may be affected`;
+    }
+    
+    // Show notification
+    this.errorNotification.style.display = 'block';
+    this.errorNotification.classList.add('shown');
+    
+    // Auto-hide after 10 seconds if not already dismissed
+    this.errorNotificationTimeout = setTimeout(() => {
+      this.dismissErrorNotification();
+    }, 10000);
+  }
+
+  dismissErrorNotification() {
+    if (!this.errorNotification) return;
+    
+    this.errorNotification.style.display = 'none';
+    this.errorNotification.classList.remove('shown');
+    this.errorNotificationShowing = false;
+    
+    if (this.errorNotificationTimeout) {
+      clearTimeout(this.errorNotificationTimeout);
+      this.errorNotificationTimeout = null;
+    }
+  }
+
+  reportErrorAsBug() {
+    if (!this.currentError) {
+      console.warn('No current error to report');
+      return;
+    }
+    
+    // Dismiss the notification
+    this.dismissErrorNotification();
+    
+    // Generate comprehensive error report
+    const errorReport = this.generateErrorBugReport(this.currentError);
+    
+    // Submit the bug report
+    this.submitBugReport(errorReport, 'Auto-detected Error');
+  }
+
+  generateErrorBugReport(errorData) {
+    // Get session context
+    const notesContent = this.notesEditor?.textContent || 'No notes';
+    const transcriptionContent = Array.from(this.transcriptionDisplay?.children || [])
+      .map(entry => entry.textContent)
+      .join('\n') || 'No transcription';
+
+    // Get recent console logs (from error history)
+    const recentErrors = this.errorHistory.slice(-5).map(err => 
+      `[${err.timestamp}] ${err.type}: ${err.message}`
+    ).join('\n');
+
+    const errorBody = `## Auto-Detected Error Report
+
+**Error Details:**
+- **Type:** ${errorData.type}
+- **Message:** ${errorData.message}
+- **Timestamp:** ${errorData.timestamp}
+- **File:** ${errorData.filename || 'N/A'}
+- **Line:** ${errorData.line || 'N/A'}
+
+**System Information:**
+- **App Version:** ${errorData.appVersion}
+- **Platform:** ${window.appInfo?.platform || 'Unknown'}
+- **User Agent:** ${errorData.userAgent}
+- **URL:** ${errorData.url}
+
+**Session Context:**
+- **Recording Status:** ${this.isRecording ? 'Recording' : 'Not Recording'}
+- **Backend:** ${this.whisperEnabled ? 'Whisper' : 'Vosk'} 
+- **Simulation Mode:** ${this.simulationMode ? 'Enabled' : 'Disabled'}
+
+**Current Session Notes:**
+\`\`\`
+${notesContent.substring(0, 500)}${notesContent.length > 500 ? '...' : ''}
+\`\`\`
+
+**Current Session Transcription:**
+\`\`\`
+${transcriptionContent.substring(0, 500)}${transcriptionContent.length > 500 ? '...' : ''}
+\`\`\`
+
+**Recent Error History:**
+\`\`\`
+${recentErrors}
+\`\`\`
+
+---
+*This bug report was auto-generated by ScribeCat's error detection system*`;
+
+    return {
+      title: `[Auto-Detected] ${errorData.type} Error: ${errorData.message.substring(0, 80)}`,
+      body: errorBody,
+      labels: ['bug', 'auto-detected', 'error-monitoring']
+    };
   }
 }
 
