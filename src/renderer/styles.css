@@ -1,6 +1,8 @@
 /* Variables for theming */
 :root {
   --primary-color: #6366f1;
+  --secondary-color: #10b981;
+  --accent: #f59e0b;
   --primary-hover: #5855eb;
   --success-color: #10b981;
   --warning-color: #f59e0b;
@@ -14,6 +16,11 @@
   --text-muted: #94a3b8;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --spacing-xs: 2px;
+  --spacing-sm: 4px;
+  --spacing-md: 8px;
+  --spacing-lg: 12px;
+  --spacing-xl: 16px;
 }
 
 /* Custom fonts */
@@ -25,20 +32,11 @@
   font-display: swap;
 }
 
-/* Dark theme */
-[data-theme="dark"] {
-  --background: #0f172a;
-  --surface: #1e293b;
-  --surface-hover: #334155;
-  --border: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-}
-
-/* Blue theme */
-[data-theme="blue"] {
+/* 1. Ocean - Blue, Teal, Cyan */
+[data-theme="ocean"] {
   --primary-color: #0ea5e9;
+  --secondary-color: #14b8a6;
+  --accent: #06b6d4;
   --primary-hover: #0284c7;
   --background: #f0f9ff;
   --surface: #e0f2fe;
@@ -46,9 +44,11 @@
   --border: #7dd3fc;
 }
 
-/* Forest theme */
+/* 2. Forest - Green, Emerald, Lime */
 [data-theme="forest"] {
   --primary-color: #059669;
+  --secondary-color: #10b981;
+  --accent: #65a30d;
   --primary-hover: #047857;
   --background: #f0fdf4;
   --surface: #dcfce7;
@@ -56,9 +56,11 @@
   --border: #86efac;
 }
 
-/* Sunset theme */
+/* 3. Sunset - Orange, Red, Pink */
 [data-theme="sunset"] {
   --primary-color: #ea580c;
+  --secondary-color: #dc2626;
+  --accent: #ec4899;
   --primary-hover: #c2410c;
   --background: #fff7ed;
   --surface: #fed7aa;
@@ -66,9 +68,11 @@
   --border: #fb923c;
 }
 
-/* Purple theme */
-[data-theme="purple"] {
+/* 4. Royal - Purple, Indigo, Violet */
+[data-theme="royal"] {
   --primary-color: #8b5cf6;
+  --secondary-color: #6366f1;
+  --accent: #a855f7;
   --primary-hover: #7c3aed;
   --background: #faf5ff;
   --surface: #ede9fe;
@@ -76,9 +80,11 @@
   --border: #c4b5fd;
 }
 
-/* Rose theme */
+/* 5. Rose - Pink, Rose, Red */
 [data-theme="rose"] {
   --primary-color: #f43f5e;
+  --secondary-color: #e11d48;
+  --accent: #ef4444;
   --primary-hover: #e11d48;
   --background: #fff1f2;
   --surface: #fecdd3;
@@ -86,9 +92,11 @@
   --border: #fb7185;
 }
 
-/* Teal theme */
-[data-theme="teal"] {
+/* 6. Tropical - Teal, Green, Cyan */
+[data-theme="tropical"] {
   --primary-color: #14b8a6;
+  --secondary-color: #059669;
+  --accent: #06b6d4;
   --primary-hover: #0d9488;
   --background: #f0fdfa;
   --surface: #ccfbf1;
@@ -96,9 +104,11 @@
   --border: #5eead4;
 }
 
-/* Indigo theme */
-[data-theme="indigo"] {
+/* 7. Cosmic - Indigo, Purple, Blue */
+[data-theme="cosmic"] {
   --primary-color: #6366f1;
+  --secondary-color: #8b5cf6;
+  --accent: #3b82f6;
   --primary-hover: #4f46e5;
   --background: #eef2ff;
   --surface: #e0e7ff;
@@ -106,9 +116,11 @@
   --border: #a5b4fc;
 }
 
-/* Amber theme */
-[data-theme="amber"] {
+/* 8. Autumn - Amber, Orange, Yellow */
+[data-theme="autumn"] {
   --primary-color: #f59e0b;
+  --secondary-color: #ea580c;
+  --accent: #eab308;
   --primary-hover: #d97706;
   --background: #fffbeb;
   --surface: #fef3c7;
@@ -116,9 +128,11 @@
   --border: #fcd34d;
 }
 
-/* Emerald theme */
+/* 9. Emerald - Emerald, Teal, Green */
 [data-theme="emerald"] {
   --primary-color: #10b981;
+  --secondary-color: #14b8a6;
+  --accent: #059669;
   --primary-hover: #059669;
   --background: #ecfdf5;
   --surface: #d1fae5;
@@ -126,9 +140,11 @@
   --border: #6ee7b7;
 }
 
-/* Cyan theme */
-[data-theme="cyan"] {
+/* 10. Arctic - Cyan, Blue, Slate */
+[data-theme="arctic"] {
   --primary-color: #06b6d4;
+  --secondary-color: #0ea5e9;
+  --accent: #64748b;
   --primary-hover: #0891b2;
   --background: #ecfeff;
   --surface: #cffafe;
@@ -136,9 +152,11 @@
   --border: #67e8f9;
 }
 
-/* Pink theme */
-[data-theme="pink"] {
+/* 11. Berry - Pink, Purple, Fuchsia */
+[data-theme="berry"] {
   --primary-color: #ec4899;
+  --secondary-color: #8b5cf6;
+  --accent: #d946ef;
   --primary-hover: #db2777;
   --background: #fdf2f8;
   --surface: #fce7f3;
@@ -146,9 +164,11 @@
   --border: #f9a8d4;
 }
 
-/* Slate theme */
-[data-theme="slate"] {
+/* 12. Monochrome - Slate, Gray, Zinc */
+[data-theme="monochrome"] {
   --primary-color: #64748b;
+  --secondary-color: #6b7280;
+  --accent: #71717a;
   --primary-hover: #475569;
   --background: #f8fafc;
   --surface: #f1f5f9;
@@ -156,10 +176,12 @@
   --border: #cbd5e1;
 }
 
-/* Midnight theme */
+/* 13. Midnight - Dark Blue, Indigo, Purple */
 [data-theme="midnight"] {
-  --primary-color: #3b82f6;
-  --primary-hover: #2563eb;
+  --primary-color: #1e40af;
+  --secondary-color: #4338ca;
+  --accent: #7c3aed;
+  --primary-hover: #1d4ed8;
   --background: #020617;
   --surface: #0f172a;
   --surface-hover: #1e293b;
@@ -167,6 +189,30 @@
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
+}
+
+/* 14. Neon - Lime, Yellow, Green */
+[data-theme="neon"] {
+  --primary-color: #65a30d;
+  --secondary-color: #eab308;
+  --accent: #16a34a;
+  --primary-hover: #4d7c0f;
+  --background: #f7fee7;
+  --surface: #ecfccb;
+  --surface-hover: #d9f99d;
+  --border: #bef264;
+}
+
+/* 15. Volcano - Red, Orange, Amber */
+[data-theme="volcano"] {
+  --primary-color: #dc2626;
+  --secondary-color: #ea580c;
+  --accent: #f59e0b;
+  --primary-hover: #b91c1c;
+  --background: #fef2f2;
+  --surface: #fecaca;
+  --surface-hover: #fca5a5;
+  --border: #f87171;
 }
 
 /* Base styles */
@@ -208,19 +254,22 @@ body {
 
 /* Header */
 .app-header {
-  height: 90px;
+  height: clamp(70px, 8vh, 90px); /* Dynamic header height: 70px-90px based on viewport */
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 var(--spacing-sm); /* Consistent 4px horizontal padding */
+  margin: var(--spacing-sm); /* 4px margin around header */
+  border-radius: var(--spacing-sm); /* Rounded corners with 4px radius */
   -webkit-app-region: drag;
 }
 
 .header-left, .header-center, .header-right {
   display: flex;
   align-items: center;
+  gap: var(--spacing-sm); /* 4px gap between header elements */
   -webkit-app-region: no-drag;
 }
 
@@ -331,7 +380,8 @@ body {
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-sm); /* 4px gap between logo and title */
+  margin: var(--spacing-sm); /* 4px margin around logo container */
 }
 
 .logo {
@@ -343,7 +393,7 @@ body {
 }
 
 .app-title {
-  font-size: 28px;
+  font-size: clamp(20px, 4vw, 28px); /* Dynamic title size: 20px-28px */
   font-weight: 700;
   color: var(--primary-color);
   font-family: 'GalaxyCaterpillar', 'Inter', sans-serif;
@@ -352,16 +402,17 @@ body {
 /* Status chips */
 .status-chips {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--spacing-sm); /* 4px gap between status chips */
+  margin: var(--spacing-sm); /* 4px margin around chips container */
   justify-content: flex-end;
 }
 
 .status-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: var(--spacing-sm); /* 4px gap inside chip */
+  padding: var(--spacing-sm) var(--spacing-md); /* 4px vertical, 8px horizontal padding */
+  margin: var(--spacing-sm); /* 4px margin around each chip */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -430,11 +481,12 @@ body {
   width: 30px; /* collapsed square */
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--spacing-sm); /* 4px border radius */
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 1200;
   padding: 0; /* collapsed has no padding */
+  margin: var(--spacing-sm); /* 4px margin around sidebar */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: top left;
 }
@@ -453,7 +505,7 @@ body {
 
 .sidebar:not(.open)::before {
   content: '\2261'; /* triple bar ≡ */
-  font-size: 20px;
+  font-size: clamp(16px, 3vw, 20px); /* Dynamic sidebar icon size */
   color: var(--text-secondary);
 }
 
@@ -519,14 +571,15 @@ body {
 }
 
 .sidebar-section {
-  margin-bottom: 24px;
+  margin: var(--spacing-sm); /* 4px margin between sections */
+  padding: var(--spacing-sm); /* 4px padding inside sections */
 }
 
 .sidebar-section h3 {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin: var(--spacing-sm); /* 4px margin around headings */
 }
 
 /* Developer settings */
@@ -628,36 +681,54 @@ body {
   padding: 8px;
 }
 
-/* Theme selector and preview */
-.theme-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.theme-preview {
-  display: flex;
-  gap: 4px;
+/* Theme grid layout */
+.theme-grid-container {
   margin-top: 8px;
 }
 
-.theme-swatch {
-  width: 20px;
-  height: 20px;
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 240px;
+}
+
+.theme-option {
+  position: relative;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 4px;
+  transition: all 0.2s ease;
+}
+
+.theme-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-option.active {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.theme-colors {
+  display: flex;
+  height: 24px;
   border-radius: 4px;
-  border: 1px solid var(--border);
+  overflow: hidden;
 }
 
-.theme-swatch.primary {
-  background: var(--primary-color);
+.theme-color {
+  flex: 1;
 }
 
-.theme-swatch.surface {
-  background: var(--surface);
-}
-
-.theme-swatch.background {
-  background: var(--background);
+.theme-label {
+  font-size: 10px;
+  text-align: center;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Course selection */
@@ -739,28 +810,34 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: calc(100vh - 90px); /* Account for header height */
+  height: calc(100vh - clamp(70px, 8vh, 90px)); /* Account for dynamic header height */
+  margin: var(--spacing-sm); /* 4px margin around main content */
+  padding: var(--spacing-sm); /* 4px padding inside main content */
 }
 
 /* Recording controls */
 .recording-controls {
-  padding: 16px;
+  padding: 12.8px; /* Reduced by 20% from 16px */
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border: 2px solid var(--border);
+  border-top: 3px solid var(--accent); /* Accent top border */
+  border-bottom: 3px solid var(--primary-color); /* Primary bottom border for tri-color effect */
   border-radius: 12px;
-  margin: 16px;
+  margin: var(--spacing-sm); /* 4px margin on all sides */
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-sm); /* 4px gap between controls */
   flex-shrink: 0;
+  transition: border-color 0.3s ease;
+  height: 56px; /* Reduced by 20% from default ~70px */
 }
 
 .record-btn {
   background: var(--danger-color);
   color: white;
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 9.6px 19.2px; /* Reduced by 20% from 12px 24px */
+  font-size: 12.8px; /* Reduced by 20% from 16px */
   border-radius: 8px;
 }
 
@@ -811,10 +888,10 @@ body {
 
 .recording-time {
   font-family: 'Courier New', monospace;
-  font-size: 18px;
+  font-size: clamp(14px, 2.5vw, 18px); /* Dynamic recording time size */
   font-weight: 600;
   color: var(--text-primary);
-  min-width: 60px;
+  min-width: clamp(45px, 8vw, 60px); /* Dynamic minimum width */
 }
 
 /* VU Meter Styles */
@@ -865,35 +942,41 @@ body {
 .content-container {
   flex: 1;
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--spacing-sm); /* 4px gap between editor and transcription */
+  padding: var(--spacing-sm); /* 4px padding around content */
+  margin: var(--spacing-sm); /* 4px margin around container */
   overflow: hidden;
   min-height: 0; /* Allow flex shrinking */
+  flex-direction: row; /* Horizontal layout by default */
 }
 
 /* Editor section */
 .editor-section {
-  flex: 1;
+  flex: 1 1 50%; /* Equal width split, can grow/shrink */
   display: flex;
   flex-direction: column;
   min-width: 0;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
+  border: 2px solid var(--border);
+  border-left: 3px solid var(--accent); /* Accent border for visual pop */
+  border-radius: var(--spacing-sm); /* 4px border radius */
+  padding: var(--spacing-sm); /* 4px padding inside section */
+  margin: var(--spacing-sm); /* 4px margin around section */
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: border-color 0.3s ease;
 }
 
 .editor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0;
+  margin: var(--spacing-sm); /* 4px margin around header */
+  padding: var(--spacing-sm); /* 4px padding inside header */
 }
 
 .editor-header h2 {
-  font-size: 18px;
+  font-size: clamp(14px, 2.5vw, 18px); /* Dynamic section heading size */
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -902,20 +985,22 @@ body {
 .formatting-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: var(--spacing-sm); /* 4px gap between toolbar buttons */
+  padding: var(--spacing-sm); /* 4px padding inside toolbar */
+  margin: var(--spacing-sm); /* 4px margin around toolbar */
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--spacing-sm) var(--spacing-sm) 0 0; /* 4px rounded corners on top */
   border-bottom: none;
   flex-wrap: wrap;
 }
 
 .format-btn {
-  padding: 6px 8px;
+  padding: var(--spacing-sm) var(--spacing-md); /* 4px vertical, 8px horizontal */
+  margin: var(--spacing-sm); /* 4px margin around each button */
   border: none;
   background: none;
-  border-radius: 4px;
+  border-radius: var(--spacing-sm); /* 4px border radius */
   cursor: pointer;
   color: var(--text-secondary);
   font-size: 14px;
@@ -1005,17 +1090,59 @@ body {
   border-color: var(--primary-color);
 }
 
+/* Resize handle */
+.resize-handle {
+  width: 8px;
+  background: transparent;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background: var(--border);
+}
+
+.resize-handle-bar {
+  width: 2px;
+  height: 60px;
+  background: var(--text-muted);
+  border-radius: 1px;
+  transition: all 0.2s ease;
+}
+
+.resize-handle:hover .resize-handle-bar {
+  background: var(--primary-color);
+  width: 3px;
+  height: 80px;
+}
+
 /* Transcription section */
 .transcription-section {
-  width: 400px;
+  flex: 1 1 50%; /* Equal width split, can grow/shrink */
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
+  border: 2px solid var(--border);
+  border-right: 3px solid var(--primary-color); /* Primary border for balance with editor */
+  border-radius: var(--spacing-sm); /* 4px border radius */
+  padding: var(--spacing-sm); /* 4px padding inside section */
+  margin: var(--spacing-sm); /* 4px margin around section */
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.editor-section:hover {
+  border-left-color: var(--primary-color); /* Enhanced accent on hover */
+}
+
+.transcription-section:hover {
+  border-right-color: var(--accent); /* Enhanced primary on hover */
 }
 
 .transcription-header {
@@ -1026,7 +1153,7 @@ body {
 }
 
 .transcription-header h2 {
-  font-size: 18px;
+  font-size: clamp(14px, 2.5vw, 18px); /* Dynamic section heading size */
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -1066,16 +1193,21 @@ body {
 /* AI Chat */
 .ai-chat {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 400px;
+  bottom: var(--spacing-sm); /* 4px from bottom */
+  right: var(--spacing-sm); /* 4px from right */
+  width: 320px; /* Reduced by 20% from 400px */
+  min-width: 280px; /* Minimum width for usability */
+  max-width: 500px; /* Maximum width constraint */
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--spacing-sm); /* 4px border radius */
+  margin: var(--spacing-sm); /* 4px margin around chat */
   box-shadow: var(--shadow-lg);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   transform-origin: bottom right;
+  resize: both; /* Allow resizing */
+  overflow: hidden; /* Needed for resize */
 }
 
 .ai-chat.collapsed .chat-content {
@@ -1087,17 +1219,54 @@ body {
 
 .ai-chat:not(.collapsed) .chat-content {
   opacity: 1;
-  max-height: 500px;
+  max-height: 400px; /* Reduced by 20% from 500px */
   transition: opacity 0.3s ease 0.1s, max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chat-header {
-  padding: 16px 20px;
+  padding: var(--spacing-sm); /* 4px padding inside header */
+  margin: var(--spacing-sm); /* 4px margin around header */
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-sm); /* 4px gap between header elements */
   cursor: pointer;
+  position: relative;
+}
+
+.chat-drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 12px;
+  height: 12px;
+  cursor: move;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.chat-drag-handle:hover {
+  opacity: 1;
+}
+
+.chat-drag-handle::before,
+.chat-drag-handle::after {
+  content: '';
+  height: 2px;
+  background: var(--text-muted);
+  border-radius: 1px;
+}
+
+.chat-drag-handle::before {
+  margin-bottom: 2px;
+}
+
+.ai-chat.collapsed .chat-drag-handle {
+  display: none;
 }
 
 .chat-header h3 {
@@ -1159,17 +1328,19 @@ body {
 }
 
 .chat-input-container {
-  padding: 16px;
+  padding: var(--spacing-sm); /* 4px padding inside container */
+  margin: var(--spacing-sm); /* 4px margin around container */
   border-top: 1px solid var(--border);
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm); /* 4px gap between input and button */
 }
 
 .chat-input {
   flex: 1;
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-md); /* 4px vertical, 8px horizontal */
+  margin: var(--spacing-sm); /* 4px margin around input */
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--spacing-sm); /* 4px border radius */
   background: var(--background);
   color: var(--text-primary);
   font-size: 14px;
@@ -1213,22 +1384,26 @@ body {
 /* Responsive design */
 @media (max-width: 1400px) {
   .ai-chat {
-    width: 320px;
+    width: 280px; /* Reduced by 20% from 350px */
   }
 }
 
 @media (max-width: 1200px) {
+  /* Keep horizontal layout, maintain consistent 4px spacing */
   .content-container {
-    flex-direction: column;
+    gap: var(--spacing-sm); /* Maintain 4px gap */
+    padding: var(--spacing-sm); /* Maintain 4px padding */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
   }
   
+  .editor-section,
   .transcription-section {
-    width: 100%;
-    height: 200px;
+    padding: var(--spacing-sm); /* Maintain 4px internal padding */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
   }
   
   .ai-chat {
-    width: 350px;
+    width: 280px; /* Reduced by 20% from 350px */
   }
   
   .header-right .clock-section {
@@ -1237,7 +1412,8 @@ body {
   
   .status-chips {
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--spacing-sm); /* Maintain 4px gap */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
   }
 }
 
@@ -1248,7 +1424,8 @@ body {
   
   .recording-controls {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: var(--spacing-sm); /* Maintain 4px gap */
+    margin: var(--spacing-sm); /* Maintain 4px margin on all sides */
   }
   
   .status-chips {
@@ -1266,7 +1443,41 @@ body {
   }
 }
 
+/* Responsive Breakpoints with Dynamic Margins */
+
+/* Tablet and larger screens - Keep horizontal layout with dynamic sizing */
+@media (max-width: 1024px) {
+  .content-container {
+    gap: clamp(4px, 1.5vw, 8px); /* Dynamic gap: scales with screen size */
+    padding: clamp(4px, 1.5vw, 8px); /* Dynamic padding */
+  }
+  
+  .editor-section,
+  .transcription-section {
+    padding: var(--spacing-sm); /* Maintain 4px internal padding */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
+  }
+  
+  .ai-chat {
+    width: 280px;
+    height: 350px;
+  }
+}
+
+/* Small tablets - Maintain horizontal layout with minimal spacing */
 @media (max-width: 768px) {
+  .content-container {
+    gap: var(--spacing-sm); /* Maintain 4px gap */
+    padding: var(--spacing-sm); /* Maintain 4px padding */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
+  }
+  
+  .editor-section,
+  .transcription-section {
+    padding: var(--spacing-sm); /* Maintain 4px internal padding */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
+  }
+  
   .formatting-toolbar {
     flex-wrap: wrap;
   }
@@ -1298,12 +1509,19 @@ body {
 
 @media (max-width: 600px) {
   .content-container {
-    padding: 12px;
-    gap: 12px;
+    padding: var(--spacing-sm); /* Maintain 4px padding */
+    gap: var(--spacing-sm); /* Maintain 4px gap */
+    margin: var(--spacing-sm); /* Maintain 4px margin */
+  }
+  
+  .transcription-section {
+    flex: 1 1 50%; /* Maintain equal split even on small screens */
+    min-width: 200px; /* Minimum usable width on phones */
   }
   
   .recording-controls {
-    padding: 12px;
+    padding: var(--spacing-sm); /* Maintain 4px padding for phones */
+    margin: var(--spacing-sm); /* Maintain 4px margin for mobile */
   }
   
   .app-header {
@@ -1325,6 +1543,26 @@ body {
   
   .status-chips {
     margin-top: 4px;
+  }
+}
+
+/* Very small screens - Switch to vertical layout only when absolutely necessary */
+@media (max-width: 480px) {
+  .content-container {
+    flex-direction: column; /* Finally switch to vertical stacking */
+    gap: clamp(4px, 2vw, 8px); /* Adequate spacing between stacked cards */
+    padding: clamp(4px, 2vw, 8px);
+  }
+  
+  .editor-section,
+  .transcription-section {
+    flex: none; /* Remove flex sizing for stacked layout */
+    width: 100%; /* Full width when stacked */
+    max-height: 40vh; /* Limit height so both cards are visible */
+  }
+  
+  .resize-handle {
+    display: none; /* Hide resize handle in vertical layout */
   }
 }
 

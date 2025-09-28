@@ -61,7 +61,7 @@ class ScribeCatApp {
     // Settings elements
     this.saveOpenAIKeyBtn = document.getElementById('save-openai-key');
     this.openAIKeyInput = document.getElementById('openai-key');
-    this.themeSelect = document.getElementById('theme-select');
+    this.themeGrid = document.getElementById('theme-grid');
     this.canvasUrl = document.getElementById('canvas-url');
     this.courseSelect = document.getElementById('course-select');
     this.manualCourseFields = document.getElementById('manual-course-fields');
@@ -106,27 +106,15 @@ class ScribeCatApp {
     this.chatMessages = document.getElementById('chat-messages');
     this.toggleChatBtn = document.getElementById('toggle-chat');
     this.sendChatBtn = document.getElementById('send-chat');
+    this.chatDragHandle = document.getElementById('chat-drag-handle');
+    
+    // Resize handle elements
+    this.resizeHandle = document.getElementById('resize-handle');
+    this.editorSection = document.querySelector('.editor-section');
+    this.transcriptionSection = document.querySelector('.transcription-section');
     
     // Developer Settings
     this.simulationModeToggle = document.getElementById('simulation-mode-toggle');
-    
-    // Bug Reporter elements
-    this.bugReportForm = document.getElementById('bug-report-form');
-    this.bugTitleInput = document.getElementById('bug-title');
-    this.bugDescriptionTextarea = document.getElementById('bug-description');
-    this.userEmailInput = document.getElementById('user-email');
-    this.createBugReportBtn = document.getElementById('create-bug-report');
-    this.bugReportStatus = document.getElementById('bug-report-status');
-
-    // Error Notification elements
-    this.errorNotification = document.getElementById('error-notification');
-    this.errorNotificationText = document.getElementById('error-notification-text');
-    this.dismissErrorBtn = document.getElementById('dismiss-error');
-    this.reportErrorBugBtn = document.getElementById('report-error-bug');
-
-    // Error tracking
-    this.currentError = null;
-    this.errorHistory = [];
   }
 
   async init() {
@@ -134,7 +122,6 @@ class ScribeCatApp {
     this.cleanupDomArtifacts();
     this.initializeElements();
     this.setupEventListeners();
-    this.initializeErrorMonitoring(); // Add error monitoring
     await this.loadSettings();
     this.initializeClock();
     await this.initializeAudioDevices();
@@ -251,8 +238,9 @@ class ScribeCatApp {
         if ((backend === 'whisper') && result && result.text) this.addTranscriptionEntry(result.text);
       });
     }
-    if (this.themeSelect) {
-      this.themeSelect.addEventListener('change', (e) => this.changeTheme(e.target.value));
+    // Initialize theme grid
+    if (this.themeGrid) {
+      this.initializeThemeGrid();
     }
     if (this.simulationModeToggle) {
       this.simulationModeToggle.addEventListener('change', (e) => this.toggleSimulationMode(e.target.checked));
@@ -334,6 +322,24 @@ class ScribeCatApp {
     if (this.sendChatBtn) {
       this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
     }
+    if (this.chatInput) {
+      this.chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          this.sendChatMessage();
+        }
+      });
+    }
+    
+    // Content sections resize handle
+    if (this.resizeHandle) {
+      this.setupContentResize();
+    }
+    
+    // Chat drag functionality
+    if (this.chatDragHandle && this.aiChat) {
+      this.setupChatDrag();
+    }
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       mainContent.addEventListener('click', () => {
@@ -367,19 +373,6 @@ class ScribeCatApp {
     if (driveStatus) {
       driveStatus.addEventListener('click', () => this.showStatusDetails('drive'));
     }
-    
-    // Bug Reporter event listeners
-    if (this.createBugReportBtn) {
-      this.createBugReportBtn.addEventListener('click', () => this.createBugReport());
-    }
-
-    // Error Notification event listeners
-    if (this.dismissErrorBtn) {
-      this.dismissErrorBtn.addEventListener('click', () => this.dismissErrorNotification());
-    }
-    if (this.reportErrorBugBtn) {
-      this.reportErrorBugBtn.addEventListener('click', () => this.reportErrorAsBug());
-    }
   }
 
   toggleSidebar() {
@@ -411,13 +404,133 @@ class ScribeCatApp {
     }
   }
 
+  setupContentResize() {
+    let isResizing = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+    let startRightWidth = 0;
+
+    this.resizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+
+      const containerRect = this.resizeHandle.parentElement.getBoundingClientRect();
+      const leftRect = this.editorSection.getBoundingClientRect();
+      const rightRect = this.transcriptionSection.getBoundingClientRect();
+
+      startLeftWidth = leftRect.width;
+      startRightWidth = rightRect.width;
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      // Prevent text selection during resize
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'ew-resize';
+    });
+
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+
+      const deltaX = e.clientX - startX;
+      const containerWidth = this.resizeHandle.parentElement.clientWidth;
+      const handleWidth = this.resizeHandle.offsetWidth;
+
+      // Calculate new widths
+      const newLeftWidth = startLeftWidth + deltaX;
+      const newRightWidth = startRightWidth - deltaX;
+
+      // Set minimum widths (25% each to ensure cards always fit)
+      const minWidth = containerWidth * 0.25;
+      
+      if (newLeftWidth >= minWidth && newRightWidth >= minWidth) {
+        const totalAvailable = containerWidth - handleWidth;
+        const leftPercent = (newLeftWidth / totalAvailable) * 100;
+        const rightPercent = (newRightWidth / totalAvailable) * 100;
+
+        this.editorSection.style.flex = `0 0 ${leftPercent}%`;
+        this.transcriptionSection.style.flex = `0 0 ${rightPercent}%`;
+      }
+    };
+
+    const handleMouseUp = () => {
+      isResizing = false;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      
+      // Restore text selection and cursor
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }
+
+  setupChatDrag() {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startBottom = 0;
+
+    this.chatDragHandle.addEventListener('mousedown', (e) => {
+      // Only drag when chat is expanded
+      if (this.aiChat.classList.contains('collapsed')) return;
+      
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const chatRect = this.aiChat.getBoundingClientRect();
+      startLeft = chatRect.left;
+      startBottom = window.innerHeight - chatRect.bottom;
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      // Prevent text selection during drag
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'move';
+      
+      e.preventDefault();
+    });
+
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      const newLeft = startLeft + deltaX;
+      const newBottom = startBottom - deltaY;
+      
+      // Keep chat within viewport bounds
+      const chatRect = this.aiChat.getBoundingClientRect();
+      const maxLeft = window.innerWidth - chatRect.width - 20;
+      const maxBottom = window.innerHeight - chatRect.height - 20;
+      
+      const boundedLeft = Math.max(20, Math.min(newLeft, maxLeft));
+      const boundedBottom = Math.max(20, Math.min(newBottom, maxBottom));
+      
+      this.aiChat.style.left = `${boundedLeft}px`;
+      this.aiChat.style.right = 'auto';
+      this.aiChat.style.bottom = `${boundedBottom}px`;
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      
+      // Restore text selection and cursor
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }
+
   async loadSettings() {
     // Load theme
-    const savedTheme = await window.electronAPI.storeGet('theme') || 'default';
+    const savedTheme = await window.electronAPI.storeGet('theme') || 'ocean';
     this.changeTheme(savedTheme);
-    this.themeSelect.value = savedTheme;
-    // Update theme preview on load
-    this.updateThemePreview();
+    this.updateThemeSelection(savedTheme);
     
     // Load simulation mode (defaults to true if not set)
     const savedSimulationMode = await window.electronAPI.storeGet('simulation-mode');
@@ -759,13 +872,61 @@ class ScribeCatApp {
     }, 3000);
   }
 
+  initializeThemeGrid() {
+    const themes = [
+      { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#14b8a6', accent: '#06b6d4' },
+      { id: 'forest', name: 'Forest', primary: '#059669', secondary: '#10b981', accent: '#65a30d' },
+      { id: 'sunset', name: 'Sunset', primary: '#ea580c', secondary: '#dc2626', accent: '#ec4899' },
+      { id: 'royal', name: 'Royal', primary: '#8b5cf6', secondary: '#6366f1', accent: '#a855f7' },
+      { id: 'rose', name: 'Rose', primary: '#f43f5e', secondary: '#e11d48', accent: '#ef4444' },
+      { id: 'tropical', name: 'Tropical', primary: '#14b8a6', secondary: '#059669', accent: '#06b6d4' },
+      { id: 'cosmic', name: 'Cosmic', primary: '#6366f1', secondary: '#8b5cf6', accent: '#3b82f6' },
+      { id: 'autumn', name: 'Autumn', primary: '#f59e0b', secondary: '#ea580c', accent: '#eab308' },
+      { id: 'emerald', name: 'Emerald', primary: '#10b981', secondary: '#14b8a6', accent: '#059669' },
+      { id: 'arctic', name: 'Arctic', primary: '#06b6d4', secondary: '#0ea5e9', accent: '#64748b' },
+      { id: 'berry', name: 'Berry', primary: '#ec4899', secondary: '#8b5cf6', accent: '#d946ef' },
+      { id: 'monochrome', name: 'Mono', primary: '#64748b', secondary: '#6b7280', accent: '#71717a' },
+      { id: 'midnight', name: 'Midnight', primary: '#1e40af', secondary: '#4338ca', accent: '#7c3aed' },
+      { id: 'neon', name: 'Neon', primary: '#65a30d', secondary: '#eab308', accent: '#16a34a' },
+      { id: 'volcano', name: 'Volcano', primary: '#dc2626', secondary: '#ea580c', accent: '#f59e0b' }
+    ];
+
+    this.themeGrid.innerHTML = '';
+    
+    themes.forEach(theme => {
+      const themeOption = document.createElement('div');
+      themeOption.className = 'theme-option';
+      themeOption.dataset.theme = theme.id;
+      
+      themeOption.innerHTML = `
+        <div class="theme-colors">
+          <div class="theme-color primary" style="background-color: ${theme.primary}"></div>
+          <div class="theme-color secondary" style="background-color: ${theme.secondary}"></div>
+          <div class="theme-color accent" style="background-color: ${theme.accent}"></div>
+        </div>
+        <div class="theme-label">${theme.name}</div>
+      `;
+      
+      themeOption.addEventListener('click', () => {
+        this.changeTheme(theme.id);
+        this.updateThemeSelection(theme.id);
+      });
+      
+      this.themeGrid.appendChild(themeOption);
+    });
+  }
+
+  updateThemeSelection(themeId) {
+    const themeOptions = this.themeGrid.querySelectorAll('.theme-option');
+    themeOptions.forEach(option => {
+      option.classList.toggle('active', option.dataset.theme === themeId);
+    });
+  }
+
   changeTheme(theme) {
     this.currentTheme = theme;
     document.documentElement.setAttribute('data-theme', theme);
     window.electronAPI.storeSet('theme', theme);
-    
-    // Update theme preview swatches
-    this.updateThemePreview();
   }
 
   async toggleSimulationMode(enabled) {
@@ -841,33 +1002,6 @@ class ScribeCatApp {
         span.textContent = 'AI (Live)';
         transcriptionStatus.title = 'AI Status - Using real API connections';
       }
-    }
-  }
-
-  updateThemePreview() {
-    const preview = document.getElementById('theme-preview');
-    if (preview) {
-      // Force a repaint to get the latest CSS custom property values
-      setTimeout(() => {
-        const primarySwatch = preview.querySelector('.theme-swatch.primary');
-        const surfaceSwatch = preview.querySelector('.theme-swatch.surface');
-        const backgroundSwatch = preview.querySelector('.theme-swatch.background');
-        
-        if (primarySwatch) {
-          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-          primarySwatch.style.backgroundColor = primaryColor;
-        }
-        
-        if (surfaceSwatch) {
-          const surfaceColor = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
-          surfaceSwatch.style.backgroundColor = surfaceColor;
-        }
-        
-        if (backgroundSwatch) {
-          const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
-          backgroundSwatch.style.backgroundColor = backgroundColor;
-        }
-      }, 50);
     }
   }
 
@@ -1663,7 +1797,7 @@ class ScribeCatApp {
       `${index + 1}. ${course.courseNumber} - ${course.courseTitle}`
     ).join('\n');
     
-    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'import' to import from Canvas browser extension\n4. Enter 'scrape' to attempt Canvas course scraping\n5. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
+    const action = prompt(`Current Courses:\n${courseList || 'None'}\n\nActions:\n1. Enter 'add:COURSE_NUMBER:COURSE_TITLE' to add a course\n2. Enter 'delete:INDEX' to delete a course (1-based)\n3. Enter 'scrape' to attempt Canvas course scraping\n4. Click Cancel to close\n\nExample: add:CS101:Introduction to Computer Science`);
     
     if (action) {
       if (action.startsWith('add:')) {
@@ -1693,96 +1827,11 @@ class ScribeCatApp {
         } else {
           alert('Invalid course index.');
         }
-      } else if (action === 'import') {
-        await this.importCoursesFromExtension();
       } else if (action === 'scrape') {
         await this.attemptCanvasScraping();
       } else {
-        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, import, or scrape');
+        alert('Invalid action. Use add:COURSE_NUMBER:COURSE_TITLE, delete:INDEX, or scrape');
       }
-    }
-  }
-
-  async importCoursesFromExtension() {
-    const jsonData = prompt(`Paste the JSON data from ScribeCat Canvas Browser Extension:\n\n(Copy the data from the extension's "Copy for ScribeCat" feature)`);
-    
-    if (!jsonData) {
-      return; // User canceled
-    }
-    
-    try {
-      // Parse the JSON data
-      const importData = JSON.parse(jsonData);
-      
-      // Validate the data structure
-      if (!importData.courses || !Array.isArray(importData.courses)) {
-        throw new Error('Invalid import data format. Missing courses array.');
-      }
-      
-      if (importData.source && !importData.source.includes('ScribeCat')) {
-        const confirmProceed = confirm('Warning: This data may not be from the ScribeCat Canvas extension. Continue anyway?');
-        if (!confirmProceed) {
-          return;
-        }
-      }
-      
-      // Get existing courses
-      const existingCourses = await window.electronAPI.storeGet('predefined-courses') || [];
-      
-      // Process imported courses
-      let importedCount = 0;
-      let skippedCount = 0;
-      
-      for (const importedCourse of importData.courses) {
-        // Validate required fields
-        if (!importedCourse.courseTitle && !importedCourse.courseNumber) {
-          skippedCount++;
-          continue;
-        }
-        
-        // Check for duplicates (by course number or title)
-        const isDuplicate = existingCourses.some(existing => 
-          (existing.courseNumber && importedCourse.courseNumber && 
-           existing.courseNumber.toLowerCase() === importedCourse.courseNumber.toLowerCase()) ||
-          (existing.courseTitle && importedCourse.courseTitle &&
-           existing.courseTitle.toLowerCase() === importedCourse.courseTitle.toLowerCase())
-        );
-        
-        if (isDuplicate) {
-          skippedCount++;
-          continue;
-        }
-        
-        // Add the course
-        const newCourse = {
-          id: importedCourse.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          courseNumber: importedCourse.courseNumber || '',
-          courseTitle: importedCourse.courseTitle || 'Imported Course',
-          source: 'canvas_extension',
-          imported: new Date().toISOString()
-        };
-        
-        existingCourses.push(newCourse);
-        importedCount++;
-      }
-      
-      // Save the updated courses
-      await window.electronAPI.storeSet('predefined-courses', existingCourses);
-      await this.loadPredefinedCourses();
-      
-      // Show results
-      let message = `Import completed!\n\n`;
-      message += `✅ Imported: ${importedCount} courses\n`;
-      if (skippedCount > 0) {
-        message += `⚠️ Skipped: ${skippedCount} courses (duplicates or invalid data)\n`;
-      }
-      message += `\nTotal courses: ${existingCourses.length}`;
-      
-      alert(message);
-      
-    } catch (error) {
-      console.error('Import failed:', error);
-      alert(`Import failed: ${error.message}\n\nPlease ensure you're pasting valid JSON data from the ScribeCat Canvas browser extension.`);
     }
   }
 
@@ -1793,7 +1842,7 @@ class ScribeCatApp {
       return;
     }
 
-    alert(`Canvas Course Scraping Methods:\n\n1. Browser Extension (NEW!):\n   - Install the ScribeCat Canvas browser extension\n   - Automatically collects course data from Canvas dashboard\n   - Use "import" in course management to import collected data\n\n2. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nTry the new browser extension first! Install it from the browser-extension folder and use "import" in course management.`);
+    alert(`Canvas Course Scraping Methods:\n\n1. Canvas API (Recommended):\n   - Requires API token from Canvas settings\n   - Use /api/v1/courses endpoint\n   - More reliable and doesn't require page parsing\n\n2. Browser Extension:\n   - Create Chrome/Firefox extension\n   - Inject content script into Canvas pages\n   - Parse course list from DOM elements\n\n3. Selenium/Puppeteer (Not recommended):\n   - Automate browser navigation\n   - Requires login credentials\n   - More complex and fragile\n\n4. LTI Integration:\n   - Register as Learning Tools Interoperability app\n   - Get course context automatically\n   - Requires institutional approval\n\nFor now, use the manual course management or consider implementing Canvas API integration.`);
   }
 
   /* 
@@ -2089,16 +2138,8 @@ class ScribeCatApp {
   }
 
   async getAIResponse(question, notesContent, transcriptionContent) {
-    // First check if this might be a bug-related conversation
-    const bugDetected = this.detectBugInConversation(question, notesContent, transcriptionContent);
-    
     if (this.simulationMode) {
-      // Enhanced simulation with bug detection
-      if (bugDetected.isBug) {
-        return await this.handleBugConversation(question, bugDetected, true);
-      }
-      
-      // Regular simulation responses
+      // Simulate AI response
       const responses = [
         "Based on your notes, here's what I found...",
         "Looking at the transcription, it seems like...",
@@ -2114,16 +2155,9 @@ class ScribeCatApp {
       
       return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using OpenAI's API to provide contextual answers.]`;
     } else {
-      // Real OpenAI API implementation with enhanced bug detection
+      // Real OpenAI API implementation
       try {
         const context = `Notes: ${notesContent}\n\nTranscription: ${transcriptionContent}`;
-        
-        let systemPrompt = 'You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.';
-        
-        // Enhanced system prompt for bug detection
-        if (bugDetected.isBug) {
-          systemPrompt += ' The user appears to be experiencing a technical issue. If this seems like a bug or problem with ScribeCat functionality, offer to help them report it by asking if they would like you to help create a bug report.';
-        }
         
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -2136,7 +2170,7 @@ class ScribeCatApp {
             messages: [
               {
                 role: 'system',
-                content: systemPrompt
+                content: 'You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.'
               },
               {
                 role: 'user',
@@ -2153,596 +2187,12 @@ class ScribeCatApp {
         }
 
         const data = await response.json();
-        const aiResponse = data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
-        
-        // If bug detected, add helpful suggestion
-        if (bugDetected.isBug) {
-          return await this.handleBugConversation(question, bugDetected, false, aiResponse);
-        }
-        
-        return aiResponse;
+        return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
       } catch (error) {
         console.error('Error calling OpenAI API:', error);
         return `Error: Could not connect to OpenAI API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
       }
     }
-  }
-
-  // Enhanced bug detection in conversations
-  detectBugInConversation(question, notesContent, transcriptionContent) {
-    const bugKeywords = [
-      'not working', 'broken', 'error', 'crash', 'freeze', 'frozen',
-      'stuck', 'problem', 'issue', 'bug', 'fail', 'failed', 'failing',
-      'won\'t save', 'can\'t record', 'not saving', 'not recording',
-      'doesn\'t work', 'stopped working', 'not responding', 'hang', 'hanging'
-    ];
-
-    const functionKeywords = [
-      'record', 'recording', 'save', 'saving', 'transcri', 'notes',
-      'drive', 'export', 'audio', 'microphone', 'voice', 'playback'
-    ];
-
-    const questionLower = question.toLowerCase();
-    const hasBugKeyword = bugKeywords.some(keyword => questionLower.includes(keyword));
-    const hasFunctionKeyword = functionKeywords.some(keyword => questionLower.includes(keyword));
-
-    // Check for specific bug patterns
-    const specificPatterns = [
-      /my .+ (isn't|aren't|won't|can't|not) (working|saving|recording)/i,
-      /how do I fix/i,
-      /why (isn't|won't|can't|doesn't)/i,
-      /something (is|seems) wrong/i,
-      /having trouble with/i,
-      /keep getting (error|problem)/i
-    ];
-
-    const hasSpecificPattern = specificPatterns.some(pattern => pattern.test(question));
-
-    return {
-      isBug: (hasBugKeyword && hasFunctionKeyword) || hasSpecificPattern,
-      confidence: hasSpecificPattern ? 'high' : hasBugKeyword && hasFunctionKeyword ? 'medium' : 'low',
-      keywords: bugKeywords.filter(keyword => questionLower.includes(keyword)),
-      functions: functionKeywords.filter(keyword => questionLower.includes(keyword))
-    };
-  }
-
-  async handleBugConversation(question, bugInfo, isSimulation, aiResponse = null) {
-    // Start conversational bug reporting flow
-    if (!this.bugReportingFlow) {
-      this.bugReportingFlow = {
-        active: false,
-        stage: 'detection',
-        responses: {},
-        originalQuestion: question,
-        bugInfo: bugInfo
-      };
-    }
-
-    if (this.bugReportingFlow.stage === 'detection') {
-      // Offer to help with bug reporting
-      this.bugReportingFlow.active = true;
-      this.bugReportingFlow.stage = 'offer';
-      
-      const offerMessage = isSimulation 
-        ? `It sounds like you might be experiencing a technical issue with ScribeCat. I'd be happy to help you report this as a bug to the development team. Would you like me to guide you through creating a bug report? This will help get the issue fixed faster.
-
-Type "yes" or "help me report this" to start the bug reporting process, or continue with your question if you prefer.`
-        : `${aiResponse}
-
-It sounds like you might be experiencing a technical issue. Would you like me to help you create a bug report for the development team? I can guide you through a few questions to gather the necessary details.`;
-
-      return offerMessage;
-    }
-
-    return this.continueBugReportingFlow(question);
-  }
-
-  async continueBugReportingFlow(userInput) {
-    if (!this.bugReportingFlow || !this.bugReportingFlow.active) {
-      return "I'm not sure what you're referring to. Can you please rephrase your question?";
-    }
-
-    const inputLower = userInput.toLowerCase();
-    const isPositive = ['yes', 'yeah', 'sure', 'ok', 'okay', 'help', 'report'].some(word => inputLower.includes(word));
-    const isNegative = ['no', 'nope', 'skip', 'not now', 'later'].some(word => inputLower.includes(word));
-
-    switch (this.bugReportingFlow.stage) {
-      case 'offer':
-        if (isPositive) {
-          this.bugReportingFlow.stage = 'question1';
-          return "Great! I'll help you create a comprehensive bug report. Let's start with a few questions:\n\n**Question 1:** Can you describe exactly what you were trying to do when the problem occurred?";
-        } else if (isNegative) {
-          this.bugReportingFlow.active = false;
-          return "No problem! Feel free to ask me anything else about ScribeCat or continue with your original question.";
-        } else {
-          return "I didn't quite understand. Would you like me to help you report this issue as a bug? Please type 'yes' to continue or 'no' to skip.";
-        }
-
-      case 'question1':
-        this.bugReportingFlow.responses.whatTrying = userInput;
-        this.bugReportingFlow.stage = 'question2';
-        return "**Question 2:** What exactly happened? Did you see any error messages or unexpected behavior?";
-
-      case 'question2':
-        this.bugReportingFlow.responses.whatHappened = userInput;
-        this.bugReportingFlow.stage = 'question3';
-        return "**Question 3:** Had this feature been working correctly before, or is this the first time you tried it?";
-
-      case 'question3':
-        this.bugReportingFlow.responses.previouslyWorked = userInput;
-        this.bugReportingFlow.stage = 'question4';
-        return "**Question 4:** Are you able to reproduce this issue consistently, or does it happen randomly?";
-
-      case 'question4':
-        this.bugReportingFlow.responses.reproducible = userInput;
-        this.bugReportingFlow.stage = 'generate';
-        return "Perfect! I have enough information to create a comprehensive bug report. Let me generate it for you...\n\n" + 
-               await this.generateAIBugReport();
-
-      default:
-        this.bugReportingFlow.active = false;
-        return "Something went wrong with the bug reporting flow. Please try again or use the manual bug reporter in the sidebar.";
-    }
-  }
-
-  async generateAIBugReport() {
-    if (!this.bugReportingFlow || !this.bugReportingFlow.responses) {
-      return "Error: No bug report data available.";
-    }
-
-    const responses = this.bugReportingFlow.responses;
-    const bugInfo = this.bugReportingFlow.bugInfo;
-    
-    // Generate comprehensive title
-    const title = this.generateBugTitle(responses.whatTrying, responses.whatHappened);
-    
-    // Generate comprehensive description
-    const description = this.generateBugDescription(responses);
-    
-    // Create the bug report
-    const bugReport = this.generateBugReportContentWithContext(title, description, '');
-    
-    // Reset the flow
-    this.bugReportingFlow.active = false;
-    this.bugReportingFlow = null;
-    
-    // Submit the bug report
-    setTimeout(async () => {
-      const success = await this.submitBugReport(bugReport, title);
-      if (success) {
-        this.addChatMessage("✅ Bug report submitted successfully! The development team will review your report.", 'ai');
-      } else {
-        this.addChatMessage("❌ There was an issue submitting the bug report. You can try using the manual bug reporter in the sidebar.", 'ai');
-      }
-    }, 1000);
-    
-    return `Here's your bug report:\n\n**Title:** ${title}\n\n**Description:**\n${description}\n\nI'll submit this report to GitHub now. You should see a browser window open where you can review and finalize the submission.`;
-  }
-
-  generateBugTitle(whatTrying, whatHappened) {
-    // Extract key action and issue
-    const tryingWords = whatTrying.toLowerCase().split(' ');
-    const happenedWords = whatHappened.toLowerCase().split(' ');
-    
-    const actions = ['record', 'save', 'export', 'transcribe', 'play'];
-    const issues = ['not working', 'failed', 'error', 'crash', 'stuck'];
-    
-    const foundAction = actions.find(action => tryingWords.some(word => word.includes(action)));
-    const foundIssue = issues.find(issue => happenedWords.join(' ').includes(issue));
-    
-    if (foundAction && foundIssue) {
-      return `${foundAction.charAt(0).toUpperCase() + foundAction.slice(1)} ${foundIssue}`;
-    } else if (foundAction) {
-      return `Issue with ${foundAction}`;
-    } else {
-      return whatHappened.substring(0, 80);
-    }
-  }
-
-  generateBugDescription(responses) {
-    return `## User Report
-
-**What I was trying to do:**
-${responses.whatTrying}
-
-**What happened:**
-${responses.whatHappened}
-
-**Previous behavior:**
-${responses.previouslyWorked}
-
-**Reproducibility:**
-${responses.reproducible}
-
-**Additional Context:**
-This report was generated through an AI-guided conversation to help capture comprehensive details about the issue.`;
-  }
-
-  // Simple Bug Reporter Methods
-  async createBugReport() {
-    const title = this.bugTitleInput?.value?.trim();
-    const description = this.bugDescriptionTextarea?.value?.trim();
-    const email = this.userEmailInput?.value?.trim();
-
-    if (!title || !description) {
-      this.updateBugReportStatus('Please fill in the title and description', 'error');
-      return;
-    }
-
-    try {
-      if (this.createBugReportBtn) {
-        this.createBugReportBtn.disabled = true;
-        this.createBugReportBtn.textContent = 'Reporting...';
-      }
-
-      // Create comprehensive bug report with enhanced context
-      const bugReport = this.generateBugReportContentWithContext(title, description, email);
-      
-      // Try multiple reporting methods
-      const success = await this.submitBugReport(bugReport, title);
-      
-      if (success) {
-        this.updateBugReportStatus('✅ Bug report submitted successfully!', 'success');
-        // Clear form
-        if (this.bugTitleInput) this.bugTitleInput.value = '';
-        if (this.bugDescriptionTextarea) this.bugDescriptionTextarea.value = '';
-        if (this.userEmailInput) this.userEmailInput.value = '';
-      } else {
-        throw new Error('Failed to submit bug report');
-      }
-      
-    } catch (error) {
-      console.error('Error creating bug report:', error);
-      this.updateBugReportStatus(`❌ ${error.message}`, 'error');
-    } finally {
-      if (this.createBugReportBtn) {
-        this.createBugReportBtn.disabled = false;
-        this.createBugReportBtn.textContent = 'Report Bug';
-      }
-    }
-  }
-
-  generateBugReportContent(title, description, email) {
-    return {
-      title: `[User Report] ${title}`,
-      body: `## Bug Report
-
-**Summary:** ${title}
-
-**Description:**
-${description}
-
-**User Details:**
-- Email: ${email || 'Not provided'}
-- App Version: ${window.appInfo?.version || 'Unknown'}
-- Platform: ${window.appInfo?.platform || 'Unknown'}
-- User Agent: ${navigator.userAgent}
-- Timestamp: ${new Date().toISOString()}
-
-**System Info:**
-- Screen Resolution: ${screen.width}x${screen.height}
-- Language: ${navigator.language}
-- Online: ${navigator.onLine}
-
----
-*This bug report was submitted via ScribeCat's integrated bug reporter*`,
-      labels: ['bug', 'user-report', 'scribecat']
-    };
-  }
-
-  // Enhanced session context collection for manual bug reports
-  generateBugReportContentWithContext(title, description, email) {
-    // Get session context
-    const notesContent = this.notesEditor?.textContent || 'No notes';
-    const transcriptionContent = Array.from(this.transcriptionDisplay?.children || [])
-      .map(entry => entry.textContent)
-      .join('\n') || 'No transcription';
-
-    // Get recent errors if any
-    const recentErrors = this.errorHistory.slice(-3).map(err => 
-      `[${err.timestamp}] ${err.type}: ${err.message}`
-    ).join('\n');
-
-    const enhancedBody = `## Bug Report
-
-**Summary:** ${title}
-
-**Description:**
-${description}
-
-**User Details:**
-- Email: ${email || 'Not provided'}
-- App Version: ${window.appInfo?.version || 'Unknown'}
-- Platform: ${window.appInfo?.platform || 'Unknown'}
-- User Agent: ${navigator.userAgent}
-- Timestamp: ${new Date().toISOString()}
-
-**System Info:**
-- Screen Resolution: ${screen.width}x${screen.height}
-- Language: ${navigator.language}
-- Online: ${navigator.onLine}
-- Recording Status: ${this.isRecording ? 'Recording' : 'Not Recording'}
-- Backend: ${this.whisperEnabled ? 'Whisper' : 'Vosk'}
-- Simulation Mode: ${this.simulationMode ? 'Enabled' : 'Disabled'}
-
-**Session Context:**
-${notesContent.length > 0 ? `
-**Current Notes:**
-\`\`\`
-${notesContent.substring(0, 1000)}${notesContent.length > 1000 ? '...' : ''}
-\`\`\`
-` : '**Notes:** Empty'}
-
-${transcriptionContent.length > 0 ? `
-**Current Transcription:**
-\`\`\`
-${transcriptionContent.substring(0, 1000)}${transcriptionContent.length > 1000 ? '...' : ''}
-\`\`\`
-` : '**Transcription:** Empty'}
-
-${recentErrors ? `
-**Recent Errors:**
-\`\`\`
-${recentErrors}
-\`\`\`
-` : ''}
-
----
-*This bug report was submitted via ScribeCat's integrated bug reporter*`;
-
-    return {
-      title: `[User Report] ${title}`,
-      body: enhancedBody,
-      labels: ['bug', 'user-report', 'scribecat']
-    };
-  }
-
-  async submitBugReport(bugReport, title) {
-    // Method 1: Try to open GitHub issue creation page with pre-filled data
-    try {
-      const repo = 'lmdrew96/ScribeCat'; // ScribeCat repository
-      const issueUrl = new URL(`https://github.com/${repo}/issues/new`);
-      
-      // Add query parameters for pre-filled issue
-      issueUrl.searchParams.set('title', bugReport.title);
-      issueUrl.searchParams.set('body', bugReport.body);
-      issueUrl.searchParams.set('labels', bugReport.labels.join(','));
-      
-      // Open in external browser
-      window.open(issueUrl.toString(), '_blank');
-      
-      this.updateBugReportStatus('Opening GitHub in your browser...', 'info');
-      
-      // Give user feedback that browser opened
-      setTimeout(() => {
-        this.updateBugReportStatus('✅ Please complete the issue submission in your browser', 'success');
-      }, 2000);
-      
-      return true;
-      
-    } catch (error) {
-      console.error('Failed to open GitHub issue page:', error);
-      
-      // Fallback: Copy to clipboard
-      try {
-        const reportText = `${bugReport.title}\n\n${bugReport.body}`;
-        await navigator.clipboard.writeText(reportText);
-        this.updateBugReportStatus('📋 Bug report copied to clipboard - please paste it at: https://github.com/lmdrew96/ScribeCat/issues/new', 'warning');
-        return true;
-      } catch (clipboardError) {
-        console.error('Failed to copy to clipboard:', clipboardError);
-        // Show manual instructions
-        this.updateBugReportStatus('❌ Please manually report this at: https://github.com/lmdrew96/ScribeCat/issues/new', 'error');
-        return false;
-      }
-    }
-  }
-
-  updateBugReportStatus(message, type = 'info') {
-    if (!this.bugReportStatus) return;
-    
-    this.bugReportStatus.style.display = 'block';
-    this.bugReportStatus.textContent = message;
-    this.bugReportStatus.className = `bug-status ${type}`;
-    
-    // Auto-hide success/info messages after 5 seconds
-    if (type === 'success' || type === 'info') {
-      setTimeout(() => {
-        if (this.bugReportStatus) {
-          this.bugReportStatus.style.display = 'none';
-        }
-      }, 5000);
-    }
-  }
-
-  // Error Monitoring and Notification System
-  initializeErrorMonitoring() {
-    // Global error handler
-    window.addEventListener('error', (event) => {
-      this.handleGlobalError({
-        message: event.message,
-        filename: event.filename,
-        line: event.lineno,
-        column: event.colno,
-        error: event.error,
-        type: 'javascript'
-      });
-    });
-
-    // Unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', (event) => {
-      this.handleGlobalError({
-        message: event.reason?.message || 'Unhandled promise rejection',
-        error: event.reason,
-        type: 'promise'
-      });
-    });
-
-    // Console error monitoring
-    this.originalConsoleError = console.error;
-    console.error = (...args) => {
-      this.originalConsoleError.apply(console, args);
-      
-      // Only show notification for significant errors, not warnings
-      const errorMessage = args.join(' ');
-      if (this.isSignificantError(errorMessage)) {
-        this.handleGlobalError({
-          message: errorMessage,
-          type: 'console',
-          args: args
-        });
-      }
-    };
-  }
-
-  isSignificantError(message) {
-    // Filter out non-critical errors/warnings
-    const ignoredPatterns = [
-      'Failed to load resource',
-      'Resource was not loaded',
-      'Could not load link',
-      'Could not load script',
-      'AudioContext',
-      'webkitAudioContext'
-    ];
-    
-    return !ignoredPatterns.some(pattern => message.includes(pattern));
-  }
-
-  handleGlobalError(errorInfo) {
-    console.log('Handling global error:', errorInfo);
-    
-    // Store error for potential reporting
-    const errorData = {
-      ...errorInfo,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      appVersion: window.appInfo?.version || 'Unknown',
-      url: window.location.href
-    };
-    
-    this.errorHistory.push(errorData);
-    
-    // Keep only last 10 errors
-    if (this.errorHistory.length > 10) {
-      this.errorHistory.shift();
-    }
-    
-    // Set current error for reporting
-    this.currentError = errorData;
-    
-    // Show notification after a short delay to avoid overwhelming user
-    if (!this.errorNotificationShowing) {
-      setTimeout(() => {
-        this.showErrorNotification(errorInfo.message);
-      }, 1000);
-    }
-  }
-
-  showErrorNotification(customMessage = null) {
-    if (!this.errorNotification) return;
-    
-    this.errorNotificationShowing = true;
-    
-    // Update message if provided
-    if (customMessage && this.errorNotificationText) {
-      this.errorNotificationText.textContent = `${customMessage} - functionality may be affected`;
-    }
-    
-    // Show notification
-    this.errorNotification.style.display = 'block';
-    this.errorNotification.classList.add('shown');
-    
-    // Auto-hide after 10 seconds if not already dismissed
-    this.errorNotificationTimeout = setTimeout(() => {
-      this.dismissErrorNotification();
-    }, 10000);
-  }
-
-  dismissErrorNotification() {
-    if (!this.errorNotification) return;
-    
-    this.errorNotification.style.display = 'none';
-    this.errorNotification.classList.remove('shown');
-    this.errorNotificationShowing = false;
-    
-    if (this.errorNotificationTimeout) {
-      clearTimeout(this.errorNotificationTimeout);
-      this.errorNotificationTimeout = null;
-    }
-  }
-
-  reportErrorAsBug() {
-    if (!this.currentError) {
-      console.warn('No current error to report');
-      return;
-    }
-    
-    // Dismiss the notification
-    this.dismissErrorNotification();
-    
-    // Generate comprehensive error report
-    const errorReport = this.generateErrorBugReport(this.currentError);
-    
-    // Submit the bug report
-    this.submitBugReport(errorReport, 'Auto-detected Error');
-  }
-
-  generateErrorBugReport(errorData) {
-    // Get session context
-    const notesContent = this.notesEditor?.textContent || 'No notes';
-    const transcriptionContent = Array.from(this.transcriptionDisplay?.children || [])
-      .map(entry => entry.textContent)
-      .join('\n') || 'No transcription';
-
-    // Get recent console logs (from error history)
-    const recentErrors = this.errorHistory.slice(-5).map(err => 
-      `[${err.timestamp}] ${err.type}: ${err.message}`
-    ).join('\n');
-
-    const errorBody = `## Auto-Detected Error Report
-
-**Error Details:**
-- **Type:** ${errorData.type}
-- **Message:** ${errorData.message}
-- **Timestamp:** ${errorData.timestamp}
-- **File:** ${errorData.filename || 'N/A'}
-- **Line:** ${errorData.line || 'N/A'}
-
-**System Information:**
-- **App Version:** ${errorData.appVersion}
-- **Platform:** ${window.appInfo?.platform || 'Unknown'}
-- **User Agent:** ${errorData.userAgent}
-- **URL:** ${errorData.url}
-
-**Session Context:**
-- **Recording Status:** ${this.isRecording ? 'Recording' : 'Not Recording'}
-- **Backend:** ${this.whisperEnabled ? 'Whisper' : 'Vosk'} 
-- **Simulation Mode:** ${this.simulationMode ? 'Enabled' : 'Disabled'}
-
-**Current Session Notes:**
-\`\`\`
-${notesContent.substring(0, 500)}${notesContent.length > 500 ? '...' : ''}
-\`\`\`
-
-**Current Session Transcription:**
-\`\`\`
-${transcriptionContent.substring(0, 500)}${transcriptionContent.length > 500 ? '...' : ''}
-\`\`\`
-
-**Recent Error History:**
-\`\`\`
-${recentErrors}
-\`\`\`
-
----
-*This bug report was auto-generated by ScribeCat's error detection system*`;
-
-    return {
-      title: `[Auto-Detected] ${errorData.type} Error: ${errorData.message.substring(0, 80)}`,
-      body: errorBody,
-      labels: ['bug', 'auto-detected', 'error-monitoring']
-    };
   }
 }
 
