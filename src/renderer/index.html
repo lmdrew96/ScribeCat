@@ -28,7 +28,7 @@
                         <div class="time">12:00 PM</div>
                         <div class="date">Monday, Jan 1</div>
                     </div>
-                    <div class="status-chips">
+                    <div class="status-chips" id="status-chips" style="display: none;">
                         <div class="status-chip" id="audio-status" title="Audio Status - Click for details">
                             <div class="status-indicator"></div>
                             <span>Audio</span>
@@ -479,11 +479,70 @@
             </main>
 
         <!-- Version Info -->
-        <div class="version-info" id="version-info">v1.0.0</div>
+        <div class="system-info-corner">
+            <div class="health-indicator" id="health-indicator" title="System Health">
+                <svg class="ekg-icon" width="24" height="24" viewBox="0 0 100 24" xmlns="http://www.w3.org/2000/svg">
+                    <path class="ekg-line" d="M0,12 L20,12 L25,5 L30,20 L35,8 L40,16 L45,12 L100,12" 
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="version-info" id="version-info">v1.0.0</div>
+        </div>
         
         <!-- Sidebar Scrim -->
         <div class="sidebar-scrim" id="sidebar-scrim"></div>
         
+        <!-- Health Status Dialog -->
+        <div class="modal-overlay" id="health-dialog" style="display: none;">
+            <div class="modal-content health-dialog-content">
+                <div class="modal-header">
+                    <h3>System Health Monitor</h3>
+                    <button class="modal-close" id="health-dialog-close">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Bug Reporter Section -->
+                    <div class="health-section bug-reporter-section">
+                        <h4>Report Issues</h4>
+                        <p class="section-description">Found a problem? Report it to help improve ScribeCat.</p>
+                        <button id="health-report-bug" class="btn btn-primary">Report Bug</button>
+                    </div>
+
+                    <!-- Search/Filter Section -->
+                    <div class="health-section search-section">
+                        <div class="search-container">
+                            <input type="text" id="health-search" placeholder="Search system components..." class="input-field">
+                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Comprehensive Status List -->
+                    <div class="health-section status-list-section">
+                        <h4>System Components</h4>
+                        <div class="health-status-list" id="health-status-list">
+                            <!-- Status items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Tooltip -->
+        <div class="health-tooltip" id="health-tooltip" style="display: none;">
+            <div class="tooltip-content">
+                <div class="critical-status-list" id="critical-status-list">
+                    <!-- Critical status items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
         <!-- Clear Notes Confirmation Modal -->
         <div class="modal-overlay" id="clear-notes-modal" style="display: none;">
             <div class="modal-content">
