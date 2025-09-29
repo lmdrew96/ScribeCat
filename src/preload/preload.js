@@ -78,7 +78,31 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
 
   // E2E healthcheck (safe, no IPC)
-  healthCheck: () => 'ok'
+  healthCheck: () => 'ok',
+
+  // Authentication API
+  authSignIn: (email, password) => ipcRenderer.invoke('auth:sign-in', email, password),
+  authSignUp: (email, password, displayName) => ipcRenderer.invoke('auth:sign-up', email, password, displayName),
+  authSignInWithGoogle: () => ipcRenderer.invoke('auth:sign-in-google'),
+  authSignInWithApple: () => ipcRenderer.invoke('auth:sign-in-apple'),
+  authResetPassword: (email) => ipcRenderer.invoke('auth:reset-password', email),
+  authSignOut: () => ipcRenderer.invoke('auth:sign-out'),
+  authSkip: () => ipcRenderer.invoke('auth:skip'),
+  authGetCurrentUser: () => ipcRenderer.invoke('auth:get-current-user'),
+  authIsSignedIn: () => ipcRenderer.invoke('auth:is-signed-in'),
+  authIsDeveloper: () => ipcRenderer.invoke('auth:is-developer'),
+  authGetAccountType: () => ipcRenderer.invoke('auth:get-account-type'),
+  authGetTokenUsage: () => ipcRenderer.invoke('auth:get-token-usage'),
+  authGetPremiumUnlocks: () => ipcRenderer.invoke('auth:get-premium-unlocks'),
+  authTrackTokenUsage: (amount) => ipcRenderer.invoke('auth:track-token-usage', amount),
+  authSyncSettings: (settings) => ipcRenderer.invoke('auth:sync-settings', settings),
+  authLoadSettings: () => ipcRenderer.invoke('auth:load-settings'),
+  authShowAuthWindow: () => ipcRenderer.invoke('auth:show-auth-window'),
+  authCloseAuthWindow: () => ipcRenderer.invoke('auth:close-auth-window'),
+  authOpenExternal: (url) => ipcRenderer.invoke('auth:open-external', url),
+  authSetDeveloperAccount: (userId, isDeveloper) => ipcRenderer.invoke('auth:set-developer-account', userId, isDeveloper),
+  authCheckDeveloperStatus: (userId) => ipcRenderer.invoke('auth:check-developer-status', userId),
+  authWindowClosing: () => ipcRenderer.send('auth:window-closing')
 });
 
 if (process.env.E2E) {

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const keytar = require('keytar');
@@ -10,11 +10,14 @@ const ElectronStore = require('electron-store');
 const Store = ElectronStore.default || ElectronStore;
 const store = new Store({ name: 'settings' });
 
-// Import subscription manager
+// Import subscription manager and auth manager
 const SubscriptionManager = require('./shared/subscription-manager.js');
+const AuthManager = require('./shared/auth-manager.js');
 const subscriptionManager = new SubscriptionManager();
+const authManager = new AuthManager();
 
 let mainWindow;
+let authWindow;
 
 // Enable live reload for development (optional)
 if (process.env.NODE_ENV === 'development' && !process.env.E2E) {
@@ -605,6 +608,244 @@ ipcMain.handle('subscription:track-usage', async (event, feature, amount) => {
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
+  }
+});
+
+// Authentication IPC handlers
+ipcMain.handle('auth:sign-in', async (event, email, password) => {
+  try {
+    const result = await authManager.signInWithEmail(email, password);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:sign-up', async (event, email, password, displayName) => {
+  try {
+    const result = await authManager.signUpWithEmail(email, password, displayName);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:sign-in-google', async () => {
+  try {
+    const result = await authManager.signInWithGoogle();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:sign-in-apple', async () => {
+  try {
+    const result = await authManager.signInWithApple();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:reset-password', async (event, email) => {
+  try {
+    const result = await authManager.resetPassword(email);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:sign-out', async () => {
+  try {
+    const result = await authManager.signOut();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:skip', async () => {
+  try {
+    // Set a flag to indicate user chose local-only mode
+    store.set('auth-skipped', true);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:get-current-user', async () => {
+  try {
+    const user = authManager.getCurrentUser();
+    const profile = authManager.getUserProfile();
+    return { success: true, user, profile };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:is-signed-in', async () => {
+  try {
+    const isSignedIn = authManager.isSignedIn();
+    return { success: true, isSignedIn };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:is-developer', async () => {
+  try {
+    const isDeveloper = authManager.isDeveloper();
+    return { success: true, isDeveloper };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:get-account-type', async () => {
+  try {
+    const accountType = authManager.getAccountType();
+    return { success: true, accountType };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:get-token-usage', async () => {
+  try {
+    const tokenUsage = authManager.getTokenUsage();
+    return { success: true, tokenUsage };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:get-premium-unlocks', async () => {
+  try {
+    const premiumUnlocks = authManager.getPremiumUnlocks();
+    return { success: true, premiumUnlocks };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:track-token-usage', async (event, amount) => {
+  try {
+    const result = await authManager.trackTokenUsage(amount);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:sync-settings', async (event, settings) => {
+  try {
+    const result = await authManager.syncSettings(settings);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:load-settings', async () => {
+  try {
+    const result = await authManager.loadSettings();
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:show-auth-window', async () => {
+  try {
+    if (authWindow) {
+      authWindow.focus();
+      return { success: true };
+    }
+
+    authWindow = new BrowserWindow({
+      width: 500,
+      height: 700,
+      minWidth: 400,
+      minHeight: 600,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        enableRemoteModule: false,
+        preload: path.join(__dirname, 'preload', 'preload.js')
+      },
+      titleBarStyle: 'hiddenInset',
+      show: false,
+      parent: mainWindow,
+      modal: true,
+      resizable: false,
+      maximizable: false,
+      minimizable: false
+    });
+
+    authWindow.loadFile(path.join(__dirname, 'renderer', 'auth-modal.html'));
+
+    authWindow.once('ready-to-show', () => {
+      authWindow.show();
+    });
+
+    authWindow.on('closed', () => {
+      authWindow = null;
+    });
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:close-auth-window', async () => {
+  try {
+    if (authWindow) {
+      authWindow.close();
+      authWindow = null;
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:open-external', async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Developer account management
+ipcMain.handle('auth:set-developer-account', async (event, userId, isDeveloper) => {
+  try {
+    const result = await authManager.setDeveloperAccount(userId, isDeveloper);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:check-developer-status', async (event, userId) => {
+  try {
+    const result = await authManager.checkDeveloperStatus(userId);
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle auth window closing
+ipcMain.on('auth:window-closing', () => {
+  if (authWindow) {
+    authWindow.close();
+    authWindow = null;
   }
 });
 

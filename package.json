@@ -35,6 +35,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.64.0",
+    "@firebase/auth": "^1.11.0",
+    "@firebase/firestore": "^4.9.2",
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
@@ -42,6 +44,7 @@
     "dotenv": "^17.2.2",
     "electron-store": "^10.1.0",
     "express": "^5.1.0",
+    "firebase": "^12.3.0",
     "keytar": "^7.9.0",
     "node-fetch": "^2.7.0",
     "ws": "^8.18.3"

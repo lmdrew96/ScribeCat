@@ -44,6 +44,10 @@ class ScribeCatApp {
     this.reviewAudio = null;
     this.isReviewPlaying = false;
     
+    // Authentication and user profile
+    this.currentUser = null;
+    this.userProfile = null;
+    
     this.init();
   }
 
@@ -223,6 +227,8 @@ class ScribeCatApp {
     this.upgradeSubscriptionBtn = document.getElementById('upgrade-subscription');
     this.viewPremiumUnlocksBtn = document.getElementById('view-premium-unlocks');
     this.currentFeaturesList = document.getElementById('current-features');
+    this.signOutBtn = document.getElementById('sign-out-btn');
+    this.signInBtn = document.getElementById('sign-in-btn');
   }
 
   async init() {
@@ -231,6 +237,9 @@ class ScribeCatApp {
     this.initializeElements();
     this.setupEventListeners();
     await this.loadSettings();
+    
+    // Initialize authentication
+    await this.initializeAuthentication();
     
     // Initialize subscription manager
     await this.initializeSubscriptionManager();
@@ -281,6 +290,277 @@ class ScribeCatApp {
   }
 
   // Initialize subscription manager with IPC communication
+  async initializeAuthentication() {
+    try {
+      // Check if user is already signed in
+      const authStatus = await window.electronAPI.authIsSignedIn();
+      if (authStatus.success && authStatus.isSignedIn) {
+        console.log('User is already signed in');
+        await this.loadUserProfile();
+        return;
+      }
+      
+      // Check if user previously skipped authentication
+      const authSkipped = await window.electronAPI.storeGet('auth-skipped');
+      if (authSkipped) {
+        console.log('User previously chose local-only mode');
+        return;
+      }
+      
+      // Show authentication modal for first-time users
+      console.log('Showing authentication modal');
+      await this.showAuthenticationModal();
+      
+    } catch (error) {
+      console.error('Failed to initialize authentication:', error);
+      // Continue with local-only mode if auth fails
+    }
+  }
+
+  async showAuthenticationModal() {
+    try {
+      const result = await window.electronAPI.authShowAuthWindow();
+      if (result.success) {
+        console.log('Authentication modal opened');
+      } else {
+        console.error('Failed to open authentication modal:', result.error);
+      }
+    } catch (error) {
+      console.error('Error opening authentication modal:', error);
+    }
+  }
+
+  async loadUserProfile() {
+    try {
+      const userResult = await window.electronAPI.authGetCurrentUser();
+      if (userResult.success && userResult.user) {
+        this.currentUser = userResult.user;
+        this.userProfile = userResult.profile;
+        
+        // Update UI with user info
+        this.updateUserInterface();
+        
+        // Load user settings
+        await this.loadUserSettings();
+        
+        console.log('User profile loaded:', this.userProfile);
+      }
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+    }
+  }
+
+  updateUserInterface() {
+    // Update subscription info based on user profile
+    if (this.userProfile) {
+      const isDeveloper = this.userProfile.isDeveloper || false;
+      const accountType = this.userProfile.accountType || 'free';
+      
+      // Update tier badge
+      if (this.tierBadge) {
+        this.tierBadge.textContent = isDeveloper ? 'Developer' : accountType.charAt(0).toUpperCase() + accountType.slice(1);
+        this.tierBadge.className = `tier-badge ${accountType}`;
+      }
+      
+      // Update tier description
+      if (this.tierDescription) {
+        if (isDeveloper) {
+          this.tierDescription.textContent = 'Unlimited everything';
+        } else {
+          this.tierDescription.textContent = this.getTierDescription(accountType);
+        }
+      }
+      
+      // Update token usage display
+      this.updateTokenUsageDisplay();
+      
+      // Update premium unlocks
+      this.updatePremiumUnlocks();
+      
+      // Show sign-out button, hide sign-in button
+      if (this.signOutBtn) {
+        this.signOutBtn.style.display = 'block';
+      }
+      if (this.signInBtn) {
+        this.signInBtn.style.display = 'none';
+      }
+      
+      // Hide upgrade buttons for developer accounts
+      if (isDeveloper) {
+        if (this.upgradeSubscriptionBtn) {
+          this.upgradeSubscriptionBtn.style.display = 'none';
+        }
+        if (this.viewPremiumUnlocksBtn) {
+          this.viewPremiumUnlocksBtn.style.display = 'none';
+        }
+      } else {
+        if (this.upgradeSubscriptionBtn) {
+          this.upgradeSubscriptionBtn.style.display = 'block';
+        }
+        if (this.viewPremiumUnlocksBtn) {
+          this.viewPremiumUnlocksBtn.style.display = 'block';
+        }
+      }
+    } else {
+      // No user profile - show sign-in button, hide sign-out button
+      if (this.signOutBtn) {
+        this.signOutBtn.style.display = 'none';
+      }
+      if (this.signInBtn) {
+        this.signInBtn.style.display = 'block';
+      }
+    }
+  }
+
+  getTierDescription(tier) {
+    const descriptions = {
+      'free': 'Limited features',
+      'plus': 'Enhanced features',
+      'pro': 'Full features',
+      'developer': 'Unlimited everything'
+    };
+    return descriptions[tier] || 'Unknown tier';
+  }
+
+  updateTokenUsageDisplay() {
+    if (!this.userProfile || !this.dailyTokens) return;
+    
+    const tokenUsage = this.userProfile.tokens || { dailyLimit: 2000, used: 0 };
+    const isDeveloper = this.userProfile.isDeveloper || false;
+    
+    if (isDeveloper) {
+      this.dailyTokens.textContent = 'Unlimited';
+      this.dailyTokens.parentElement.style.display = 'block';
+    } else {
+      const used = tokenUsage.used || 0;
+      const limit = tokenUsage.dailyLimit || 2000;
+      this.dailyTokens.textContent = `${used.toLocaleString()}/${limit.toLocaleString()}`;
+      this.dailyTokens.parentElement.style.display = 'block';
+    }
+  }
+
+  updatePremiumUnlocks() {
+    if (!this.userProfile) return;
+    
+    const premiumUnlocks = this.userProfile.premiumUnlocks || {};
+    const isDeveloper = this.userProfile.isDeveloper || false;
+    
+    // Update feature list based on unlocks
+    if (this.currentFeaturesList) {
+      const features = this.getFeatureList(premiumUnlocks, isDeveloper);
+      this.currentFeaturesList.innerHTML = features.map(feature => 
+        `<li>${feature.enabled ? '✅' : '❌'} ${feature.name}</li>`
+      ).join('');
+    }
+  }
+
+  getFeatureList(premiumUnlocks, isDeveloper) {
+    return [
+      { name: 'Audio transcription', enabled: true },
+      { name: 'Note taking & editing', enabled: true },
+      { name: 'AI summary per session', enabled: true },
+      { name: 'AskAI chat', enabled: isDeveloper || premiumUnlocks.powerEditor || false },
+      { name: 'AI Autopolish', enabled: isDeveloper || premiumUnlocks.powerEditor || false },
+      { name: 'Pro themes', enabled: isDeveloper || premiumUnlocks.designersPack || false },
+      { name: 'Study boost', enabled: isDeveloper || premiumUnlocks.studyBoost || false },
+      { name: 'Organization pro', enabled: isDeveloper || premiumUnlocks.organizationPro || false }
+    ];
+  }
+
+  async loadUserSettings() {
+    try {
+      const settingsResult = await window.electronAPI.authLoadSettings();
+      if (settingsResult.success && settingsResult.settings) {
+        // Merge user settings with local settings
+        const userSettings = settingsResult.settings;
+        
+        // Apply theme if available
+        if (userSettings.theme) {
+          this.currentTheme = userSettings.theme;
+          this.applyTheme(userSettings.theme);
+        }
+        
+        // Apply other settings
+        if (userSettings.language) {
+          // Set language preference
+        }
+        
+        if (userSettings.defaultHighlighterColor) {
+          // Apply highlighter color
+          const highlightColorInput = document.getElementById('highlight-color');
+          if (highlightColorInput) {
+            highlightColorInput.value = userSettings.defaultHighlighterColor;
+          }
+        }
+        
+        console.log('User settings loaded and applied');
+      }
+    } catch (error) {
+      console.error('Failed to load user settings:', error);
+    }
+  }
+
+  async syncUserSettings() {
+    try {
+      if (!this.userProfile) return;
+      
+      // Collect current settings
+      const settings = {
+        theme: this.currentTheme,
+        language: 'en', // Default for now
+        defaultHighlighterColor: document.getElementById('highlight-color')?.value || '#FFFF00'
+      };
+      
+      // Sync to cloud
+      const result = await window.electronAPI.authSyncSettings(settings);
+      if (result.success) {
+        console.log('Settings synced to cloud');
+      } else {
+        console.error('Failed to sync settings:', result.error);
+      }
+    } catch (error) {
+      console.error('Error syncing settings:', error);
+    }
+  }
+
+  async signOut() {
+    try {
+      const result = await window.electronAPI.authSignOut();
+      if (result.success) {
+        // Clear user data
+        this.currentUser = null;
+        this.userProfile = null;
+        
+        // Update UI
+        this.updateUserInterface();
+        
+        // Reset subscription status to free tier
+        this.subscriptionStatus = {
+          tier: 'free',
+          tierDisplayName: 'Free',
+          premiumUnlocks: [],
+          features: {
+            askAIAccess: false,
+            aiSummariesPerSession: 1,
+            aiAutopolish: false,
+            proThemes: false
+          }
+        };
+        
+        // Update subscription display
+        this.updateSubscriptionDisplay();
+        
+        console.log('User signed out successfully');
+      } else {
+        console.error('Failed to sign out:', result.error);
+        alert('Failed to sign out. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+      alert('An error occurred while signing out. Please try again.');
+    }
+  }
+
   async initializeSubscriptionManager() {
     // Set reference for session tracking
     window.scribeCatApp = this;
@@ -842,6 +1122,12 @@ class ScribeCatApp {
     }
     if (this.viewPremiumUnlocksBtn) {
       this.viewPremiumUnlocksBtn.addEventListener('click', () => this.showPremiumUnlocksModal());
+    }
+    if (this.signOutBtn) {
+      this.signOutBtn.addEventListener('click', () => this.signOut());
+    }
+    if (this.signInBtn) {
+      this.signInBtn.addEventListener('click', () => this.showAuthenticationModal());
     }
     
     // Transcription event listeners (backend-gated)
