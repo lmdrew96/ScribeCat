@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Menu events
   onMenuAction: (callback) => {
     ipcRenderer.on('menu:new-recording', (e) => callback(e, 'menu:new-recording'));
+    ipcRenderer.on('menu:open-recording', (e) => callback(e, 'menu:open-recording'));
     ipcRenderer.on('menu:save', (e) => callback(e, 'menu:save'));
     ipcRenderer.on('menu:find', (e) => callback(e, 'menu:find'));
     ipcRenderer.on('menu:find-next', (e) => callback(e, 'menu:find-next'));

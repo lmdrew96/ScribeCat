@@ -303,6 +303,12 @@ function createMenu() {
           click: () => mainWindow?.webContents.send('menu:new-recording')
         },
         {
+          label: 'Open Recording...',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => mainWindow?.webContents.send('menu:open-recording'),
+          enabled: false // Placeholder for future functionality
+        },
+        {
           label: 'Save',
           accelerator: 'CmdOrCtrl+S',
           click: () => mainWindow?.webContents.send('menu:save')
@@ -312,7 +318,12 @@ function createMenu() {
           label: 'Exit',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => app.quit()
-        }
+        },
+        ...(process.platform === 'win32' ? [{
+          label: 'Close',
+          accelerator: 'Alt+F4',
+          click: () => app.quit()
+        }] : [])
       ]
     },
     {

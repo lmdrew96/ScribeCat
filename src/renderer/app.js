@@ -442,6 +442,9 @@ class ScribeCatApp {
           case 'menu:new-recording':
             this.newRecording();
             break;
+          case 'menu:open-recording':
+            this.showStatus('Open Recording feature coming soon!');
+            break;
           case 'menu:save':
             this.saveRecording();
             break;
@@ -582,6 +585,13 @@ class ScribeCatApp {
         return;
       }
 
+      // Handle Alt+F4 for Windows
+      if (e.altKey && e.key === 'F4' && navigator.platform.toLowerCase().includes('win')) {
+        e.preventDefault();
+        this.quitApplication();
+        return;
+      }
+
       // Handle modifier-based shortcuts
       if (e.ctrlKey || e.metaKey) {
         const handled = this.handleGlobalShortcut(e, isInInput);
@@ -624,6 +634,12 @@ class ScribeCatApp {
     // Document Management Shortcuts
     if (key === 'n' && !e.shiftKey) {
       this.newRecording();
+      return true;
+    }
+    
+    if (key === 'o' && !e.shiftKey) {
+      // Placeholder for open recording functionality
+      this.showStatus('Open Recording feature coming soon!');
       return true;
     }
     
@@ -2457,7 +2473,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       return;
     }
     
-    // Handle keyboard shortcuts
+    // Handle keyboard shortcuts for text formatting when in notes editor
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case 'b':
@@ -2484,6 +2500,20 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         case 'y':
           e.preventDefault();
           this.executeFormat('redo');
+          break;
+        case 'a':
+          // Let selectAll work normally in notes editor
+          break;
+        case 'x':
+          // Let cut work normally in notes editor
+          setTimeout(() => this.saveNotesDraft(), 10);
+          break;
+        case 'v':
+          // Let paste work normally in notes editor
+          setTimeout(() => this.saveNotesDraft(), 10);
+          break;
+        case 'c':
+          // Let copy work normally in notes editor
           break;
       }
     }
@@ -2613,6 +2643,39 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       indicator.style.opacity = '0';
       setTimeout(() => indicator.remove(), 300);
     }, 1500);
+  }
+
+  showStatus(message, type = 'info') {
+    // Create a temporary status indicator
+    const colors = {
+      info: '#3b82f6',
+      success: '#22c55e',
+      warning: '#f59e0b',
+      error: '#ef4444'
+    };
+    
+    const indicator = document.createElement('div');
+    indicator.textContent = message;
+    indicator.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${colors[type] || colors.info};
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      z-index: 1000;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.3s ease;
+      max-width: 300px;
+    `;
+    document.body.appendChild(indicator);
+    
+    setTimeout(() => {
+      indicator.style.opacity = '0';
+      setTimeout(() => indicator.remove(), 300);
+    }, 2500);
   }
 
   openFindDialog() {
@@ -2952,6 +3015,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
           <div>
             <h3>Document Management</h3>
             <div class="shortcut-item"><kbd>${cmdKey}+N</kbd> New Recording</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+O</kbd> Open Recording</div>
             <div class="shortcut-item"><kbd>${cmdKey}+S</kbd> Save</div>
             
             <h3>Text Formatting</h3>
@@ -2995,6 +3059,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
             <div class="shortcut-item"><kbd>${cmdKey}+,</kbd> Open Settings</div>
             <div class="shortcut-item"><kbd>${cmdKey}+?</kbd> Show This Help</div>
             <div class="shortcut-item"><kbd>F11</kbd> Toggle Fullscreen</div>
+            ${navigator.platform.toLowerCase().includes('win') ? '<div class="shortcut-item"><kbd>Alt+F4</kbd> Exit Application</div>' : ''}
           </div>
         </div>
       </div>
