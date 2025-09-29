@@ -106,7 +106,7 @@ struct AppTheme {
             surfaceColor: Color(hex: "#ccfbf1"),
             borderColor: Color(hex: "#5eead4"),
             textPrimary: Color(hex: "#0f766e"),
-            textSecondary: Color(hex: "#14b8a6"),
+            textSecondary: Color(hex: "#0f766e"),
             colorScheme: .light
         ),
         

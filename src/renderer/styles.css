@@ -109,7 +109,7 @@
   --surface-hover: #99f6e4;
   --border: #5eead4;
   --text-primary: #0f766e;
-  --text-secondary: #14b8a6;
+  --text-secondary: #0f766e;    /* Fixed: Same as primary for better contrast */
   --text-muted: #2dd4bf;
 }
 
@@ -1032,7 +1032,7 @@ body {
 
 /* Buttons */
 .btn {
-  padding: 8px 16px;
+  padding: var(--spacing-md) var(--spacing-xl); /* 8px 16px */
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -1041,7 +1041,7 @@ body {
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-md); /* 6px -> 8px for consistency */
 }
 
 .btn-primary {
