@@ -232,14 +232,18 @@ async function main() {
   });
 
   // Click-driven tests for buttons/controls
-  harness.test('sidebar toggle button toggles sidebar class', () => {
+  harness.test('collapsed sidebar click opens sidebar', () => {
     const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebar-toggle');
-    if (!sidebar || !toggle) return false;
+    if (!sidebar) return false;
+    // Ensure sidebar starts collapsed
     sidebar.classList.remove('open');
-    toggle.click();
+    // Click the collapsed sidebar to open it (this is the new behavior)
+    sidebar.click();
     if (!sidebar.classList.contains('open')) return false;
-    toggle.click();
+    // Click close button to close it
+    const closeBtn = sidebar.querySelector('.sidebar-close');
+    if (!closeBtn) return false;
+    closeBtn.click();
     return !sidebar.classList.contains('open');
   });
 
@@ -277,6 +281,32 @@ async function main() {
     app.transcriptionDisplay.scrollTop = 0;
     document.getElementById('jump-latest').click();
     return app.transcriptionDisplay.scrollTop === app.transcriptionDisplay.scrollHeight;
+  });
+
+  harness.testAsync('clear notes button clears editor content', async () => {
+    const notesEditor = document.getElementById('notes-editor');
+    const clearNotesBtn = document.getElementById('clear-notes');
+    const clearNotesModal = document.getElementById('clear-notes-modal');
+    const clearNotesConfirm = document.getElementById('clear-notes-confirm');
+    
+    if (!notesEditor || !clearNotesBtn || !clearNotesModal || !clearNotesConfirm) return false;
+    
+    // Add some content to the editor
+    notesEditor.innerHTML = '<p>Test content to be cleared</p>';
+    
+    // Click clear notes button
+    clearNotesBtn.click();
+    
+    // Check if modal is shown
+    if (clearNotesModal.style.display !== 'flex') return false;
+    
+    // Confirm the clear action
+    clearNotesConfirm.click();
+    
+    // Check if content is cleared and modal is hidden
+    if (notesEditor.innerHTML !== '' || clearNotesModal.style.display !== 'none') return false;
+    
+    return true;
   });
 
   await harness.testAsync('save claude key button saves via keytar IPC', async () => {

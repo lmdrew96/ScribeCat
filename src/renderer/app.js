@@ -55,7 +55,6 @@ class ScribeCatApp {
     this.vuBar = document.getElementById('vu-bar');
     // Sidebar
     this.sidebar = document.getElementById('sidebar');
-    this.sidebarToggle = document.getElementById('sidebar-toggle');
     this.sidebarScrim = document.getElementById('sidebar-scrim');
     
     // Settings elements
@@ -86,6 +85,13 @@ class ScribeCatApp {
     this.clearTranscriptionBtn = document.getElementById('clear-transcription');
     this.jumpLatestBtn = document.getElementById('jump-latest');
     this.transcriptionBackendSelect = document.getElementById('transcription-backend');
+    
+    // Clear notes functionality
+    this.clearNotesBtn = document.getElementById('clear-notes');
+    this.clearNotesModal = document.getElementById('clear-notes-modal');
+    this.clearNotesConfirm = document.getElementById('clear-notes-confirm');
+    this.clearNotesCancel = document.getElementById('clear-notes-cancel');
+    this.clearNotesModalClose = document.getElementById('clear-notes-modal-close');
     
     // Developer settings
     this.simulationToggle = document.getElementById('simulation-toggle');
@@ -233,9 +239,6 @@ class ScribeCatApp {
   }
 
   setupEventListeners() {
-    if (this.sidebarToggle) {
-      this.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
-    }
     // Allow clicking the collapsed sidebar block itself to open it
     if (this.sidebar) {
       this.sidebar.addEventListener('click', (e) => {
@@ -458,6 +461,31 @@ class ScribeCatApp {
     if (driveStatus) {
       driveStatus.addEventListener('click', () => this.showStatusDetails('drive'));
     }
+    
+    // Clear notes functionality
+    if (this.clearNotesBtn) {
+      this.clearNotesBtn.addEventListener('click', () => this.showClearNotesModal());
+    }
+    
+    if (this.clearNotesConfirm) {
+      this.clearNotesConfirm.addEventListener('click', () => this.confirmClearNotes());
+    }
+    
+    if (this.clearNotesCancel) {
+      this.clearNotesCancel.addEventListener('click', () => this.hideClearNotesModal());
+    }
+    
+    if (this.clearNotesModalClose) {
+      this.clearNotesModalClose.addEventListener('click', () => this.hideClearNotesModal());
+    }
+    
+    // Keyboard shortcut for clear notes (Ctrl+Shift+Delete)
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'Delete') {
+        e.preventDefault();
+        this.showClearNotesModal();
+      }
+    });
   }
 
   toggleSidebar() {
@@ -1610,6 +1638,30 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
   clearTranscription() {
     this.transcriptionDisplay.innerHTML = '';
+  }
+  
+  showClearNotesModal() {
+    if (this.clearNotesModal) {
+      this.clearNotesModal.style.display = 'flex';
+    }
+  }
+  
+  hideClearNotesModal() {
+    if (this.clearNotesModal) {
+      this.clearNotesModal.style.display = 'none';
+    }
+  }
+  
+  confirmClearNotes() {
+    if (this.notesEditor) {
+      this.notesEditor.innerHTML = '';
+      // Also clear the AI summary if it exists
+      const aiSummary = document.getElementById('ai-summary');
+      if (aiSummary) {
+        aiSummary.innerHTML = '';
+      }
+    }
+    this.hideClearNotesModal();
   }
 
   newRecording() {

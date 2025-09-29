@@ -272,6 +272,20 @@ body {
   align-items: center;
   gap: var(--spacing-sm); /* 4px gap between header elements */
   -webkit-app-region: no-drag;
+  flex: 1;
+}
+
+.header-left {
+  justify-content: flex-start;
+  min-width: 80px; /* Reserve space for window controls on different platforms */
+}
+
+.header-center {
+  justify-content: center;
+}
+
+.header-right {
+  justify-content: flex-end;
 }
 
 /* Error Notification Banner */
@@ -362,27 +376,7 @@ body {
   padding-top: 20px;
 }
 
-/* Fixed Sidebar Toggle Button */
-.sidebar-toggle-fixed {
-  position: fixed;
-  top: 12px; /* Position below minimize button area */
-  left: 12px; /* Align with left edge, centered under minimize button */
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.2s;
-  z-index: 1001; /* Above other elements */
-  box-shadow: var(--shadow-sm);
-}
 
-.sidebar-toggle-fixed:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-md);
-}
 
 .logo-container {
   display: flex;
@@ -539,6 +533,7 @@ body {
   display: none;
   width: 36px;
   height: 36px;
+  z-index: 1102; /* Higher z-index to ensure it's on top */
 }
 
 .sidebar.open .sidebar-close {
@@ -555,6 +550,7 @@ body {
 .sidebar-close svg {
   width: 16px;
   height: 16px;
+  pointer-events: none; /* Ensure SVG doesn't block clicks */
 }
 
 /* Scrim behind open sidebar */
@@ -1010,8 +1006,8 @@ body {
 }
 
 .format-btn {
-  padding: var(--spacing-sm) var(--spacing-md); /* 4px vertical, 8px horizontal */
-  margin: var(--spacing-sm); /* 4px margin around each button */
+  padding: 3px 6px; /* 20% smaller than previous 4px 8px */
+  margin: 3px; /* 20% smaller than previous 4px */
   border: none;
   background: none;
   border-radius: var(--spacing-sm); /* 4px border radius */
@@ -1019,6 +1015,92 @@ body {
   color: var(--text-secondary);
   font-size: 14px;
   transition: all 0.2s;
+  min-width: 32px; /* Ensure minimum touch target */
+  min-height: 32px; /* Ensure minimum touch target */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.format-btn svg {
+  width: 13px; /* 20% smaller than previous 16px */
+  height: 13px;
+}
+
+/* Clear notes button styling */
+.clear-notes-btn {
+  color: var(--danger-color) !important;
+  font-weight: 500;
+  gap: 4px;
+}
+
+.clear-notes-btn:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: var(--danger-color) !important;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--background);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 16px;
+  color: var(--text-primary);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
 }
 
 .format-btn:hover {
