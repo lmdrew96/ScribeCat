@@ -138,6 +138,16 @@ class ScribeCatApp {
     
     // Developer Settings
     this.simulationModeToggle = document.getElementById('simulation-mode-toggle');
+    
+    // Subscription UI elements
+    this.tierBadge = document.getElementById('tier-badge');
+    this.tierDescription = document.getElementById('tier-description');
+    this.sessionSummariesDisplay = document.getElementById('session-summaries');
+    this.dailyTokensDisplay = document.getElementById('daily-tokens');
+    this.tokenUsageItem = document.getElementById('token-usage');
+    this.upgradeSubscriptionBtn = document.getElementById('upgrade-subscription');
+    this.viewPremiumUnlocksBtn = document.getElementById('view-premium-unlocks');
+    this.currentFeaturesList = document.getElementById('current-features');
   }
 
   async init() {
@@ -253,9 +263,307 @@ class ScribeCatApp {
 
   // Update UI elements based on tier
   updateTierBasedUI() {
-    // This will be expanded as we add more tier-specific UI elements
+    if (!this.subscriptionStatus) return;
+    
+    // Update tier badge and description
+    if (this.tierBadge) {
+      this.tierBadge.textContent = this.subscriptionStatus.tierDisplayName;
+      this.tierBadge.className = `tier-badge ${this.subscriptionStatus.tier}`;
+    }
+    
+    if (this.tierDescription) {
+      const descriptions = {
+        free: 'Limited features',
+        plus: 'AskAI chat + unlimited summaries',
+        pro: 'Everything + Pro themes + study plans'
+      };
+      this.tierDescription.textContent = descriptions[this.subscriptionStatus.tier] || 'Unknown plan';
+    }
+    
+    // Update usage stats
+    this.updateUsageStats();
+    
+    // Update features list
+    this.updateFeaturesList();
+    
+    // Update upgrade button
+    if (this.upgradeSubscriptionBtn) {
+      if (this.subscriptionStatus.tier === 'free') {
+        this.upgradeSubscriptionBtn.textContent = 'Upgrade to Plus ($12/month)';
+        this.upgradeSubscriptionBtn.style.display = 'block';
+      } else if (this.subscriptionStatus.tier === 'plus') {
+        this.upgradeSubscriptionBtn.textContent = 'Upgrade to Pro ($35/month)';
+        this.upgradeSubscriptionBtn.style.display = 'block';
+      } else {
+        this.upgradeSubscriptionBtn.style.display = 'none';
+      }
+    }
+    
+    // Show/hide token usage for paid tiers
+    if (this.tokenUsageItem) {
+      this.tokenUsageItem.style.display = this.subscriptionStatus.features.askAIAccess ? 'flex' : 'none';
+    }
+    
+    // Add Pro badge if applicable
     if (this.subscriptionStatus.features.proBadge) {
       // Add Pro badge to UI when implemented
+    }
+  }
+
+  // Update usage statistics display
+  updateUsageStats() {
+    if (!this.subscriptionStatus) return;
+    
+    // Update session summaries
+    if (this.sessionSummariesDisplay) {
+      const limit = this.subscriptionStatus.features.aiSummariesPerSession;
+      const limitText = limit === -1 ? '∞' : limit;
+      this.sessionSummariesDisplay.textContent = `${this.currentSessionSummaries}/${limitText}`;
+      
+      // Add warning colors if approaching limit
+      if (limit !== -1 && this.currentSessionSummaries >= limit) {
+        this.sessionSummariesDisplay.className = 'usage-value danger';
+      } else if (limit !== -1 && this.currentSessionSummaries >= limit * 0.8) {
+        this.sessionSummariesDisplay.className = 'usage-value warning';
+      } else {
+        this.sessionSummariesDisplay.className = 'usage-value';
+      }
+    }
+    
+    // Update daily tokens for paid tiers
+    if (this.dailyTokensDisplay && this.subscriptionStatus.features.askAIAccess) {
+      const tokensUsed = this.subscriptionStatus.usageTracking?.askAITokensToday || 0;
+      const tokensLimit = this.subscriptionStatus.tier === 'plus' ? 10000 : 40000;
+      this.dailyTokensDisplay.textContent = `${tokensUsed.toLocaleString()}/${tokensLimit.toLocaleString()}`;
+      
+      // Add warning colors
+      if (tokensUsed >= tokensLimit) {
+        this.dailyTokensDisplay.className = 'usage-value danger';
+      } else if (tokensUsed >= tokensLimit * 0.8) {
+        this.dailyTokensDisplay.className = 'usage-value warning';
+      } else {
+        this.dailyTokensDisplay.className = 'usage-value';
+      }
+    }
+  }
+
+  // Update features list based on subscription
+  updateFeaturesList() {
+    if (!this.currentFeaturesList || !this.subscriptionStatus) return;
+    
+    const features = [
+      { name: 'Audio transcription', included: true },
+      { name: 'Note taking & editing', included: true },
+      { name: 'AI summaries', included: this.subscriptionStatus.features.aiSummariesPerSession > 0 || this.subscriptionStatus.features.aiSummariesPerSession === -1, 
+        detail: this.subscriptionStatus.features.aiSummariesPerSession === -1 ? 'Unlimited' : `${this.subscriptionStatus.features.aiSummariesPerSession} per session` },
+      { name: 'AskAI chat', included: this.subscriptionStatus.features.askAIAccess },
+      { name: 'AI Autopolish', included: this.subscriptionStatus.features.aiAutopolish },
+      { name: 'Pro themes', included: this.subscriptionStatus.features.proThemes },
+      { name: 'Custom study plans', included: this.subscriptionStatus.features.customStudyPlans }
+    ];
+    
+    this.currentFeaturesList.innerHTML = features.map(feature => {
+      const icon = feature.included ? '✅' : '❌';
+      const detail = feature.detail ? ` (${feature.detail})` : '';
+      return `<li>${icon} ${feature.name}${detail}</li>`;
+    }).join('');
+  }
+
+  // Show upgrade modal with tier comparison
+  showUpgradeModal() {
+    const currentTier = this.subscriptionStatus?.tier || 'free';
+    let title, content;
+    
+    if (currentTier === 'free') {
+      title = 'Upgrade to ScribeCat Plus';
+      content = `
+        <div class="upgrade-comparison">
+          <div class="plan-column current">
+            <h3>Free (Current)</h3>
+            <ul>
+              <li>✅ Audio transcription</li>
+              <li>✅ Note taking</li>
+              <li>✅ 1 AI summary per session</li>
+              <li>❌ AskAI chat</li>
+              <li>❌ AI Autopolish</li>
+            </ul>
+          </div>
+          <div class="plan-column upgrade">
+            <h3>Plus - $12/month</h3>
+            <ul>
+              <li>✅ Everything in Free</li>
+              <li>✅ AskAI chat (10,000 tokens/day)</li>
+              <li>✅ Unlimited AI summaries</li>
+              <li>✅ AI Autopolish</li>
+              <li>✅ Priority support</li>
+            </ul>
+            <button class="btn btn-primary upgrade-btn" onclick="window.scribeCatApp.upgradeTier('plus')">
+              Upgrade to Plus
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (currentTier === 'plus') {
+      title = 'Upgrade to ScribeCat Pro';
+      content = `
+        <div class="upgrade-comparison">
+          <div class="plan-column current">
+            <h3>Plus (Current)</h3>
+            <ul>
+              <li>✅ AskAI chat (10,000 tokens/day)</li>
+              <li>✅ Unlimited AI summaries</li>
+              <li>✅ AI Autopolish</li>
+            </ul>
+          </div>
+          <div class="plan-column upgrade">
+            <h3>Pro - $35/month</h3>
+            <ul>
+              <li>✅ Everything in Plus</li>
+              <li>✅ 40,000 AskAI tokens/day</li>
+              <li>✅ Exclusive Pro themes</li>
+              <li>✅ Custom AI study plans</li>
+              <li>✅ Early access features</li>
+              <li>✅ Pro supporter badge</li>
+            </ul>
+            <button class="btn btn-primary upgrade-btn" onclick="window.scribeCatApp.upgradeTier('pro')">
+              Upgrade to Pro
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      title = 'You\'re on Pro!';
+      content = `
+        <div class="pro-status">
+          <p>🎉 You have access to all ScribeCat features!</p>
+          <p>Thank you for supporting ScribeCat development.</p>
+        </div>
+      `;
+    }
+    
+    this.showModal(title, content);
+  }
+
+  // Show premium unlocks store
+  showPremiumUnlocksModal() {
+    const title = 'Premium Unlocks Store';
+    const content = `
+      <div class="premium-unlocks-store">
+        <p>Enhance your ScribeCat experience with these one-time purchases:</p>
+        
+        <div class="unlock-grid">
+          <div class="unlock-item">
+            <h4>Designer's Pack - $2.99</h4>
+            <p>Custom themes, premium fonts, and icon pack</p>
+            <button class="btn btn-secondary" onclick="window.scribeCatApp.purchaseUnlock('designers-pack')">
+              Purchase
+            </button>
+          </div>
+          
+          <div class="unlock-item">
+            <h4>Power Editor - $2.99</h4>
+            <p>Markdown support, LaTeX rendering, and code blocks</p>
+            <button class="btn btn-secondary" onclick="window.scribeCatApp.purchaseUnlock('power-editor')">
+              Purchase
+            </button>
+          </div>
+          
+          <div class="unlock-item">
+            <h4>Study Boost - $2.99</h4>
+            <p>Pomodoro timer, focus mode, and study statistics</p>
+            <button class="btn btn-secondary" onclick="window.scribeCatApp.purchaseUnlock('study-boost')">
+              Purchase
+            </button>
+          </div>
+          
+          <div class="unlock-item">
+            <h4>Organization Pro - $2.99</h4>
+            <p>Advanced tagging, note linking, and smart search</p>
+            <button class="btn btn-secondary" onclick="window.scribeCatApp.purchaseUnlock('organization-pro')">
+              Purchase
+            </button>
+          </div>
+        </div>
+        
+        <div class="bundle-deal">
+          <h4>🎁 Bundle Deal: All 4 Unlocks for $9.99 (Save $2!)</h4>
+          <button class="btn btn-primary" onclick="window.scribeCatApp.purchaseBundle('all-unlocks')">
+            Buy Bundle
+          </button>
+        </div>
+      </div>
+    `;
+    
+    this.showModal(title, content);
+  }
+
+  // Generic modal display method
+  showModal(title, content) {
+    // For now, use alert. Later this can be replaced with a proper modal
+    alert(`${title}\n\n${content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()}`);
+  }
+
+  // Upgrade to a specific tier (placeholder for payment integration)
+  async upgradeTier(tier) {
+    // In a real implementation, this would integrate with a payment processor
+    const confirmed = confirm(`Upgrade to ${tier.charAt(0).toUpperCase() + tier.slice(1)} tier?\n\nThis is a demo - no actual payment will be charged.`);
+    
+    if (confirmed) {
+      try {
+        const response = await window.electronAPI.subscriptionSetTier(tier);
+        if (response.success) {
+          this.subscriptionStatus = response.status;
+          this.updateTierBasedUI();
+          this.applyFeatureRestrictions();
+          alert(`Successfully upgraded to ${tier.charAt(0).toUpperCase() + tier.slice(1)}!`);
+        } else {
+          alert('Upgrade failed: ' + response.error);
+        }
+      } catch (error) {
+        alert('Upgrade failed: ' + error.message);
+      }
+    }
+  }
+
+  // Purchase premium unlock (placeholder for payment integration)
+  async purchaseUnlock(unlockId) {
+    // In a real implementation, this would integrate with a payment processor
+    const confirmed = confirm(`Purchase premium unlock?\n\nThis is a demo - no actual payment will be charged.`);
+    
+    if (confirmed) {
+      try {
+        const response = await window.electronAPI.subscriptionAddUnlock(unlockId);
+        if (response.success) {
+          this.subscriptionStatus = response.status;
+          this.updateTierBasedUI();
+          alert('Premium unlock activated!');
+        } else {
+          alert('Purchase failed: ' + response.error);
+        }
+      } catch (error) {
+        alert('Purchase failed: ' + error.message);
+      }
+    }
+  }
+
+  // Purchase bundle (placeholder)
+  async purchaseBundle(bundleId) {
+    const confirmed = confirm(`Purchase bundle deal?\n\nThis is a demo - no actual payment will be charged.`);
+    
+    if (confirmed) {
+      // Add all unlocks
+      const unlocks = ['designers-pack', 'power-editor', 'study-boost', 'organization-pro'];
+      for (const unlock of unlocks) {
+        await window.electronAPI.subscriptionAddUnlock(unlock);
+      }
+      
+      // Refresh status
+      const statusResponse = await window.electronAPI.subscriptionGetStatus();
+      if (statusResponse.success) {
+        this.subscriptionStatus = statusResponse.status;
+        this.updateTierBasedUI();
+        alert('Bundle activated! All premium unlocks are now available.');
+      }
     }
   }
 
@@ -395,6 +703,15 @@ class ScribeCatApp {
     if (this.jumpLatestBtn) {
       this.jumpLatestBtn.addEventListener('click', () => this.scrollTranscriptionToLatest());
     }
+    
+    // Subscription event listeners
+    if (this.upgradeSubscriptionBtn) {
+      this.upgradeSubscriptionBtn.addEventListener('click', () => this.showUpgradeModal());
+    }
+    if (this.viewPremiumUnlocksBtn) {
+      this.viewPremiumUnlocksBtn.addEventListener('click', () => this.showPremiumUnlocksModal());
+    }
+    
     // Transcription event listeners (backend-gated)
     if (window.electronAPI && window.electronAPI.onVoskResult) {
       window.electronAPI.onVoskResult((event, result) => {
@@ -1215,6 +1532,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       // Track AI summary usage
       this.currentSessionSummaries++;
       await window.electronAPI.subscriptionTrackUsage('aiSummary', 1);
+      
+      // Update the UI to reflect new usage
+      this.updateUsageStats();
       
       this.generateSummaryBtn.disabled = false;
     }
