@@ -71,8 +71,8 @@ if (process.env.E2E) {
 
 // Version info
 contextBridge.exposeInMainWorld('appInfo', {
-  version: '1.0.0',
+  version: '1.1.0',
   platform: process.platform,
-  isDev: process.env.NODE_ENV !== 'production',
+  isDev: process.env.NODE_ENV !== 'production' || process.argv.includes('--dev'),
   isFull: process.env.DEV_FULL === '1'
 });

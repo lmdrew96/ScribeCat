@@ -1527,14 +1527,274 @@ body {
 }
 
 /* Version info */
-.version-info {
+/* Version info and Health Indicator */
+.system-info-corner {
   position: fixed;
   bottom: 10px;
   left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+}
+
+.version-info {
   font-size: 10px;
   color: var(--text-muted);
   font-weight: 500;
-  z-index: 100;
+}
+
+.health-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.health-indicator:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.ekg-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--success-color);
+  transition: color 0.3s ease;
+}
+
+.health-indicator.warning .ekg-icon {
+  color: var(--warning-color);
+}
+
+.health-indicator.error .ekg-icon {
+  color: var(--danger-color);
+}
+
+/* EKG Line Animation */
+.ekg-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: ekg-pulse 3s ease-in-out infinite;
+}
+
+.health-indicator.warning .ekg-line {
+  animation: ekg-irregular 3s ease-in-out infinite;
+}
+
+.health-indicator.error .ekg-line {
+  animation: ekg-flatline 3s ease-in-out infinite;
+}
+
+@keyframes ekg-pulse {
+  0% { stroke-dashoffset: 100; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -100; }
+}
+
+@keyframes ekg-irregular {
+  0% { stroke-dashoffset: 100; }
+  25% { stroke-dashoffset: 50; }
+  50% { stroke-dashoffset: 0; }
+  75% { stroke-dashoffset: -25; }
+  100% { stroke-dashoffset: -100; }
+}
+
+@keyframes ekg-flatline {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Health Tooltip */
+.health-tooltip {
+  position: fixed;
+  bottom: 50px;
+  left: 10px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  max-width: 300px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.health-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.critical-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.critical-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.critical-status-item:last-child {
+  border-bottom: none;
+}
+
+.status-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.status-value {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.status-value.success {
+  color: var(--success-color);
+}
+
+.status-value.warning {
+  color: var(--warning-color);
+}
+
+.status-value.error {
+  color: var(--danger-color);
+}
+
+/* Health Dialog */
+.health-dialog-content {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.health-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.health-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.health-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-description {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.search-container {
+  position: relative;
+}
+
+.search-container .input-field {
+  padding-right: 40px;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.health-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.health-status-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.health-status-item.hidden {
+  display: none;
+}
+
+.health-status-item:hover {
+  background: var(--surface-hover);
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.status-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.status-indicator-large {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.status-dot.success {
+  background: var(--success-color);
+}
+
+.status-dot.warning {
+  background: var(--warning-color);
+}
+
+.status-dot.error {
+  background: var(--danger-color);
 }
 
 /* Scrollbar styling */
@@ -1889,7 +2149,7 @@ body {
   .recording-controls,
   .formatting-toolbar,
   .ai-chat-container,
-  .version-info {
+  .system-info-corner {
     display: none !important;
   }
   

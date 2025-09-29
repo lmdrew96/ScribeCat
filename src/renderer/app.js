@@ -99,6 +99,18 @@ class ScribeCatApp {
     // Status elements
     this.clock = document.querySelector('.clock');
     this.versionInfo = document.getElementById('version-info');
+    this.statusChips = document.getElementById('status-chips');
+    
+    // Health system elements
+    this.healthIndicator = document.getElementById('health-indicator');
+    this.healthTooltip = document.getElementById('health-tooltip');
+    this.healthDialog = document.getElementById('health-dialog');
+    this.healthDialogClose = document.getElementById('health-dialog-close');
+    this.healthReportBug = document.getElementById('health-report-bug');
+    this.healthSearch = document.getElementById('health-search');
+    this.healthStatusList = document.getElementById('health-status-list');
+    this.criticalStatusList = document.getElementById('critical-status-list');
+    
     this.vocalIsolationCheckbox = document.getElementById('vocal-isolation');
     this.microphoneSelect = document.getElementById('microphone-select');
     this.fontSelector = document.getElementById('font-family');
@@ -536,6 +548,34 @@ class ScribeCatApp {
     
     if (this.clearNotesModalClose) {
       this.clearNotesModalClose.addEventListener('click', () => this.hideClearNotesModal());
+    }
+    
+    // Health system event listeners
+    if (this.healthIndicator) {
+      this.healthIndicator.addEventListener('click', () => this.showHealthDialog());
+      this.healthIndicator.addEventListener('mouseenter', () => this.showHealthTooltip());
+      this.healthIndicator.addEventListener('mouseleave', () => this.hideHealthTooltip());
+    }
+    
+    if (this.healthDialogClose) {
+      this.healthDialogClose.addEventListener('click', () => this.hideHealthDialog());
+    }
+    
+    if (this.healthReportBug) {
+      this.healthReportBug.addEventListener('click', () => this.reportBugFromHealth());
+    }
+    
+    if (this.healthSearch) {
+      this.healthSearch.addEventListener('input', (e) => this.filterHealthStatus(e.target.value));
+    }
+    
+    // Close health dialog when clicking outside
+    if (this.healthDialog) {
+      this.healthDialog.addEventListener('click', (e) => {
+        if (e.target === this.healthDialog) {
+          this.hideHealthDialog();
+        }
+      });
     }
     
     // Setup global keyboard shortcuts
@@ -1435,12 +1475,21 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   initializeStatusChips() {
-    this.updateStatusChip('audio', 'inactive');
-    this.updateStatusChip('transcription', 'inactive');
-    this.updateStatusChip('drive', 'inactive');
+    // Show status chips only in development mode
+    if (this.statusChips && window.appInfo?.isDev) {
+      this.statusChips.style.display = 'flex';
+      this.updateStatusChip('audio', 'inactive');
+      this.updateStatusChip('transcription', 'inactive');
+      this.updateStatusChip('drive', 'inactive');
+      
+      // Check Drive folder status
+      this.checkDriveStatus();
+    } else if (this.statusChips) {
+      this.statusChips.style.display = 'none';
+    }
     
-    // Check Drive folder status
-    this.checkDriveStatus();
+    // Initialize health system
+    this.initializeHealthSystem();
   }
 
   updateStatusChip(type, status) {
@@ -3098,6 +3147,278 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     });
 
     document.body.appendChild(this.shortcutsDialog);
+  }
+
+  // Health System Methods
+  initializeHealthSystem() {
+    // Initialize health monitoring
+    this.healthStatus = {
+      audio: { status: 'inactive', message: 'Not initialized' },
+      transcription: { status: 'inactive', message: 'Not initialized' },
+      drive: { status: 'inactive', message: 'Not configured' },
+      claude: { status: 'inactive', message: 'Not configured' },
+      canvas: { status: 'inactive', message: 'Not configured' },
+      general: { status: 'active', message: 'App running normally' }
+    };
+    
+    // Start health monitoring
+    this.updateHealthStatus();
+    
+    // Populate health status list
+    this.populateHealthStatusList();
+    
+    // Set up periodic health checks
+    setInterval(() => this.updateHealthStatus(), 5000); // Check every 5 seconds
+  }
+
+  async updateHealthStatus() {
+    // Check audio status
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(device => device.kind === 'audioinput');
+      if (audioInputs.length > 0) {
+        this.healthStatus.audio = { status: 'active', message: 'Audio recording available' };
+      } else {
+        this.healthStatus.audio = { status: 'warning', message: 'No microphone detected' };
+      }
+    } catch (error) {
+      this.healthStatus.audio = { status: 'error', message: 'Cannot access audio devices. Check permissions.' };
+    }
+
+    // Check transcription backend
+    if (this.whisperEnabled || this.voskModelPath) {
+      this.healthStatus.transcription = { status: 'active', message: 'Transcription engine ready' };
+    } else {
+      this.healthStatus.transcription = { status: 'warning', message: 'Transcription backend not configured' };
+    }
+
+    // Check Drive status
+    const notesDriveFolder = await window.electronAPI?.storeGet('notes-drive-folder');
+    const transcriptionDriveFolder = await window.electronAPI?.storeGet('transcription-drive-folder');
+    if (notesDriveFolder || transcriptionDriveFolder) {
+      this.healthStatus.drive = { status: 'active', message: 'Google Drive folders configured' };
+    } else {
+      this.healthStatus.drive = { status: 'inactive', message: 'Google Drive not configured' };
+    }
+
+    // Check Claude API
+    if (this.claudeApiKey) {
+      this.healthStatus.claude = { status: 'active', message: this.isUsingDeveloperKey ? 'Using developer API key' : 'Using your API key' };
+    } else {
+      this.healthStatus.claude = { status: 'warning', message: 'No Claude API key configured' };
+    }
+
+    // Check Canvas integration
+    const canvasUrl = await window.electronAPI?.storeGet('canvas-url');
+    if (canvasUrl) {
+      this.healthStatus.canvas = { status: 'active', message: 'Canvas integration configured' };
+    } else {
+      this.healthStatus.canvas = { status: 'inactive', message: 'Canvas integration not configured' };
+    }
+
+    // Update overall health indicator
+    this.updateHealthIndicator();
+    
+    // Update tooltip if visible
+    if (this.healthTooltip && this.healthTooltip.classList.contains('show')) {
+      this.populateCriticalStatusList();
+    }
+
+    // Update dialog if open
+    if (this.healthDialog && this.healthDialog.style.display !== 'none') {
+      this.populateHealthStatusList();
+    }
+  }
+
+  updateHealthIndicator() {
+    if (!this.healthIndicator) return;
+
+    const criticalStatuses = [this.healthStatus.audio, this.healthStatus.transcription, this.healthStatus.drive];
+    const hasError = criticalStatuses.some(status => status.status === 'error');
+    const hasWarning = criticalStatuses.some(status => status.status === 'warning');
+
+    // Remove existing classes
+    this.healthIndicator.classList.remove('warning', 'error');
+
+    if (hasError) {
+      this.healthIndicator.classList.add('error');
+      this.healthIndicator.title = 'Critical system issues detected - Click for details';
+    } else if (hasWarning) {
+      this.healthIndicator.classList.add('warning');
+      this.healthIndicator.title = 'System warnings detected - Click for details';
+    } else {
+      this.healthIndicator.title = 'All systems operational - Click for details';
+    }
+  }
+
+  showHealthTooltip() {
+    if (!this.healthTooltip) return;
+    
+    this.populateCriticalStatusList();
+    this.healthTooltip.classList.add('show');
+  }
+
+  hideHealthTooltip() {
+    if (!this.healthTooltip) return;
+    this.healthTooltip.classList.remove('show');
+  }
+
+  populateCriticalStatusList() {
+    if (!this.criticalStatusList) return;
+
+    const criticalSystems = [
+      { name: 'Audio Recording', status: this.healthStatus.audio },
+      { name: 'Transcription Engine', status: this.healthStatus.transcription },
+      { name: 'Google Drive', status: this.healthStatus.drive }
+    ];
+
+    this.criticalStatusList.innerHTML = '';
+    
+    criticalSystems.forEach(system => {
+      const item = document.createElement('div');
+      item.className = 'critical-status-item';
+      
+      const statusText = system.status.status === 'active' ? 'Working' : 
+                        system.status.status === 'warning' ? 'Warning' : 'Error';
+      
+      item.innerHTML = `
+        <span class="status-name">${system.name}:</span>
+        <span class="status-value ${system.status.status}">${statusText}</span>
+      `;
+      
+      this.criticalStatusList.appendChild(item);
+    });
+  }
+
+  showHealthDialog() {
+    if (!this.healthDialog) return;
+    
+    this.populateHealthStatusList();
+    this.healthDialog.style.display = 'flex';
+  }
+
+  hideHealthDialog() {
+    if (!this.healthDialog) return;
+    this.healthDialog.style.display = 'none';
+  }
+
+  populateHealthStatusList() {
+    if (!this.healthStatusList) return;
+
+    const allSystems = [
+      { 
+        title: 'Audio Recording', 
+        description: 'Microphone access and audio capture functionality',
+        status: this.healthStatus.audio,
+        keywords: ['audio', 'microphone', 'recording', 'mic', 'sound']
+      },
+      { 
+        title: 'Transcription Engine', 
+        description: 'Speech-to-text conversion using Vosk or Whisper',
+        status: this.healthStatus.transcription,
+        keywords: ['transcription', 'speech', 'text', 'vosk', 'whisper', 'ai']
+      },
+      { 
+        title: 'Google Drive Integration', 
+        description: 'Cloud storage for notes and transcriptions',
+        status: this.healthStatus.drive,
+        keywords: ['drive', 'google', 'cloud', 'storage', 'save', 'sync']
+      },
+      { 
+        title: 'Claude AI Assistant', 
+        description: 'AI-powered chat and summary generation',
+        status: this.healthStatus.claude,
+        keywords: ['claude', 'ai', 'chat', 'summary', 'assistant', 'anthropic']
+      },
+      { 
+        title: 'Canvas Integration', 
+        description: 'Learning management system integration',
+        status: this.healthStatus.canvas,
+        keywords: ['canvas', 'lms', 'course', 'school', 'education']
+      },
+      { 
+        title: 'Application Core', 
+        description: 'Main application functionality and user interface',
+        status: this.healthStatus.general,
+        keywords: ['app', 'core', 'ui', 'interface', 'general', 'main']
+      }
+    ];
+
+    this.healthStatusList.innerHTML = '';
+    
+    allSystems.forEach(system => {
+      const item = document.createElement('div');
+      item.className = 'health-status-item';
+      item.dataset.keywords = system.keywords.join(' ').toLowerCase();
+      
+      const statusText = system.status.status === 'active' ? 'Working' : 
+                        system.status.status === 'warning' ? 'Warning' : 
+                        system.status.status === 'inactive' ? 'Inactive' : 'Error';
+      
+      let description = system.status.message;
+      if (system.status.status === 'error' && system.title === 'Audio Recording') {
+        description += ' Try refreshing the page or checking browser permissions in Settings > Privacy & Security > Microphone.';
+      } else if (system.status.status === 'warning' && system.title === 'Transcription Engine') {
+        description += ' Configure a transcription backend in the audio settings to enable speech-to-text.';
+      } else if (system.status.status === 'inactive' && system.title === 'Google Drive Integration') {
+        description += ' Set up Drive folder paths in the sidebar to automatically save your work to the cloud.';
+      }
+      
+      item.innerHTML = `
+        <div class="status-info">
+          <h5 class="status-title">${system.title}</h5>
+          <p class="status-description">${description}</p>
+        </div>
+        <div class="status-indicator-large">
+          <div class="status-dot ${system.status.status}"></div>
+          <span>${statusText}</span>
+        </div>
+      `;
+      
+      this.healthStatusList.appendChild(item);
+    });
+  }
+
+  filterHealthStatus(query) {
+    if (!this.healthStatusList) return;
+
+    const items = this.healthStatusList.querySelectorAll('.health-status-item');
+    const searchTerm = query.toLowerCase();
+
+    items.forEach(item => {
+      const keywords = item.dataset.keywords || '';
+      const title = item.querySelector('.status-title')?.textContent.toLowerCase() || '';
+      const description = item.querySelector('.status-description')?.textContent.toLowerCase() || '';
+      
+      const matches = keywords.includes(searchTerm) || 
+                     title.includes(searchTerm) || 
+                     description.includes(searchTerm);
+      
+      if (matches || searchTerm === '') {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  }
+
+  reportBugFromHealth() {
+    // Close health dialog first
+    this.hideHealthDialog();
+    
+    // Trigger the existing bug report functionality
+    // This would integrate with the existing error notification system
+    if (window.electronAPI) {
+      // Create a bug report with current health status
+      const healthReport = Object.entries(this.healthStatus)
+        .map(([system, status]) => `${system}: ${status.status} - ${status.message}`)
+        .join('\n');
+      
+      console.log('Health Status Report for Bug Filing:\n', healthReport);
+      
+      // You could expand this to actually open a bug report dialog or form
+      alert('Bug reporting system would open here with current health status attached.');
+    }
   }
 }
 
