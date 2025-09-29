@@ -21,6 +21,8 @@
   --spacing-md: 8px;
   --spacing-lg: 12px;
   --spacing-xl: 16px;
+  --spacing-2xl: 20px;
+  --spacing-3xl: 24px;
 }
 
 /* Custom fonts */
@@ -32,187 +34,254 @@
   font-display: swap;
 }
 
-/* 1. Ocean - Blue, Teal, Cyan */
-[data-theme="ocean"] {
-  --primary-color: #0ea5e9;
-  --secondary-color: #14b8a6;
-  --accent: #06b6d4;
-  --primary-hover: #0284c7;
-  --background: #f0f9ff;
-  --surface: #e0f2fe;
-  --surface-hover: #bae6fd;
-  --border: #7dd3fc;
+/* FOCUS THEMES - Designed for concentration and deep work */
+
+/* 1. Arctic Focus - Cool blues and grays for clarity and focus */
+[data-theme="arctic-focus"] {
+  --primary-color: #0f172a;     /* 60% - Deep navy for main UI elements */
+  --secondary-color: #3b82f6;   /* 30% - Bright blue for accents */
+  --accent: #64748b;            /* 10% - Cool gray for subtle elements */
+  --primary-hover: #1e293b;
+  --background: #f8fafc;
+  --surface: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --border: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
 }
 
-/* 2. Forest - Green, Emerald, Lime */
-[data-theme="forest"] {
-  --primary-color: #059669;
-  --secondary-color: #10b981;
-  --accent: #65a30d;
-  --primary-hover: #047857;
-  --background: #f0fdf4;
-  --surface: #dcfce7;
-  --surface-hover: #bbf7d0;
-  --border: #86efac;
+/* 2. Forest Study - Deep greens for nature-inspired focus */
+[data-theme="forest-study"] {
+  --primary-color: #14532d;     /* 60% - Deep forest green */
+  --secondary-color: #22c55e;   /* 30% - Vibrant green for highlights */
+  --accent: #84cc16;            /* 10% - Fresh lime for accents */
+  --primary-hover: #166534;
+  --background: #f7fef7;
+  --surface: #f0fdf4;
+  --surface-hover: #dcfce7;
+  --border: #bbf7d0;
+  --text-primary: #14532d;
+  --text-secondary: #15803d;
+  --text-muted: #22c55e;
 }
 
-/* 3. Sunset - Orange, Red, Pink */
-[data-theme="sunset"] {
-  --primary-color: #ea580c;
-  --secondary-color: #dc2626;
-  --accent: #ec4899;
-  --primary-hover: #c2410c;
-  --background: #fff7ed;
+/* 3. Midnight Scholar - Dark blues and purples for evening focus */
+[data-theme="midnight-scholar"] {
+  --primary-color: #1e1b4b;     /* 60% - Deep indigo */
+  --secondary-color: #6366f1;   /* 30% - Bright indigo for emphasis */
+  --accent: #8b5cf6;            /* 10% - Purple for subtle accents */
+  --primary-hover: #312e81;
+  --background: #020617;
+  --surface: #0f172a;
+  --surface-hover: #1e293b;
+  --border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+}
+
+/* CREATIVE THEMES - Designed to inspire and energize creative work */
+
+/* 4. Sunset Canvas - Warm oranges, pinks, and purples for creativity */
+[data-theme="sunset-canvas"] {
+  --primary-color: #ea580c;     /* 60% - Warm orange for main elements */
+  --secondary-color: #ec4899;   /* 30% - Vibrant pink for highlights */
+  --accent: #8b5cf6;            /* 10% - Purple for creative touches */
+  --primary-hover: #dc2626;
+  --background: #fffbf0;
   --surface: #fed7aa;
   --surface-hover: #fdba74;
   --border: #fb923c;
+  --text-primary: #9a3412;
+  --text-secondary: #c2410c;
+  --text-muted: #ea580c;
 }
 
-/* 4. Royal - Purple, Indigo, Violet */
-[data-theme="royal"] {
-  --primary-color: #8b5cf6;
-  --secondary-color: #6366f1;
-  --accent: #a855f7;
-  --primary-hover: #7c3aed;
-  --background: #faf5ff;
-  --surface: #ede9fe;
-  --surface-hover: #ddd6fe;
-  --border: #c4b5fd;
-}
-
-/* 5. Rose - Pink, Rose, Red */
-[data-theme="rose"] {
-  --primary-color: #f43f5e;
-  --secondary-color: #e11d48;
-  --accent: #ef4444;
-  --primary-hover: #e11d48;
-  --background: #fff1f2;
-  --surface: #fecdd3;
-  --surface-hover: #fda4af;
-  --border: #fb7185;
-}
-
-/* 6. Tropical - Teal, Green, Cyan */
-[data-theme="tropical"] {
-  --primary-color: #14b8a6;
-  --secondary-color: #059669;
-  --accent: #06b6d4;
-  --primary-hover: #0d9488;
+/* 5. Aurora Dream - Teals, purples, and pinks for imaginative work */
+[data-theme="aurora-dream"] {
+  --primary-color: #14b8a6;     /* 60% - Teal for calming base */
+  --secondary-color: #a855f7;   /* 30% - Purple for creative energy */
+  --accent: #ec4899;            /* 10% - Pink for inspiring touches */
+  --primary-hover: #0f766e;
   --background: #f0fdfa;
   --surface: #ccfbf1;
   --surface-hover: #99f6e4;
   --border: #5eead4;
+  --text-primary: #0f766e;
+  --text-secondary: #0f766e;    /* Fixed: Same as primary for better contrast */
+  --text-muted: #2dd4bf;
 }
 
-/* 7. Cosmic - Indigo, Purple, Blue */
-[data-theme="cosmic"] {
-  --primary-color: #6366f1;
-  --secondary-color: #8b5cf6;
-  --accent: #3b82f6;
-  --primary-hover: #4f46e5;
-  --background: #eef2ff;
-  --surface: #e0e7ff;
-  --surface-hover: #c7d2fe;
-  --border: #a5b4fc;
+/* 6. Coral Reef - Corals, turquoise, and yellows for vibrant creativity */
+[data-theme="coral-reef"] {
+  --primary-color: #f97316;     /* 60% - Coral orange for main UI */
+  --secondary-color: #06b6d4;   /* 30% - Turquoise for contrast */
+  --accent: #eab308;            /* 10% - Sunny yellow for energy */
+  --primary-hover: #ea580c;
+  --background: #fff7ed;
+  --surface: #fed7aa;
+  --surface-hover: #fdba74;
+  --border: #fb923c;
+  --text-primary: #9a3412;
+  --text-secondary: #c2410c;
+  --text-muted: #ea580c;
 }
+/* FRIENDLY THEMES - Designed for welcoming and approachable experiences */
 
-/* 8. Autumn - Amber, Orange, Yellow */
-[data-theme="autumn"] {
-  --primary-color: #f59e0b;
-  --secondary-color: #ea580c;
-  --accent: #eab308;
+/* 7. Warm Welcome - Soft oranges, yellows, and creams for friendliness */
+[data-theme="warm-welcome"] {
+  --primary-color: #f59e0b;     /* 60% - Warm amber for welcoming feel */
+  --secondary-color: #eab308;   /* 30% - Golden yellow for cheerfulness */
+  --accent: #fed7aa;            /* 10% - Soft cream for gentle touches */
   --primary-hover: #d97706;
   --background: #fffbeb;
   --surface: #fef3c7;
   --surface-hover: #fde68a;
   --border: #fcd34d;
+  --text-primary: #92400e;
+  --text-secondary: #b45309;
+  --text-muted: #d97706;
 }
 
-/* 9. Emerald - Emerald, Teal, Green */
-[data-theme="emerald"] {
-  --primary-color: #10b981;
-  --secondary-color: #14b8a6;
-  --accent: #059669;
-  --primary-hover: #059669;
-  --background: #ecfdf5;
-  --surface: #d1fae5;
-  --surface-hover: #a7f3d0;
-  --border: #6ee7b7;
+/* 8. Cozy Corner - Browns, tans, and soft oranges for comfort */
+[data-theme="cozy-corner"] {
+  --primary-color: #92400e;     /* 60% - Rich brown for stability */
+  --secondary-color: #f59e0b;   /* 30% - Warm amber for coziness */
+  --accent: #fed7aa;            /* 10% - Soft tan for warmth */
+  --primary-hover: #78350f;
+  --background: #fefdf8;
+  --surface: #fef3c7;
+  --surface-hover: #fde68a;
+  --border: #fcd34d;
+  --text-primary: #78350f;
+  --text-secondary: #92400e;
+  --text-muted: #b45309;
 }
 
-/* 10. Arctic - Cyan, Blue, Slate */
-[data-theme="arctic"] {
-  --primary-color: #06b6d4;
-  --secondary-color: #0ea5e9;
-  --accent: #64748b;
-  --primary-hover: #0891b2;
-  --background: #ecfeff;
-  --surface: #cffafe;
-  --surface-hover: #a5f3fc;
-  --border: #67e8f9;
+/* 9. Friendly Chat - Light blues, greens, and yellows for conversation */
+[data-theme="friendly-chat"] {
+  --primary-color: #0ea5e9;     /* 60% - Friendly blue for openness */
+  --secondary-color: #22c55e;   /* 30% - Fresh green for positivity */
+  --accent: #eab308;            /* 10% - Cheerful yellow for warmth */
+  --primary-hover: #0284c7;
+  --background: #f0f9ff;
+  --surface: #e0f2fe;
+  --surface-hover: #bae6fd;
+  --border: #7dd3fc;
+  --text-primary: #0c4a6e;
+  --text-secondary: #0369a1;
+  --text-muted: #0284c7;
 }
 
-/* 11. Berry - Pink, Purple, Fuchsia */
-[data-theme="berry"] {
-  --primary-color: #ec4899;
-  --secondary-color: #8b5cf6;
-  --accent: #d946ef;
-  --primary-hover: #db2777;
-  --background: #fdf2f8;
-  --surface: #fce7f3;
-  --surface-hover: #fbcfe8;
-  --border: #f9a8d4;
-}
+/* CONFIDENCE THEMES - Designed to empower and inspire confidence */
 
-/* 12. Monochrome - Slate, Gray, Zinc */
-[data-theme="monochrome"] {
-  --primary-color: #64748b;
-  --secondary-color: #6b7280;
-  --accent: #71717a;
-  --primary-hover: #475569;
-  --background: #f8fafc;
-  --surface: #f1f5f9;
-  --surface-hover: #e2e8f0;
-  --border: #cbd5e1;
-}
-
-/* 13. Midnight - Dark Blue, Indigo, Purple */
-[data-theme="midnight"] {
-  --primary-color: #1e40af;
-  --secondary-color: #4338ca;
-  --accent: #7c3aed;
-  --primary-hover: #1d4ed8;
-  --background: #020617;
-  --surface: #0f172a;
-  --surface-hover: #1e293b;
-  --border: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-}
-
-/* 14. Neon - Lime, Yellow, Green */
-[data-theme="neon"] {
-  --primary-color: #65a30d;
-  --secondary-color: #eab308;
-  --accent: #16a34a;
-  --primary-hover: #4d7c0f;
-  --background: #f7fee7;
-  --surface: #ecfccb;
-  --surface-hover: #d9f99d;
-  --border: #bef264;
-}
-
-/* 15. Volcano - Red, Orange, Amber */
-[data-theme="volcano"] {
-  --primary-color: #dc2626;
-  --secondary-color: #ea580c;
-  --accent: #f59e0b;
+/* 10. Bold Leader - Reds, blacks, and golds for leadership */
+[data-theme="bold-leader"] {
+  --primary-color: #dc2626;     /* 60% - Bold red for power */
+  --secondary-color: #1f2937;   /* 30% - Strong dark gray for authority */
+  --accent: #f59e0b;            /* 10% - Gold for prestige */
   --primary-hover: #b91c1c;
   --background: #fef2f2;
   --surface: #fecaca;
   --surface-hover: #fca5a5;
   --border: #f87171;
+  --text-primary: #7f1d1d;
+  --text-secondary: #991b1b;
+  --text-muted: #b91c1c;
+}
+
+/* 11. Power Hour - Deep blues, silvers, and whites for focus */
+[data-theme="power-hour"] {
+  --primary-color: #1e40af;     /* 60% - Deep blue for trust and power */
+  --secondary-color: #64748b;   /* 30% - Professional silver */
+  --accent: #f8fafc;            /* 10% - Clean white for clarity */
+  --primary-hover: #1d4ed8;
+  --background: #f8fafc;
+  --surface: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --border: #cbd5e1;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
+/* 12. Champion - Emerald greens, golds, and blacks for victory */
+[data-theme="champion"] {
+  --primary-color: #059669;     /* 60% - Victory green */
+  --secondary-color: #f59e0b;   /* 30% - Championship gold */
+  --accent: #1f2937;            /* 10% - Elegant black */
+  --primary-hover: #047857;
+  --background: #f0fdf4;
+  --surface: #dcfce7;
+  --surface-hover: #bbf7d0;
+  --border: #86efac;
+  --text-primary: #14532d;
+  --text-secondary: #166534;
+  --text-muted: #15803d;
+}
+
+/* COZY THEMES - Designed for comfort and relaxation */
+
+/* 13. Fireside - Warm browns, oranges, and creams for comfort */
+[data-theme="fireside"] {
+  --primary-color: #92400e;     /* 60% - Rich brown like wood */
+  --secondary-color: #ea580c;   /* 30% - Warm orange like flames */
+  --accent: #fed7aa;            /* 10% - Soft cream like light */
+  --primary-hover: #78350f;
+  --background: #fffbf0;
+  --surface: #fef3c7;
+  --surface-hover: #fde68a;
+  --border: #fcd34d;
+  --text-primary: #78350f;
+  --text-secondary: #92400e;
+  --text-muted: #b45309;
+}
+
+/* 14. Rainy Day - Soft grays, blues, and lavenders for tranquility */
+[data-theme="rainy-day"] {
+  --primary-color: #64748b;     /* 60% - Gentle gray like clouds */
+  --secondary-color: #3b82f6;   /* 30% - Soft blue like sky */
+  --accent: #8b5cf6;            /* 10% - Lavender like distant hills */
+  --primary-hover: #475569;
+  --background: #f8fafc;
+  --surface: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --border: #cbd5e1;
+  --text-primary: #334155;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
+/* 15. Tea Time - Soft pinks, browns, and creams for relaxation */
+[data-theme="tea-time"] {
+  --primary-color: #a16207;     /* 60% - Tea brown for warmth */
+  --secondary-color: #f43f5e;   /* 30% - Rose pink for comfort */
+  --accent: #fef3c7;            /* 10% - Cream for softness */
+  --primary-hover: #92400e;
+  --background: #fefdf8;
+  --surface: #fef3c7;
+  --surface-hover: #fde68a;
+  --border: #fcd34d;
+  --text-primary: #78350f;
+  --text-secondary: #92400e;
+  --text-muted: #a16207;
+}
+
+/* Theme transition animations for smooth switching */
+:root {
+  transition: all 0.3s ease;
+}
+
+[data-theme] {
+  transition: all 0.3s ease;
+}
+
+/* Apply smooth transitions to all theme-colored elements */
+* {
+  transition: background-color 0.3s ease, 
+              border-color 0.3s ease, 
+              color 0.3s ease;
 }
 
 /* Base styles */
@@ -304,8 +373,8 @@ body {
 .notification-content {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  gap: 12px;
+  padding: var(--spacing-lg) var(--spacing-2xl); /* 12px 20px */
+  gap: var(--spacing-lg); /* 12px */
 }
 
 .notification-icon {
@@ -322,7 +391,7 @@ body {
 .notification-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-md); /* 8px */
 }
 
 .btn-notification {
@@ -330,14 +399,14 @@ body {
   border: none;
   color: white;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 4px;
+  padding: 6px var(--spacing-md); /* 6px 8px */
+  border-radius: var(--spacing-sm); /* 4px */
   font-size: 12px;
   font-weight: 500;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-sm); /* 4px */
 }
 
 .btn-notification.dismiss {
@@ -558,7 +627,7 @@ body {
 /* Expanded overlay panel */
 .sidebar.open {
   width: 320px;
-  padding: 20px;
+  padding: var(--spacing-2xl); /* 20px */
   overflow-y: auto;
   animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -566,13 +635,13 @@ body {
 /* Sidebar close button */
 .sidebar-close {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: var(--spacing-sm); /* 4px */
+  right: var(--spacing-sm); /* 4px */
   background: none;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 8px;
+  padding: var(--spacing-md); /* 8px */
   border-radius: 6px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: none;
@@ -837,17 +906,19 @@ body {
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  max-width: 240px;
+  gap: 12px;
+  max-width: 300px;
 }
 
 .theme-option {
   position: relative;
   cursor: pointer;
   border: 2px solid transparent;
-  border-radius: 8px;
-  padding: 4px;
+  border-radius: 12px;
+  padding: 8px;
   transition: all 0.2s ease;
+  background: var(--surface);
+  min-height: 85px;
 }
 
 .theme-option:hover {
@@ -876,7 +947,26 @@ body {
   text-align: center;
   margin-top: 4px;
   color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.theme-description {
+  font-size: 8px;
+  text-align: center;
+  margin-top: 2px;
+  color: var(--text-muted);
+  line-height: 1.2;
+  font-style: italic;
+}
+
+.theme-category {
+  font-size: 7px;
+  text-align: center;
+  margin-top: 2px;
+  color: var(--accent);
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Locked theme styles */
@@ -942,7 +1032,7 @@ body {
 
 /* Buttons */
 .btn {
-  padding: 8px 16px;
+  padding: var(--spacing-md) var(--spacing-xl); /* 8px 16px */
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -951,7 +1041,7 @@ body {
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-md); /* 6px -> 8px for consistency */
 }
 
 .btn-primary {

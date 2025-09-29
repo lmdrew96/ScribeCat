@@ -1819,24 +1819,165 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
   initializeThemeGrid() {
     const themes = [
-      // Free themes
-      { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#14b8a6', accent: '#06b6d4', tier: 'free' },
-      { id: 'forest', name: 'Forest', primary: '#059669', secondary: '#10b981', accent: '#65a30d', tier: 'free' },
-      { id: 'sunset', name: 'Sunset', primary: '#ea580c', secondary: '#dc2626', accent: '#ec4899', tier: 'free' },
-      { id: 'royal', name: 'Royal', primary: '#8b5cf6', secondary: '#6366f1', accent: '#a855f7', tier: 'free' },
-      { id: 'rose', name: 'Rose', primary: '#f43f5e', secondary: '#e11d48', accent: '#ef4444', tier: 'free' },
-      { id: 'tropical', name: 'Tropical', primary: '#14b8a6', secondary: '#059669', accent: '#06b6d4', tier: 'free' },
-      { id: 'cosmic', name: 'Cosmic', primary: '#6366f1', secondary: '#8b5cf6', accent: '#3b82f6', tier: 'free' },
-      { id: 'autumn', name: 'Autumn', primary: '#f59e0b', secondary: '#ea580c', accent: '#eab308', tier: 'free' },
+      // FOCUS THEMES - Free tier
+      { 
+        id: 'arctic-focus', 
+        name: 'Arctic Focus', 
+        description: 'Cool clarity for deep concentration',
+        primary: '#0f172a', 
+        secondary: '#3b82f6', 
+        accent: '#64748b', 
+        tier: 'free',
+        category: 'Focus'
+      },
+      { 
+        id: 'forest-study', 
+        name: 'Forest Study', 
+        description: 'Nature-inspired focus and calm',
+        primary: '#14532d', 
+        secondary: '#22c55e', 
+        accent: '#84cc16', 
+        tier: 'free',
+        category: 'Focus'
+      },
+      { 
+        id: 'midnight-scholar', 
+        name: 'Midnight Scholar', 
+        description: 'Evening focus with deep blues',
+        primary: '#1e1b4b', 
+        secondary: '#6366f1', 
+        accent: '#8b5cf6', 
+        tier: 'free',
+        category: 'Focus'
+      },
       
-      // Pro exclusive themes
-      { id: 'emerald', name: 'Emerald Pro', primary: '#10b981', secondary: '#14b8a6', accent: '#059669', tier: 'pro' },
-      { id: 'arctic', name: 'Arctic Pro', primary: '#06b6d4', secondary: '#0ea5e9', accent: '#64748b', tier: 'pro' },
-      { id: 'berry', name: 'Berry Pro', primary: '#ec4899', secondary: '#8b5cf6', accent: '#d946ef', tier: 'pro' },
-      { id: 'monochrome', name: 'Mono Pro', primary: '#64748b', secondary: '#6b7280', accent: '#71717a', tier: 'pro' },
-      { id: 'midnight', name: 'Midnight Pro', primary: '#1e40af', secondary: '#4338ca', accent: '#7c3aed', tier: 'pro' },
-      { id: 'neon', name: 'Neon Pro', primary: '#65a30d', secondary: '#eab308', accent: '#16a34a', tier: 'pro' },
-      { id: 'volcano', name: 'Volcano Pro', primary: '#dc2626', secondary: '#ea580c', accent: '#f59e0b', tier: 'pro' }
+      // CREATIVE THEMES - Free tier
+      { 
+        id: 'sunset-canvas', 
+        name: 'Sunset Canvas', 
+        description: 'Warm inspiration for creative work',
+        primary: '#ea580c', 
+        secondary: '#ec4899', 
+        accent: '#8b5cf6', 
+        tier: 'free',
+        category: 'Creative'
+      },
+      { 
+        id: 'aurora-dream', 
+        name: 'Aurora Dream', 
+        description: 'Imaginative colors for creativity',
+        primary: '#14b8a6', 
+        secondary: '#a855f7', 
+        accent: '#ec4899', 
+        tier: 'free',
+        category: 'Creative'
+      },
+      { 
+        id: 'coral-reef', 
+        name: 'Coral Reef', 
+        description: 'Vibrant energy for innovation',
+        primary: '#f97316', 
+        secondary: '#06b6d4', 
+        accent: '#eab308', 
+        tier: 'free',
+        category: 'Creative'
+      },
+      
+      // FRIENDLY THEMES - Free tier
+      { 
+        id: 'warm-welcome', 
+        name: 'Warm Welcome', 
+        description: 'Friendly warmth and openness',
+        primary: '#f59e0b', 
+        secondary: '#eab308', 
+        accent: '#fed7aa', 
+        tier: 'free',
+        category: 'Friendly'
+      },
+      { 
+        id: 'cozy-corner', 
+        name: 'Cozy Corner', 
+        description: 'Comfortable browns and tans',
+        primary: '#92400e', 
+        secondary: '#f59e0b', 
+        accent: '#fed7aa', 
+        tier: 'free',
+        category: 'Friendly'
+      },
+      { 
+        id: 'friendly-chat', 
+        name: 'Friendly Chat', 
+        description: 'Conversational blues and greens',
+        primary: '#0ea5e9', 
+        secondary: '#22c55e', 
+        accent: '#eab308', 
+        tier: 'free',
+        category: 'Friendly'
+      },
+      
+      // CONFIDENCE THEMES - Pro tier
+      { 
+        id: 'bold-leader', 
+        name: 'Bold Leader', 
+        description: 'Power and authority in red and gold',
+        primary: '#dc2626', 
+        secondary: '#1f2937', 
+        accent: '#f59e0b', 
+        tier: 'pro',
+        category: 'Confidence'
+      },
+      { 
+        id: 'power-hour', 
+        name: 'Power Hour', 
+        description: 'Professional focus with deep blues',
+        primary: '#1e40af', 
+        secondary: '#64748b', 
+        accent: '#f8fafc', 
+        tier: 'pro',
+        category: 'Confidence'
+      },
+      { 
+        id: 'champion', 
+        name: 'Champion', 
+        description: 'Victory greens with gold accents',
+        primary: '#059669', 
+        secondary: '#f59e0b', 
+        accent: '#1f2937', 
+        tier: 'pro',
+        category: 'Confidence'
+      },
+      
+      // COZY THEMES - Pro tier
+      { 
+        id: 'fireside', 
+        name: 'Fireside', 
+        description: 'Warm comfort like a crackling fire',
+        primary: '#92400e', 
+        secondary: '#ea580c', 
+        accent: '#fed7aa', 
+        tier: 'pro',
+        category: 'Cozy'
+      },
+      { 
+        id: 'rainy-day', 
+        name: 'Rainy Day', 
+        description: 'Tranquil grays and soft blues',
+        primary: '#64748b', 
+        secondary: '#3b82f6', 
+        accent: '#8b5cf6', 
+        tier: 'pro',
+        category: 'Cozy'
+      },
+      { 
+        id: 'tea-time', 
+        name: 'Tea Time', 
+        description: 'Relaxing pinks and warm browns',
+        primary: '#a16207', 
+        secondary: '#f43f5e', 
+        accent: '#fef3c7', 
+        tier: 'pro',
+        category: 'Cozy'
+      }
     ];
 
     this.themeGrid.innerHTML = '';
@@ -1864,6 +2005,8 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
           ${!hasAccess ? '<div class="lock-overlay">🔒</div>' : ''}
         </div>
         <div class="theme-label">${theme.name}</div>
+        <div class="theme-description">${theme.description}</div>
+        <div class="theme-category">${theme.category}</div>
       `;
       
       themeOption.addEventListener('click', () => {
