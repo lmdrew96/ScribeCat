@@ -121,6 +121,48 @@
                 </div>
             </div>
 
+            <!-- Subscription Section -->
+            <div class="sidebar-section">
+                <h3>Subscription</h3>
+                <div class="subscription-info">
+                    <div class="current-tier">
+                        <div class="tier-badge" id="tier-badge">Free</div>
+                        <div class="tier-description" id="tier-description">Limited features</div>
+                    </div>
+                    
+                    <div class="usage-stats" id="usage-stats">
+                        <div class="usage-item">
+                            <span class="usage-label">AI Summaries this session:</span>
+                            <span class="usage-value" id="session-summaries">0/1</span>
+                        </div>
+                        <div class="usage-item" id="token-usage" style="display: none;">
+                            <span class="usage-label">AskAI tokens today:</span>
+                            <span class="usage-value" id="daily-tokens">0/10,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-actions">
+                        <button class="btn btn-primary" id="upgrade-subscription" style="width: 100%; margin-bottom: 8px;">
+                            Upgrade to Plus ($12/month)
+                        </button>
+                        <button class="btn btn-secondary" id="view-premium-unlocks" style="width: 100%;">
+                            Premium Unlocks Store
+                        </button>
+                    </div>
+                    
+                    <div class="features-list">
+                        <h4>Your Plan Includes:</h4>
+                        <ul class="feature-list" id="current-features">
+                            <li>✅ Audio transcription</li>
+                            <li>✅ Note taking & editing</li>
+                            <li>✅ 1 AI summary per session</li>
+                            <li>❌ AskAI chat</li>
+                            <li>❌ AI Autopolish</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <div class="sidebar-section">
                 <h3>Canvas Integration</h3>
                 <div class="canvas-settings">
@@ -694,6 +736,7 @@
         </div>
     </div>
 
+    <script src="../shared/subscription-manager.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

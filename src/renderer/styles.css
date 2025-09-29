@@ -630,6 +630,106 @@ body {
   margin: var(--spacing-sm); /* 4px margin around headings */
 }
 
+/* Subscription section styles */
+.subscription-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.current-tier {
+  text-align: center;
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.tier-badge {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 4px;
+}
+
+.tier-badge.plus {
+  color: var(--secondary-color);
+}
+
+.tier-badge.pro {
+  color: var(--accent);
+}
+
+.tier-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.usage-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.usage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.usage-label {
+  color: var(--text-secondary);
+}
+
+.usage-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.usage-value.warning {
+  color: var(--warning-color);
+}
+
+.usage-value.danger {
+  color: var(--danger-color);
+}
+
+.subscription-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.features-list {
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.features-list h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 11px;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+
 /* Developer settings */
 .developer-settings {
   display: flex;
@@ -777,6 +877,36 @@ body {
   margin-top: 4px;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* Locked theme styles */
+.theme-option.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.theme-option.locked:hover {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.theme-colors.locked {
+  position: relative;
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  border-radius: 4px;
 }
 
 /* Course selection */
@@ -1379,6 +1509,22 @@ body {
 .claude-fab.expanding .claude-icon {
   opacity: 0;
   transform: scale(0.8);
+}
+
+/* Disabled feature styles */
+.claude-fab.disabled-feature {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.claude-fab.disabled-feature:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.claude-fab.disabled-feature:active {
+  transform: none;
 }
 
 /* AI Chat Panel */

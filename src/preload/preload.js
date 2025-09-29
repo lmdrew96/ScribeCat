@@ -28,6 +28,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   keytarGet: ({ service, account }) => ipcRenderer.invoke('keytar:get', { service, account }),
   keytarSet: (service, account, password) => ipcRenderer.invoke('keytar:set', { service, account, password }),
 
+  // Subscription management
+  subscriptionGetStatus: () => ipcRenderer.invoke('subscription:get-status'),
+  subscriptionSetTier: (tier) => ipcRenderer.invoke('subscription:set-tier', tier),
+  subscriptionAddUnlock: (unlockId) => ipcRenderer.invoke('subscription:add-unlock', unlockId),
+  subscriptionCanUseFeature: (feature) => ipcRenderer.invoke('subscription:can-use-feature', feature),
+  subscriptionTrackUsage: (feature, amount) => ipcRenderer.invoke('subscription:track-usage', feature, amount),
+
   // Vosk/Whisper transcription
   startVoskTranscription: (params) => ipcRenderer.invoke('transcription:start-vosk', params),
   onVoskResult: (callback) => ipcRenderer.on('transcription:vosk-result', callback),
