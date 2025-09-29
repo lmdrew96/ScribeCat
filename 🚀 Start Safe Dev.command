@@ -7,6 +7,12 @@
 # Change to the script's directory
 cd "$(dirname "$0")"
 
+# Load environment variables from .env if it exists
+if [ -f ".env" ]; then
+    echo "Loading environment variables from .env file..."
+    export $(grep -v '^#' .env | grep -v '^$' | xargs)
+fi
+
 # Check if npm is available
 if ! command -v npm &> /dev/null; then
     osascript -e 'display dialog "npm is not installed or not in PATH. Please install Node.js from nodejs.org" with title "ScribeCat Safe Dev" buttons {"OK"} default button "OK" with icon stop'

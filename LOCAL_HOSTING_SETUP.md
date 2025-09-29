@@ -31,10 +31,21 @@ npm run dev
 ## 🔧 **Server Configuration**
 
 ### Environment Setup
-Set your Claude API key for AI features:
+**Option 1: Use .env file (Recommended)**
+```bash
+# Edit your .env file
+nano .env
+
+# Add your Claude API key
+CLAUDE_API_KEY=your-claude-api-key-here
+```
+
+**Option 2: Export directly**
 ```bash
 export CLAUDE_API_KEY="your-claude-api-key-here"
 ```
+
+The server automatically loads `.env` files using dotenv.
 
 ### Server Features
 - **Port**: 3011 (configurable)
@@ -146,9 +157,10 @@ The Electron renderer automatically connects to `http://localhost:3011` for AI f
 - Verify no firewall blocking
 
 **❌ "Claude API error: 401"**
-- Set `CLAUDE_API_KEY` environment variable
-- Verify API key is valid
-- Check Anthropic Console for quota
+- Add `CLAUDE_API_KEY=your-key-here` to your `.env` file
+- OR export `CLAUDE_API_KEY` environment variable
+- Verify API key is valid at console.anthropic.com
+- Check Anthropic Console for quota limits
 
 **❌ "Failed to fetch"**
 - Confirm server URL: http://localhost:3011
