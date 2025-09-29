@@ -317,7 +317,98 @@ function createMenu() {
     },
     {
       label: 'Edit',
-      submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }]
+      submenu: [
+        { role: 'undo' }, 
+        { role: 'redo' }, 
+        { type: 'separator' }, 
+        { role: 'cut' }, 
+        { role: 'copy' }, 
+        { role: 'paste' },
+        { role: 'selectall' },
+        { type: 'separator' },
+        {
+          label: 'Find...',
+          accelerator: 'CmdOrCtrl+F',
+          click: () => mainWindow?.webContents.send('menu:find')
+        },
+        {
+          label: 'Find Next',
+          accelerator: 'CmdOrCtrl+G',
+          click: () => mainWindow?.webContents.send('menu:find-next')
+        },
+        {
+          label: 'Find Previous',
+          accelerator: 'CmdOrCtrl+Shift+G',
+          click: () => mainWindow?.webContents.send('menu:find-previous')
+        }
+      ]
+    },
+    {
+      label: 'Format',
+      submenu: [
+        {
+          label: 'Bold',
+          accelerator: 'CmdOrCtrl+B',
+          click: () => mainWindow?.webContents.send('menu:format', 'bold')
+        },
+        {
+          label: 'Italic',
+          accelerator: 'CmdOrCtrl+I',
+          click: () => mainWindow?.webContents.send('menu:format', 'italic')
+        },
+        {
+          label: 'Underline',
+          accelerator: 'CmdOrCtrl+U',
+          click: () => mainWindow?.webContents.send('menu:format', 'underline')
+        },
+        { type: 'separator' },
+        {
+          label: 'Insert Timestamp',
+          accelerator: 'CmdOrCtrl+T',
+          click: () => mainWindow?.webContents.send('menu:insert-timestamp')
+        }
+      ]
+    },
+    {
+      label: 'Recording',
+      submenu: [
+        {
+          label: 'Start/Stop Recording',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => mainWindow?.webContents.send('menu:toggle-recording')
+        },
+        {
+          label: 'Pause/Resume Recording',
+          accelerator: 'CmdOrCtrl+P',
+          click: () => mainWindow?.webContents.send('menu:pause-resume')
+        },
+        {
+          label: 'Quick Restart Recording',
+          accelerator: 'CmdOrCtrl+Shift+R',
+          click: () => mainWindow?.webContents.send('menu:quick-restart')
+        }
+      ]
+    },
+    {
+      label: 'Tools',
+      submenu: [
+        {
+          label: 'Generate AI Summary',
+          accelerator: 'CmdOrCtrl+Shift+S',
+          click: () => mainWindow?.webContents.send('menu:ai-summary')
+        },
+        {
+          label: 'Toggle Highlighter',
+          accelerator: 'CmdOrCtrl+Shift+H',
+          click: () => mainWindow?.webContents.send('menu:toggle-highlighter')
+        },
+        { type: 'separator' },
+        {
+          label: 'Clear All Notes',
+          accelerator: 'CmdOrCtrl+Shift+Delete',
+          click: () => mainWindow?.webContents.send('menu:clear-notes')
+        }
+      ]
     },
     {
       label: 'View',
@@ -330,7 +421,47 @@ function createMenu() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
+        { 
+          label: 'Toggle Fullscreen',
+          accelerator: 'F11',
+          role: 'togglefullscreen' 
+        },
+        { type: 'separator' },
+        {
+          label: 'Focus Notes Panel',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => mainWindow?.webContents.send('menu:focus-panel', 1)
+        },
+        {
+          label: 'Focus Transcription Panel',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => mainWindow?.webContents.send('menu:focus-panel', 2)
+        },
+        {
+          label: 'Focus AI Chat',
+          accelerator: 'CmdOrCtrl+3',
+          click: () => mainWindow?.webContents.send('menu:focus-panel', 3)
+        }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        {
+          label: 'Settings',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => mainWindow?.webContents.send('menu:settings')
+        }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Keyboard Shortcuts',
+          accelerator: 'CmdOrCtrl+?',
+          click: () => mainWindow?.webContents.send('menu:keyboard-shortcuts')
+        }
       ]
     }
   ];

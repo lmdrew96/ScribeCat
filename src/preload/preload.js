@@ -39,6 +39,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onMenuAction: (callback) => {
     ipcRenderer.on('menu:new-recording', (e) => callback(e, 'menu:new-recording'));
     ipcRenderer.on('menu:save', (e) => callback(e, 'menu:save'));
+    ipcRenderer.on('menu:find', (e) => callback(e, 'menu:find'));
+    ipcRenderer.on('menu:find-next', (e) => callback(e, 'menu:find-next'));
+    ipcRenderer.on('menu:find-previous', (e) => callback(e, 'menu:find-previous'));
+    ipcRenderer.on('menu:format', (e, format) => callback(e, 'menu:format', format));
+    ipcRenderer.on('menu:insert-timestamp', (e) => callback(e, 'menu:insert-timestamp'));
+    ipcRenderer.on('menu:toggle-recording', (e) => callback(e, 'menu:toggle-recording'));
+    ipcRenderer.on('menu:pause-resume', (e) => callback(e, 'menu:pause-resume'));
+    ipcRenderer.on('menu:quick-restart', (e) => callback(e, 'menu:quick-restart'));
+    ipcRenderer.on('menu:ai-summary', (e) => callback(e, 'menu:ai-summary'));
+    ipcRenderer.on('menu:toggle-highlighter', (e) => callback(e, 'menu:toggle-highlighter'));
+    ipcRenderer.on('menu:clear-notes', (e) => callback(e, 'menu:clear-notes'));
+    ipcRenderer.on('menu:focus-panel', (e, panel) => callback(e, 'menu:focus-panel', panel));
+    ipcRenderer.on('menu:settings', (e) => callback(e, 'menu:settings'));
+    ipcRenderer.on('menu:keyboard-shortcuts', (e) => callback(e, 'menu:keyboard-shortcuts'));
   },
 
   // Remove listeners

@@ -437,11 +437,67 @@ class ScribeCatApp {
       });
     }
     if (window.electronAPI && window.electronAPI.onMenuAction) {
-      window.electronAPI.onMenuAction((event, action) => {
-        if (action === 'menu:new-recording') {
-          this.newRecording();
-        } else if (action === 'menu:save') {
-          this.saveRecording();
+      window.electronAPI.onMenuAction((event, action, param) => {
+        switch (action) {
+          case 'menu:new-recording':
+            this.newRecording();
+            break;
+          case 'menu:save':
+            this.saveRecording();
+            break;
+          case 'menu:find':
+            this.openFindDialog();
+            break;
+          case 'menu:find-next':
+            this.findNext();
+            break;
+          case 'menu:find-previous':
+            this.findPrevious();
+            break;
+          case 'menu:format':
+            this.executeFormat(param);
+            break;
+          case 'menu:insert-timestamp':
+            this.insertTimestamp();
+            break;
+          case 'menu:toggle-recording':
+            this.toggleRecording();
+            break;
+          case 'menu:pause-resume':
+            if (this.isRecording) {
+              if (this.pauseBtn && !this.pauseBtn.disabled) {
+                this.pauseRecording();
+              } else if (this.resumeBtn && !this.resumeBtn.disabled) {
+                this.resumeRecording();
+              }
+            }
+            break;
+          case 'menu:quick-restart':
+            if (this.isRecording) {
+              this.stopRecording();
+              setTimeout(() => this.startRecording(), 100);
+            } else {
+              this.startRecording();
+            }
+            break;
+          case 'menu:ai-summary':
+            this.generateAISummary();
+            break;
+          case 'menu:toggle-highlighter':
+            this.toggleHighlighterMode();
+            break;
+          case 'menu:clear-notes':
+            this.showClearNotesModal();
+            break;
+          case 'menu:focus-panel':
+            this.focusPanel(param);
+            break;
+          case 'menu:settings':
+            this.openSettings();
+            break;
+          case 'menu:keyboard-shortcuts':
+            this.showKeyboardShortcutsHelp();
+            break;
         }
       });
     }
@@ -479,13 +535,8 @@ class ScribeCatApp {
       this.clearNotesModalClose.addEventListener('click', () => this.hideClearNotesModal());
     }
     
-    // Keyboard shortcut for clear notes (Ctrl+Shift+Delete)
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'Delete') {
-        e.preventDefault();
-        this.showClearNotesModal();
-      }
-    });
+    // Setup global keyboard shortcuts
+    this.setupGlobalKeyboardShortcuts();
   }
 
   toggleSidebar() {
@@ -515,6 +566,207 @@ class ScribeCatApp {
         this.sidebarScrim.classList.remove('show');
       }
     }
+  }
+
+  setupGlobalKeyboardShortcuts() {
+    // Global keyboard shortcut handler
+    document.addEventListener('keydown', (e) => {
+      // Check if we're in an input field (but not the contenteditable notes editor)
+      const isInInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || 
+                       e.target.tagName === 'SELECT' || e.target.isContentEditable && e.target !== this.notesEditor;
+      
+      // Handle Escape key
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.handleEscapeKey();
+        return;
+      }
+
+      // Handle modifier-based shortcuts
+      if (e.ctrlKey || e.metaKey) {
+        const handled = this.handleGlobalShortcut(e, isInInput);
+        if (handled) {
+          e.preventDefault();
+        }
+      }
+    });
+  }
+
+  handleEscapeKey() {
+    // Close modals and dialogs
+    if (this.clearNotesModal && this.clearNotesModal.style.display !== 'none') {
+      this.hideClearNotesModal();
+      return;
+    }
+    
+    // Close chat panel if expanded
+    if (this.aiChatPanel && this.aiChatPanel.classList.contains('expanded')) {
+      this.collapseChatPanel();
+      return;
+    }
+
+    // Close sidebar if open
+    if (this.sidebar && this.sidebar.classList.contains('open')) {
+      this.closeSidebar();
+      return;
+    }
+
+    // If find dialog exists, close it
+    if (this.findDialog && this.findDialog.style.display !== 'none') {
+      this.closeFindDialog();
+      return;
+    }
+  }
+
+  handleGlobalShortcut(e, isInInput) {
+    const key = e.key.toLowerCase();
+    
+    // Document Management Shortcuts
+    if (key === 'n' && !e.shiftKey) {
+      this.newRecording();
+      return true;
+    }
+    
+    if (key === 's' && !e.shiftKey) {
+      this.saveRecording();
+      this.showSaveIndicator();
+      return true;
+    }
+
+    // Recording Control Shortcuts
+    if (key === 'r' && !e.shiftKey) {
+      this.toggleRecording();
+      return true;
+    }
+    
+    if (key === 'r' && e.shiftKey) {
+      // Quick restart (stop current and start new)
+      if (this.isRecording) {
+        this.stopRecording();
+        setTimeout(() => this.startRecording(), 100);
+      } else {
+        this.startRecording();
+      }
+      return true;
+    }
+    
+    if (key === 'p' && !e.shiftKey) {
+      if (this.isRecording) {
+        if (this.pauseBtn && !this.pauseBtn.disabled) {
+          this.pauseRecording();
+        } else if (this.resumeBtn && !this.resumeBtn.disabled) {
+          this.resumeRecording();
+        }
+      }
+      return true;
+    }
+
+    // Navigation shortcuts
+    if (key === 'f' && !e.shiftKey) {
+      this.openFindDialog();
+      return true;
+    }
+
+    if (key === 'g') {
+      if (e.shiftKey) {
+        this.findPrevious();
+      } else {
+        this.findNext();
+      }
+      return true;
+    }
+
+    if (key === 'tab' && !e.shiftKey && !isInInput) {
+      this.switchToNextPanel();
+      return true;
+    }
+
+    // Panel focus shortcuts (numbers 1-4)
+    if (['1', '2', '3', '4'].includes(key) && !isInInput) {
+      this.focusPanel(parseInt(key));
+      return true;
+    }
+
+    // Special feature shortcuts
+    if (key === 't' && !e.shiftKey && !isInInput) {
+      this.insertTimestamp();
+      return true;
+    }
+
+    if (key === 's' && e.shiftKey) {
+      this.generateAISummary();
+      return true;
+    }
+
+    if (key === 'h' && e.shiftKey && !isInInput) {
+      this.toggleHighlighterMode();
+      return true;
+    }
+
+    // Clear all notes (Ctrl+Shift+Delete)
+    if (e.shiftKey && e.key === 'Delete') {
+      this.showClearNotesModal();
+      return true;
+    }
+
+    // Text editing shortcuts (only when not in input fields)
+    if (!isInInput) {
+      if (key === 'a' && !e.shiftKey) {
+        this.selectAllNotes();
+        return true;
+      }
+
+      if (key === 'x' && !e.shiftKey) {
+        this.cutText();
+        return true;
+      }
+
+      if (key === 'c' && !e.shiftKey) {
+        this.copyText();
+        return true;
+      }
+
+      if (key === 'v' && !e.shiftKey) {
+        this.pasteText();
+        return true;
+      }
+
+      if (key === 'd' && !e.shiftKey) {
+        this.duplicateLine();
+        return true;
+      }
+    }
+
+    // Window and application shortcuts
+    if (key === 'w' && !e.shiftKey) {
+      // Close window (if multiple windows supported)
+      this.closeWindow();
+      return true;
+    }
+
+    if (key === 'q' && !e.shiftKey && (navigator.platform.toLowerCase().includes('mac') || e.metaKey)) {
+      this.quitApplication();
+      return true;
+    }
+
+    if (key === ',' && !e.shiftKey) {
+      this.openSettings();
+      return true;
+    }
+
+    // Help shortcut
+    if ((key === '?' || key === '/') && e.shiftKey) {
+      this.showKeyboardShortcutsHelp();
+      return true;
+    }
+
+    // F11 for fullscreen
+    if (e.key === 'F11') {
+      this.toggleFullscreen();
+      return true;
+    }
+
+    return false;
   }
 
   setupContentResize() {
@@ -2335,6 +2587,452 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         return `Error: ${error.message}`;
       }
     }
+  }
+
+  // Keyboard Shortcut Handler Methods
+  showSaveIndicator() {
+    // Create a temporary save indicator
+    const indicator = document.createElement('div');
+    indicator.textContent = 'Saved!';
+    indicator.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #22c55e;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      z-index: 1000;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity 0.3s ease;
+    `;
+    document.body.appendChild(indicator);
+    
+    setTimeout(() => {
+      indicator.style.opacity = '0';
+      setTimeout(() => indicator.remove(), 300);
+    }, 1500);
+  }
+
+  openFindDialog() {
+    // Create find dialog if it doesn't exist
+    if (!this.findDialog) {
+      this.createFindDialog();
+    }
+    this.findDialog.style.display = 'flex';
+    this.findInput.focus();
+  }
+
+  createFindDialog() {
+    this.findDialog = document.createElement('div');
+    this.findDialog.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 300px;
+    `;
+
+    this.findDialog.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="text" placeholder="Find in notes..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <button type="button" style="padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Find</button>
+        <button type="button" style="padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+      </div>
+      <div style="display: flex; gap: 8px; font-size: 12px;">
+        <label><input type="checkbox"> Case sensitive</label>
+        <span id="find-results" style="margin-left: auto; color: #666;"></span>
+      </div>
+    `;
+
+    this.findInput = this.findDialog.querySelector('input[type="text"]');
+    this.findResults = this.findDialog.querySelector('#find-results');
+    this.caseSensitiveCheckbox = this.findDialog.querySelector('input[type="checkbox"]');
+    
+    // Find button
+    this.findDialog.querySelector('button:first-of-type').addEventListener('click', () => this.performFind());
+    
+    // Close button
+    this.findDialog.querySelector('button:last-of-type').addEventListener('click', () => this.closeFindDialog());
+    
+    // Enter key in input
+    this.findInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.performFind();
+      } else if (e.key === 'Escape') {
+        this.closeFindDialog();
+      }
+    });
+
+    // Real-time search
+    this.findInput.addEventListener('input', () => this.performFind());
+
+    document.body.appendChild(this.findDialog);
+  }
+
+  closeFindDialog() {
+    if (this.findDialog) {
+      this.findDialog.style.display = 'none';
+      this.clearHighlights();
+    }
+  }
+
+  performFind() {
+    if (!this.findInput.value.trim()) {
+      this.clearHighlights();
+      this.findResults.textContent = '';
+      return;
+    }
+
+    const searchText = this.findInput.value;
+    const caseSensitive = this.caseSensitiveCheckbox.checked;
+    const content = this.notesEditor.textContent;
+    
+    if (!content) {
+      this.findResults.textContent = 'No results';
+      return;
+    }
+
+    // Clear previous highlights
+    this.clearHighlights();
+
+    // Find matches
+    const flags = caseSensitive ? 'g' : 'gi';
+    const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+    const matches = content.match(regex);
+    
+    if (matches) {
+      this.findResults.textContent = `${matches.length} found`;
+      this.highlightMatches(searchText, caseSensitive);
+      this.currentFindIndex = 0;
+      this.findMatches = matches;
+    } else {
+      this.findResults.textContent = 'No results';
+      this.findMatches = [];
+    }
+  }
+
+  highlightMatches(searchText, caseSensitive) {
+    const walker = document.createTreeWalker(
+      this.notesEditor,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+
+    textNodes.forEach(textNode => {
+      const text = textNode.textContent;
+      const flags = caseSensitive ? 'g' : 'gi';
+      const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+      
+      if (regex.test(text)) {
+        const highlightedHTML = text.replace(regex, '<mark style="background: yellow; padding: 1px 2px;">$&</mark>');
+        const span = document.createElement('span');
+        span.innerHTML = highlightedHTML;
+        textNode.parentNode.replaceChild(span, textNode);
+      }
+    });
+  }
+
+  clearHighlights() {
+    const marks = this.notesEditor.querySelectorAll('mark');
+    marks.forEach(mark => {
+      const parent = mark.parentNode;
+      parent.replaceChild(document.createTextNode(mark.textContent), mark);
+      parent.normalize();
+    });
+  }
+
+  findNext() {
+    if (!this.findMatches || this.findMatches.length === 0) {
+      this.openFindDialog();
+      return;
+    }
+    // Implementation for cycling through find results
+    console.log('Find next');
+  }
+
+  findPrevious() {
+    if (!this.findMatches || this.findMatches.length === 0) {
+      this.openFindDialog();
+      return;
+    }
+    // Implementation for cycling through find results
+    console.log('Find previous');
+  }
+
+  switchToNextPanel() {
+    // Implementation for switching between panels (notes, transcription, AI chat)
+    console.log('Switch to next panel');
+  }
+
+  focusPanel(panelNumber) {
+    switch (panelNumber) {
+      case 1:
+        if (this.notesEditor) {
+          this.notesEditor.focus();
+        }
+        break;
+      case 2:
+        if (this.transcriptionDisplay) {
+          this.transcriptionDisplay.focus();
+        }
+        break;
+      case 3:
+        if (this.chatInput) {
+          this.expandChatPanel();
+          this.chatInput.focus();
+        }
+        break;
+      case 4:
+        this.openSettings();
+        break;
+    }
+  }
+
+  insertTimestamp() {
+    if (!this.notesEditor) return;
+    
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString();
+    const timestampLink = `<a href="#" onclick="return false;" style="color: #007bff; text-decoration: none;">[${timestamp}]</a> `;
+    
+    // Insert at cursor position
+    document.execCommand('insertHTML', false, timestampLink);
+    this.saveNotesDraft();
+  }
+
+  generateAISummary() {
+    if (this.generateSummaryBtn) {
+      this.generateSummaryBtn.click();
+    }
+  }
+
+  toggleHighlighterMode() {
+    // Toggle highlighter mode - find the highlight button and activate it
+    const highlightBtn = document.querySelector('[data-command="highlight"]');
+    if (highlightBtn) {
+      highlightBtn.click();
+    }
+  }
+
+  selectAllNotes() {
+    if (this.notesEditor) {
+      this.notesEditor.focus();
+      document.execCommand('selectAll');
+    }
+  }
+
+  cutText() {
+    if (this.notesEditor && window.getSelection().toString()) {
+      document.execCommand('cut');
+      this.saveNotesDraft();
+    }
+  }
+
+  copyText() {
+    if (this.notesEditor && window.getSelection().toString()) {
+      document.execCommand('copy');
+    }
+  }
+
+  pasteText() {
+    if (this.notesEditor) {
+      this.notesEditor.focus();
+      document.execCommand('paste');
+      this.saveNotesDraft();
+    }
+  }
+
+  duplicateLine() {
+    if (!this.notesEditor) return;
+    
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      // Get the current line
+      let lineStart = range.startContainer;
+      let lineEnd = range.endContainer;
+      
+      // Find the start and end of the current line
+      while (lineStart.previousSibling) {
+        lineStart = lineStart.previousSibling;
+      }
+      while (lineEnd.nextSibling) {
+        lineEnd = lineEnd.nextSibling;
+      }
+      
+      // Select the line and duplicate it
+      const lineRange = document.createRange();
+      lineRange.setStartBefore(lineStart);
+      lineRange.setEndAfter(lineEnd);
+      
+      const lineContent = lineRange.toString();
+      lineRange.collapse(false);
+      lineRange.insertNode(document.createTextNode('\n' + lineContent));
+      
+      this.saveNotesDraft();
+    }
+  }
+
+  closeWindow() {
+    // Close window functionality (placeholder for multi-window support)
+    console.log('Close window');
+  }
+
+  quitApplication() {
+    // Quit application
+    if (window.electronAPI && window.electronAPI.quit) {
+      window.electronAPI.quit();
+    } else {
+      window.close();
+    }
+  }
+
+  openSettings() {
+    this.openSidebar();
+  }
+
+  toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+  }
+
+  showKeyboardShortcutsHelp() {
+    // Create or show keyboard shortcuts help dialog
+    if (!this.shortcutsDialog) {
+      this.createShortcutsDialog();
+    }
+    this.shortcutsDialog.style.display = 'flex';
+  }
+
+  createShortcutsDialog() {
+    this.shortcutsDialog = document.createElement('div');
+    this.shortcutsDialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    const isMac = navigator.platform.toLowerCase().includes('mac');
+    const cmdKey = isMac ? '⌘' : 'Ctrl';
+
+    this.shortcutsDialog.innerHTML = `
+      <div style="background: white; border-radius: 8px; padding: 24px; max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="margin: 0;">Keyboard Shortcuts</h2>
+          <button type="button" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div>
+            <h3>Document Management</h3>
+            <div class="shortcut-item"><kbd>${cmdKey}+N</kbd> New Recording</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+S</kbd> Save</div>
+            
+            <h3>Text Formatting</h3>
+            <div class="shortcut-item"><kbd>${cmdKey}+B</kbd> Bold</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+I</kbd> Italic</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+U</kbd> Underline</div>
+            
+            <h3>Text Editing</h3>
+            <div class="shortcut-item"><kbd>${cmdKey}+Z</kbd> Undo</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Shift+Z</kbd> Redo</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+A</kbd> Select All</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+X</kbd> Cut</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+C</kbd> Copy</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+V</kbd> Paste</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+D</kbd> Duplicate Line</div>
+          </div>
+          <div>
+            <h3>Recording Controls</h3>
+            <div class="shortcut-item"><kbd>${cmdKey}+R</kbd> Start/Stop Recording</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+P</kbd> Pause/Resume</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Shift+R</kbd> Quick Restart</div>
+            
+            <h3>Navigation</h3>
+            <div class="shortcut-item"><kbd>${cmdKey}+F</kbd> Find in Notes</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+G</kbd> Find Next</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Shift+G</kbd> Find Previous</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Tab</kbd> Switch Panels</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+1</kbd> Focus Notes</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+2</kbd> Focus Transcription</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+3</kbd> Focus AI Chat</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+4</kbd> Open Settings</div>
+            
+            <h3>Special Features</h3>
+            <div class="shortcut-item"><kbd>${cmdKey}+T</kbd> Insert Timestamp</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Shift+S</kbd> Generate AI Summary</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Shift+H</kbd> Toggle Highlighter</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+Shift+Delete</kbd> Clear All Notes</div>
+            
+            <h3>General</h3>
+            <div class="shortcut-item"><kbd>Esc</kbd> Close Dialogs</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+,</kbd> Open Settings</div>
+            <div class="shortcut-item"><kbd>${cmdKey}+?</kbd> Show This Help</div>
+            <div class="shortcut-item"><kbd>F11</kbd> Toggle Fullscreen</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add CSS for shortcut items
+    const style = document.createElement('style');
+    style.textContent = `
+      .shortcut-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 14px;
+      }
+      .shortcut-item kbd {
+        background: #f1f1f1;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Close button
+    this.shortcutsDialog.querySelector('button').addEventListener('click', () => {
+      this.shortcutsDialog.style.display = 'none';
+    });
+
+    // Close on backdrop click
+    this.shortcutsDialog.addEventListener('click', (e) => {
+      if (e.target === this.shortcutsDialog) {
+        this.shortcutsDialog.style.display = 'none';
+      }
+    });
+
+    document.body.appendChild(this.shortcutsDialog);
   }
 }
 
