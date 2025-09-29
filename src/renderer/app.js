@@ -149,33 +149,67 @@ class ScribeCatApp {
     console.log('ScribeCat initialized successfully');
   }
 
-  // Claude API helper function for consistent API calls
+  // Local backend API helper function
+  async callBackendAPI(endpoint, data) {
+    const backendUrl = 'http://localhost:3011';
+    
+    try {
+      const response = await fetch(`${backendUrl}/api/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Backend API error: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      // If backend is not available, show helpful error
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Backend server not running. Please start the server first: npm run server');
+      }
+      throw error;
+    }
+  }
+
+  // Legacy Claude API helper function (now uses backend)
   async callClaudeAPI(messages, maxTokens = 1200, temperature = 0.7) {
-    if (!this.claudeApiKey) {
-      throw new Error('Claude API key not available');
+    // For backward compatibility, convert to backend format
+    const userMessage = messages.find(m => m.role === 'user');
+    if (!userMessage) {
+      throw new Error('No user message provided');
     }
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.claudeApiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: maxTokens,
-        temperature: temperature,
-        messages: messages
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+    
+    // Extract context and question from the user message
+    const content = userMessage.content;
+    const parts = content.split('\n\nQuestion: ');
+    
+    if (parts.length === 2) {
+      // This is a chat request
+      const contextPart = parts[0].replace('You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.\n\nContext: ', '');
+      const question = parts[1];
+      
+      // Parse notes and transcription from context
+      const contextParts = contextPart.split('\n\nTranscription: ');
+      const notesContent = contextParts[0].replace('Notes: ', '');
+      const transcriptionContent = contextParts[1] || '';
+      
+      const result = await this.callBackendAPI('chat', {
+        question,
+        notesContent,
+        transcriptionContent
+      });
+      
+      return result.response;
+    } else {
+      // This might be a summary, blurb, or polish request
+      throw new Error('Legacy format not supported. Use specific backend endpoints.');
     }
-
-    const data = await response.json();
-    return data.content?.[0]?.text || 'No response content';
   }
 
   cleanupDomArtifacts() {
@@ -704,32 +738,23 @@ class ScribeCatApp {
           this.aiSummary.innerHTML = '<span style="color:red">Error generating simulated summary.</span>';
         }
       } else {
-        // Real API mode
-        if (!this.claudeApiKey) {
-          this.aiSummary.innerHTML = '<span style="color:red">Claude API key required.</span>';
-          this.generateSummaryBtn.disabled = false;
-          return;
-        }
-        
+        // Real API mode using backend server
         try {
-          const prompt = `Summarize the following notes and transcript. Highlight key topics, phrases, and any due dates. Format the output in rich markdown.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
+          const result = await this.callBackendAPI('summary', {
+            notesContent,
+            transcriptionContent: transcriptContent
+          });
           
-          const summary = await this.callClaudeAPI([
-            { role: 'user', content: `You are a helpful assistant that summarizes notes and transcripts in rich markdown.\n\n${prompt}` }
-          ], 512, 0.3);
-          
-          if (summary) {
-            this.aiSummary.innerHTML = window.marked ? marked.parse(summary) : summary;
+          if (result.summary) {
+            this.aiSummary.innerHTML = window.marked ? marked.parse(result.summary) : result.summary;
+          } else if (result.fallback) {
+            this.aiSummary.innerHTML = window.marked ? marked.parse(result.fallback) : result.fallback;
           } else {
             this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
           }
         } catch (err) {
           console.error('Error generating summary:', err);
-          if (this.isUsingDeveloperKey) {
-            this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own Claude API key in settings or enable simulation mode.</span>';
-          } else {
-            this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key or enable simulation mode.</span>';
-          }
+          this.aiSummary.innerHTML = `<span style="color:red">Error generating summary: ${err.message}</span>`;
         }
       }
       this.generateSummaryBtn.disabled = false;
@@ -749,31 +774,13 @@ class ScribeCatApp {
         .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
         .join('\n');
       
-      if (!this.claudeApiKey) {
-        console.warn('Claude API key not available for blurb generation, using fallback');
-        return 'Session_Notes';
-      }
-
       try {
-        const prompt = `Generate a brief 1-6 word description suitable for a filename based on the following notes and transcript content. The response should be concise, descriptive, and use underscores instead of spaces. Focus on the main topic or subject matter.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
+        const result = await this.callBackendAPI('blurb', {
+          notesContent,
+          transcriptionContent: transcriptContent
+        });
         
-        const blurb = await this.callClaudeAPI([
-          { role: 'user', content: `You are a helpful assistant that generates brief, descriptive filenames. Respond with only the filename-friendly phrase using underscores instead of spaces, no quotes or extra text.\n\n${prompt}` }
-        ], 64, 0.3);
-        
-        if (blurb) {
-          // Clean up the blurb for filename use
-          const cleanBlurb = blurb
-            .replace(/[^a-zA-Z0-9\s_-]/g, '') // Remove special characters except spaces, underscores, hyphens
-            .replace(/\s+/g, '_') // Replace spaces with underscores
-            .replace(/_+/g, '_') // Replace multiple underscores with single
-            .replace(/^_|_$/g, '') // Remove leading/trailing underscores
-            .substring(0, 50); // Limit length
-          
-          return cleanBlurb || 'Session_Notes';
-        } else {
-          return 'Session_Notes';
-        }
+        return result.blurb || result.fallback || 'Session_Notes';
       } catch (err) {
         console.error('Error generating AI blurb:', err);
         return 'Session_Notes';
@@ -1504,14 +1511,14 @@ class ScribeCatApp {
     const context = Array.from(this.transcriptionDisplay.children)
       .map(e => e.querySelector('.transcript-text')?.textContent || '')
       .join(' ');
-    // Call Claude for polish
-    if (!this.claudeApiKey) return;
+    // Call backend for polish
     try {
-      const prompt = `Polish this transcript for clarity and grammar, keeping context in mind.\nContext: ${context}\nTranscript: ${originalText}`;
+      const result = await this.callBackendAPI('polish', {
+        originalText,
+        context
+      });
       
-      const polished = await this.callClaudeAPI([
-        { role: 'user', content: `You are a helpful assistant that polishes transcripts for clarity.\n\n${prompt}` }
-      ], 256, 0.3);
+      const polished = result.polished || result.fallback;
       if (polished && polished !== originalText) {
         const textDiv = entry.querySelector('.transcript-text');
         if (textDiv) textDiv.textContent = polished;
@@ -1519,6 +1526,7 @@ class ScribeCatApp {
       }
     } catch (err) {
       // Fail silently for polish errors
+      console.warn('Auto-polish failed:', err.message);
     }
   }
 
@@ -2141,21 +2149,18 @@ class ScribeCatApp {
       
       return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using Claude API to provide contextual answers.]`;
     } else {
-      // Real Claude API implementation
+      // Real Claude API implementation using backend server
       try {
-        const context = `Notes: ${notesContent}\n\nTranscription: ${transcriptionContent}`;
-        
-        const response = await this.callClaudeAPI([
-          {
-            role: 'user',
-            content: `You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.\n\nContext: ${context}\n\nQuestion: ${question}`
-          }
-        ], 500, 0.7);
+        const result = await this.callBackendAPI('chat', {
+          question,
+          notesContent,
+          transcriptionContent
+        });
 
-        return response || 'Sorry, I could not generate a response.';
+        return result.response || result.fallback || 'Sorry, I could not generate a response.';
       } catch (error) {
-        console.error('Error calling Claude API:', error);
-        return `Error: Could not connect to Claude API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
+        console.error('Error calling backend API:', error);
+        return `Error: ${error.message}`;
       }
     }
   }
