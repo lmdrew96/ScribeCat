@@ -8,6 +8,8 @@
     "start": "electron . --no-sandbox",
     "dev": "electron . --dev --no-sandbox",
     "safe-dev": "./enhanced-git-safety.sh dev",
+    "server": "node server.js",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -26,6 +28,7 @@
   "author": "ScribeCat Team",
   "license": "ISC",
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "electron": "^38.1.2",
     "electron-builder": "^26.0.12",
     "jsdom": "^24.1.0"

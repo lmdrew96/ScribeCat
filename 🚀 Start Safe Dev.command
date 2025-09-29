@@ -22,8 +22,8 @@ fi
 # Show starting notification
 osascript -e 'display notification "Starting ScribeCat in safe development mode..." with title "ScribeCat Safe Dev"'
 
-# Run the safe-dev command
-npm run safe-dev
+# Run the full development command (server + electron)
+npm run dev:full
 
 # Show completion notification
 osascript -e 'display notification "ScribeCat safe-dev has finished." with title "ScribeCat Safe Dev"'
