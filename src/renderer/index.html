@@ -312,6 +312,25 @@
                     <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription (Ctrl+S / ⌘S)">Save</button>
                 </div>
 
+                <!-- Course Selection -->
+                <div class="course-selection-container">
+                    <div class="course-selection-label">
+                        <label for="capture-course-select">Select Course: <span class="required">*</span></label>
+                    </div>
+                    <div class="course-selection-controls">
+                        <select id="capture-course-select" class="input-field course-selector">
+                            <option value="">Choose a course...</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div id="capture-custom-category" class="custom-category-input" style="display: none;">
+                            <input type="text" id="capture-custom-text" placeholder="Enter custom category (optional)" class="input-field">
+                        </div>
+                    </div>
+                    <div class="course-selection-error" id="course-selection-error" style="display: none;">
+                        Please select a course before saving your session
+                    </div>
+                </div>
+
                 <!-- Content Container -->
                 <div class="content-container">
                     <!-- Notes Editor -->

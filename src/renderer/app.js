@@ -120,6 +120,12 @@ class ScribeCatApp {
     this.audioDestLocalRadio = document.getElementById('audio-dest-local');
     this.audioDestDriveRadio = document.getElementById('audio-dest-drive');
     
+    // Capture page course selection
+    this.captureCourseSelect = document.getElementById('capture-course-select');
+    this.captureCustomCategory = document.getElementById('capture-custom-category');
+    this.captureCustomText = document.getElementById('capture-custom-text');
+    this.courseSelectionError = document.getElementById('course-selection-error');
+    
     // Transcription controls
     this.clearTranscriptionBtn = document.getElementById('clear-transcription');
     this.jumpLatestBtn = document.getElementById('jump-latest');
@@ -822,6 +828,9 @@ class ScribeCatApp {
     }
     if (this.courseSelect) {
       this.courseSelect.addEventListener('change', (e) => this.onCourseSelectionChange(e.target.value));
+    }
+    if (this.captureCourseSelect) {
+      this.captureCourseSelect.addEventListener('change', (e) => this.onCaptureCourseSelectionChange(e.target.value));
     }
     if (this.selectNotesDriveFolderBtn) {
       this.selectNotesDriveFolderBtn.addEventListener('click', () => this.selectNotesDriveFolder());
@@ -1707,17 +1716,21 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         return 'Simulated_Session_Notes';
       }
       
-      // Real API mode - existing functionality
-      // Generate a brief 1-6 word blurb based on notes and transcription for file naming
+      // Real API mode - analyze ONLY notes content (not transcription) as per requirements
+      // Generate a brief 1-6 word blurb based on notes content for file naming
       const notesContent = this.notesEditor.textContent || '';
-      const transcriptContent = Array.from(this.transcriptionDisplay.children)
-        .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
-        .join('\n');
+      
+      // Handle edge case of empty/sparse notes
+      if (!notesContent.trim() || notesContent.trim().length < 10) {
+        console.log('Notes content is empty or sparse, using fallback title');
+        return 'Brief_Session_Notes';
+      }
       
       try {
         const result = await this.callBackendAPI('blurb', {
           notesContent,
-          transcriptionContent: transcriptContent
+          // Explicitly exclude transcription content as per requirements
+          transcriptionContent: '' 
         });
         
         return result.blurb || result.fallback || 'Session_Notes';
@@ -2127,6 +2140,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     try {
       // Reset session summary count for new recording
       this.currentSessionSummaries = 0;
+      
+      // Reset course selection for new session
+      this.resetCourseSelection();
       
       const constraints = {
         audio: {
@@ -2579,17 +2595,30 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         return;
       }
 
-      const courseInfo = await this.getCanvasInfo();
-      const courseNumber = courseInfo.courseNumber || 'UNKNOWN';
+      // Validate course selection is required
+      if (!this.captureCourseSelect || !this.captureCourseSelect.value) {
+        this.courseSelectionError.style.display = 'block';
+        alert('Please select a course before saving your session');
+        return;
+      }
+      
+      // Hide any error message
+      this.courseSelectionError.style.display = 'none';
+
+      const courseInfo = await this.getCapturePageCourseInfo();
+      const courseId = this.formatCourseIdForFileName(courseInfo);
       
       // Generate AI blurb for filename
       const aiBlurb = await this.generateAIBlurb();
       
-      // New naming convention: CourseNumber--OpenAIBlurb
-      const baseFileName = `${courseNumber}--${aiBlurb}`;
+      // New naming convention: COURSEID–Descriptive_Title—DATE.extension
+      const currentDate = new Date();
+      const dateString = `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}-${currentDate.getFullYear()}`;
+      const formattedTitle = aiBlurb.replace(/\s+/g, '_');
+      const baseFileName = `${courseId}–${formattedTitle}—${dateString}`;
       const audioFileName = baseFileName; // .wav extension added by saveAudioFile
-      const notesFileName = `${baseFileName}_Notes`;
-      const transcriptionFileName = `${baseFileName}_Transcript`;
+      const notesFileName = baseFileName;
+      const transcriptionFileName = baseFileName;
 
       // Save audio file based on user's destination preference
       if (this.audioChunks.length > 0) {
@@ -2749,6 +2778,45 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
   }
 
+  getCapturePageCourseInfo() {
+    if (this.captureCourseSelect.value === 'other') {
+      // Use custom category text or default to "Other"
+      const customText = this.captureCustomText.value.trim();
+      return {
+        courseNumber: customText || 'Other',
+        courseTitle: customText || 'Other'
+      };
+    } else if (this.captureCourseSelect.value === '') {
+      // This shouldn't happen due to validation, but handle gracefully
+      return {
+        courseNumber: 'UNKNOWN',
+        courseTitle: 'UNKNOWN'
+      };
+    } else {
+      // Parse selected course option
+      const option = this.captureCourseSelect.options[this.captureCourseSelect.selectedIndex];
+      return {
+        courseNumber: option.dataset.courseNumber || '',
+        courseTitle: option.dataset.courseTitle || option.text
+      };
+    }
+  }
+
+  formatCourseIdForFileName(courseInfo) {
+    // Create file-safe course ID, replacing spaces with underscores and removing special characters
+    const courseId = courseInfo.courseNumber || courseInfo.courseTitle || 'Other';
+    return courseId.replace(/\s+/g, '_').replace(/[^\w\-_.]/g, '');
+  }
+
+  resetCourseSelection() {
+    if (this.captureCourseSelect) {
+      this.captureCourseSelect.value = '';
+      this.captureCustomCategory.style.display = 'none';
+      this.captureCustomText.value = '';
+      this.courseSelectionError.style.display = 'none';
+    }
+  }
+
   onCourseSelectionChange(value) {
     if (value === 'other' || value === '') {
       this.manualCourseFields.style.display = 'block';
@@ -2758,6 +2826,20 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       const selectedCourse = this.getSelectedCourse();
       this.courseNumber.value = selectedCourse.courseNumber;
       this.courseTitle.value = selectedCourse.courseTitle;
+    }
+  }
+
+  onCaptureCourseSelectionChange(value) {
+    if (value === 'other') {
+      this.captureCustomCategory.style.display = 'block';
+    } else {
+      this.captureCustomCategory.style.display = 'none';
+      this.captureCustomText.value = ''; // Clear custom text when switching away from "Other"
+    }
+    
+    // Hide error message when user makes a selection
+    if (value !== '') {
+      this.courseSelectionError.style.display = 'none';
     }
   }
 
@@ -2780,14 +2862,32 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       this.courseSelect.removeChild(this.courseSelect.lastChild);
     }
     
-    // Add predefined courses
+    // Clear capture course selector options except for default ones
+    if (this.captureCourseSelect) {
+      while (this.captureCourseSelect.children.length > 2) {
+        this.captureCourseSelect.removeChild(this.captureCourseSelect.lastChild);
+      }
+    }
+    
+    // Add predefined courses to both selectors
     courses.forEach(course => {
+      // Sidebar course selector
       const option = document.createElement('option');
       option.value = course.id;
       option.textContent = `${course.courseNumber} - ${course.courseTitle}`;
       option.dataset.courseNumber = course.courseNumber;
       option.dataset.courseTitle = course.courseTitle;
       this.courseSelect.appendChild(option);
+      
+      // Capture page course selector
+      if (this.captureCourseSelect) {
+        const captureOption = document.createElement('option');
+        captureOption.value = course.id;
+        captureOption.textContent = `${course.courseNumber} - ${course.courseTitle}`;
+        captureOption.dataset.courseNumber = course.courseNumber;
+        captureOption.dataset.courseTitle = course.courseTitle;
+        this.captureCourseSelect.appendChild(captureOption);
+      }
     });
   }
 
