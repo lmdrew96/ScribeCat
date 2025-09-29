@@ -193,7 +193,10 @@ class SubscriptionManager {
    */
   getSessionSummaryCount() {
     // This will be implemented in the main app logic
-    return window.scribeCatApp?.currentSessionSummaries || 0;
+    if (typeof window !== 'undefined' && window.scribeCatApp) {
+      return window.scribeCatApp.currentSessionSummaries || 0;
+    }
+    return 0; // Default for Node.js environment
   }
 
   /**

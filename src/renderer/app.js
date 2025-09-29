@@ -286,6 +286,9 @@ class ScribeCatApp {
     // Update features list
     this.updateFeaturesList();
     
+    // Re-initialize theme grid to show/hide Pro themes
+    this.initializeThemeGrid();
+    
     // Update upgrade button
     if (this.upgradeSubscriptionBtn) {
       if (this.subscriptionStatus.tier === 'free') {
@@ -1731,46 +1734,65 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
   initializeThemeGrid() {
     const themes = [
-      { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#14b8a6', accent: '#06b6d4' },
-      { id: 'forest', name: 'Forest', primary: '#059669', secondary: '#10b981', accent: '#65a30d' },
-      { id: 'sunset', name: 'Sunset', primary: '#ea580c', secondary: '#dc2626', accent: '#ec4899' },
-      { id: 'royal', name: 'Royal', primary: '#8b5cf6', secondary: '#6366f1', accent: '#a855f7' },
-      { id: 'rose', name: 'Rose', primary: '#f43f5e', secondary: '#e11d48', accent: '#ef4444' },
-      { id: 'tropical', name: 'Tropical', primary: '#14b8a6', secondary: '#059669', accent: '#06b6d4' },
-      { id: 'cosmic', name: 'Cosmic', primary: '#6366f1', secondary: '#8b5cf6', accent: '#3b82f6' },
-      { id: 'autumn', name: 'Autumn', primary: '#f59e0b', secondary: '#ea580c', accent: '#eab308' },
-      { id: 'emerald', name: 'Emerald', primary: '#10b981', secondary: '#14b8a6', accent: '#059669' },
-      { id: 'arctic', name: 'Arctic', primary: '#06b6d4', secondary: '#0ea5e9', accent: '#64748b' },
-      { id: 'berry', name: 'Berry', primary: '#ec4899', secondary: '#8b5cf6', accent: '#d946ef' },
-      { id: 'monochrome', name: 'Mono', primary: '#64748b', secondary: '#6b7280', accent: '#71717a' },
-      { id: 'midnight', name: 'Midnight', primary: '#1e40af', secondary: '#4338ca', accent: '#7c3aed' },
-      { id: 'neon', name: 'Neon', primary: '#65a30d', secondary: '#eab308', accent: '#16a34a' },
-      { id: 'volcano', name: 'Volcano', primary: '#dc2626', secondary: '#ea580c', accent: '#f59e0b' }
+      // Free themes
+      { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#14b8a6', accent: '#06b6d4', tier: 'free' },
+      { id: 'forest', name: 'Forest', primary: '#059669', secondary: '#10b981', accent: '#65a30d', tier: 'free' },
+      { id: 'sunset', name: 'Sunset', primary: '#ea580c', secondary: '#dc2626', accent: '#ec4899', tier: 'free' },
+      { id: 'royal', name: 'Royal', primary: '#8b5cf6', secondary: '#6366f1', accent: '#a855f7', tier: 'free' },
+      { id: 'rose', name: 'Rose', primary: '#f43f5e', secondary: '#e11d48', accent: '#ef4444', tier: 'free' },
+      { id: 'tropical', name: 'Tropical', primary: '#14b8a6', secondary: '#059669', accent: '#06b6d4', tier: 'free' },
+      { id: 'cosmic', name: 'Cosmic', primary: '#6366f1', secondary: '#8b5cf6', accent: '#3b82f6', tier: 'free' },
+      { id: 'autumn', name: 'Autumn', primary: '#f59e0b', secondary: '#ea580c', accent: '#eab308', tier: 'free' },
+      
+      // Pro exclusive themes
+      { id: 'emerald', name: 'Emerald Pro', primary: '#10b981', secondary: '#14b8a6', accent: '#059669', tier: 'pro' },
+      { id: 'arctic', name: 'Arctic Pro', primary: '#06b6d4', secondary: '#0ea5e9', accent: '#64748b', tier: 'pro' },
+      { id: 'berry', name: 'Berry Pro', primary: '#ec4899', secondary: '#8b5cf6', accent: '#d946ef', tier: 'pro' },
+      { id: 'monochrome', name: 'Mono Pro', primary: '#64748b', secondary: '#6b7280', accent: '#71717a', tier: 'pro' },
+      { id: 'midnight', name: 'Midnight Pro', primary: '#1e40af', secondary: '#4338ca', accent: '#7c3aed', tier: 'pro' },
+      { id: 'neon', name: 'Neon Pro', primary: '#65a30d', secondary: '#eab308', accent: '#16a34a', tier: 'pro' },
+      { id: 'volcano', name: 'Volcano Pro', primary: '#dc2626', secondary: '#ea580c', accent: '#f59e0b', tier: 'pro' }
     ];
 
     this.themeGrid.innerHTML = '';
+    
+    const hasProThemes = this.subscriptionStatus?.features?.proThemes || false;
     
     themes.forEach(theme => {
       const themeOption = document.createElement('div');
       themeOption.className = 'theme-option';
       themeOption.dataset.theme = theme.id;
       
+      // Check if this is a Pro theme and user doesn't have access
+      const isProTheme = theme.tier === 'pro';
+      const hasAccess = !isProTheme || hasProThemes;
+      
+      if (!hasAccess) {
+        themeOption.classList.add('locked');
+      }
+      
       themeOption.innerHTML = `
-        <div class="theme-colors">
+        <div class="theme-colors ${!hasAccess ? 'locked' : ''}">
           <div class="theme-color primary" style="background-color: ${theme.primary}"></div>
           <div class="theme-color secondary" style="background-color: ${theme.secondary}"></div>
           <div class="theme-color accent" style="background-color: ${theme.accent}"></div>
+          ${!hasAccess ? '<div class="lock-overlay">🔒</div>' : ''}
         </div>
         <div class="theme-label">${theme.name}</div>
       `;
       
       themeOption.addEventListener('click', () => {
+        if (!hasAccess) {
+          this.showUpgradePrompt('proThemes');
+          return;
+        }
         this.changeTheme(theme.id);
         this.updateThemeSelection(theme.id);
       });
       
       this.themeGrid.appendChild(themeOption);
     });
+  }
   }
 
   updateThemeSelection(themeId) {
@@ -2369,6 +2391,13 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   async autoPolishEntry(entry, originalText) {
+    // Check if user has access to AI Autopolish feature
+    const canUseResponse = await window.electronAPI.subscriptionCanUseFeature('aiAutopolish');
+    if (!canUseResponse.success || !canUseResponse.result.allowed) {
+      // User doesn't have access to AI Autopolish, skip silently
+      return;
+    }
+    
     // Gather context from previous entries
     const context = Array.from(this.transcriptionDisplay.children)
       .map(e => e.querySelector('.transcript-text')?.textContent || '')
@@ -2385,7 +2414,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         const textDiv = entry.querySelector('.transcript-text');
         if (textDiv) {
           textDiv.textContent = polished;
-          // Silent update - no visual indicators or notifications
+          // Add a subtle indicator that this was enhanced
+          textDiv.style.fontStyle = 'italic';
+          textDiv.title = 'Enhanced by AI Autopolish';
         }
       }
     } catch (err) {
