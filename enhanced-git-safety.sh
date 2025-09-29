@@ -37,40 +37,134 @@ generate_change_summary() {
         return
     fi
     
-    # Create a temporary Node.js script to call OpenAI
+    # Check for Claude API key
+    if [ -z "$CLAUDE_API_KEY" ]; then
+        echo "📝 Basic Analysis: Changes detected in files (Set CLAUDE_API_KEY for AI analysis)"
+        echo "$changes" | head -5
+        if [ $(echo "$changes" | wc -l) -gt 5 ]; then
+            echo "... and $(( $(echo "$changes" | wc -l) - 5 )) more files"
+        fi
+        return
+    fi
+    
+    # Create a temporary Node.js script to call Claude API
     cat > /tmp/analyze_changes.js << 'EOF'
-const fs = require('fs');
 const https = require('https');
 
-// Read changes from command line argument
-const changes = process.argv[2];
-const context = process.argv[3] || 'code changes';
+async function callClaude(changes, context) {
+    const apiKey = process.env.CLAUDE_API_KEY;
+    if (!apiKey) {
+        throw new Error('CLAUDE_API_KEY environment variable not set');
+    }
 
-// Simple prompt for change analysis
-const prompt = `Analyze these Git changes and provide a brief, clear summary of what they accomplish:
+    const systemPrompt = `You are a code-review assistant specialized in analyzing git diffs and changes.
+Provide:
+1) A one-sentence concise summary of what changed
+2) A short list of possible breaking changes or risks
+3) Recommended tests or QA steps to validate the change
+Be concise and use bullet points where helpful.`;
 
-${context}
+    const userPrompt = `Context: ${context}
 
-Changes:
+Here are the git changes to analyze:
+
 ${changes}
 
-Please provide:
-1. A one-line summary of the main purpose
-2. Key functional changes (bullet points)
-3. Potential impact or risks
+Respond using the three sections described in the system instruction.`;
 
-Keep it concise and focus on WHAT the changes do, not HOW they're implemented.`;
+    const requestData = JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        temperature: 0.0,
+        messages: [
+            { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
+        ]
+    });
 
-// Basic OpenAI API call (would need proper implementation)
-console.log("🤖 AI Analysis:");
-console.log("Summary: Changes detected in multiple files");
-console.log("• Modified functionality or styling");
-console.log("• May affect user interface or behavior");
-console.log("Impact: Test thoroughly after merge");
+    return new Promise((resolve, reject) => {
+        const options = {
+            hostname: 'api.anthropic.com',
+            port: 443,
+            path: '/v1/messages',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(requestData),
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01'
+            }
+        };
 
+        const req = https.request(options, (res) => {
+            let data = '';
+            
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            
+            res.on('end', () => {
+                if (res.statusCode !== 200) {
+                    reject(new Error(`Claude API error ${res.statusCode}: ${data}`));
+                    return;
+                }
+                
+                try {
+                    const response = JSON.parse(data);
+                    const text = response.content?.[0]?.text || 'No response content';
+                    resolve(text);
+                } catch (err) {
+                    reject(new Error(`Failed to parse response: ${err.message}`));
+                }
+            });
+        });
+
+        req.on('error', (err) => {
+            reject(new Error(`Request failed: ${err.message}`));
+        });
+
+        req.setTimeout(30000, () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+        });
+
+        req.write(requestData);
+        req.end();
+    });
+}
+
+// Main execution
+async function main() {
+    try {
+        const changes = process.argv[2] || '';
+        const context = process.argv[3] || 'code changes';
+        
+        if (!changes.trim()) {
+            console.log('📝 No changes to analyze');
+            return;
+        }
+
+        console.log('🤖 AI Analysis:');
+        const analysis = await callClaude(changes, context);
+        console.log(analysis);
+        
+    } catch (error) {
+        console.log('📝 Analysis Error:', error.message);
+        console.log('📝 Basic fallback: Changes detected in files');
+        
+        // Fallback analysis
+        const changes = process.argv[2] || '';
+        const lines = changes.split('\n').filter(line => line.trim());
+        console.log(`• Modified ${lines.length} items`);
+        console.log('• Review changes before deploying');
+        console.log('Impact: Test functionality after merge');
+    }
+}
+
+main();
 EOF
 
-    node /tmp/analyze_changes.js "$changes" "$context" 2>/dev/null || {
+    # Run the Node.js script with proper error handling
+    CLAUDE_API_KEY="$CLAUDE_API_KEY" node /tmp/analyze_changes.js "$changes" "$context" 2>/dev/null || {
         echo "📝 Basic Analysis: Changes detected in files"
         echo "$changes" | head -5
         if [ $(echo "$changes" | wc -l) -gt 5 ]; then
@@ -78,6 +172,7 @@ EOF
         fi
     }
     
+    # Clean up
     rm -f /tmp/analyze_changes.js
 }
 
