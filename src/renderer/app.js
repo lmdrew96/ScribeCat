@@ -106,15 +106,6 @@ class ScribeCatApp {
     this.sidebarPanel = document.getElementById('sidebar-panel');
     this.sidebarCloseBtn = document.getElementById('sidebar-close-btn');
     
-    // Debug: Check if button exists
-    console.log('Hamburger button element:', this.hamburgerMenuBtn);
-    if (this.hamburgerMenuBtn) {
-      console.log('Button found! Adding test click handler immediately...');
-      this.hamburgerMenuBtn.addEventListener('click', () => {
-        console.log('IMMEDIATE TEST: Button clicked!');
-        alert('Button is working!');
-      });
-    }
     
     // Settings elements
     this.saveClaudeKeyBtn = document.getElementById('save-claude-key');
@@ -1041,39 +1032,12 @@ class ScribeCatApp {
 
   setupEventListeners() {
     // Hamburger menu button click handler
-    console.log('Looking for hamburger menu button...', this.hamburgerMenuBtn);
-    
     if (this.hamburgerMenuBtn) {
-      console.log('Hamburger menu button found! Setting up click handler');
-      
-      // Add multiple event listeners to ensure we catch the click
       this.hamburgerMenuBtn.addEventListener('click', (e) => {
-        console.log('Hamburger menu button clicked!');
         e.preventDefault();
         e.stopPropagation();
         this.openSidebar();
       });
-      
-      this.hamburgerMenuBtn.addEventListener('mousedown', (e) => {
-        console.log('Hamburger menu button mousedown!');
-      });
-      
-      this.hamburgerMenuBtn.addEventListener('mouseup', (e) => {
-        console.log('Hamburger menu button mouseup!');
-      });
-      
-      // Also try touch events for mobile
-      this.hamburgerMenuBtn.addEventListener('touchstart', (e) => {
-        console.log('Hamburger menu button touchstart!');
-        e.preventDefault();
-        this.openSidebar();
-      });
-      
-    } else {
-      console.error('Hamburger menu button not found!');
-      // Try to find it manually
-      const manualBtn = document.getElementById('hamburger-menu-btn');
-      console.log('Manual search result:', manualBtn);
     }
     
     // Sidebar close button handler
@@ -1515,17 +1479,10 @@ class ScribeCatApp {
   }
 
   openSidebar() {
-    console.log('Opening sidebar...');
     if (this.sidebarPanel && this.sidebarOverlay) {
       this.sidebarPanel.classList.add('open');
       this.sidebarOverlay.classList.add('show');
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
-      console.log('Sidebar opened successfully');
-    } else {
-      console.error('Sidebar elements not found!', {
-        sidebarPanel: !!this.sidebarPanel,
-        sidebarOverlay: !!this.sidebarOverlay
-      });
     }
   }
   

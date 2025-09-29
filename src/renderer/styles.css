@@ -586,6 +586,12 @@ body {
   height: 20px;
 }
 
+.mode-emoji {
+  font-size: 20px;
+  line-height: 1;
+  display: block;
+}
+
 /* Hamburger Menu Button */
 .hamburger-menu-btn {
   position: fixed !important;
@@ -593,7 +599,7 @@ body {
   left: 20px !important;
   width: 40px !important;
   height: 40px !important;
-  background: #ff0000 !important; /* Bright red for testing */
+  background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
@@ -601,7 +607,7 @@ body {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 9999 !important;
+  z-index: 1002 !important;
   transition: all 0.2s ease !important;
   color: var(--text-primary) !important;
   pointer-events: auto !important;
@@ -620,20 +626,6 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Force button to be visible and clickable */
-.hamburger-menu-btn::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  background: rgba(255, 0, 0, 0.1);
-  border: 2px solid red;
-  border-radius: 12px;
-  pointer-events: none;
-  z-index: 10000;
-}
 
 /* Sidebar Overlay */
 .sidebar-overlay {
@@ -674,6 +666,7 @@ body {
 
 .sidebar-panel.open {
   transform: translateX(0);
+  z-index: 1003; /* Higher than button when open */
 }
 
 /* Sidebar Header */
