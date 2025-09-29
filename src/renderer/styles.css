@@ -21,6 +21,8 @@
   --spacing-md: 8px;
   --spacing-lg: 12px;
   --spacing-xl: 16px;
+  --spacing-2xl: 20px;
+  --spacing-3xl: 24px;
 }
 
 /* Custom fonts */
@@ -371,8 +373,8 @@ body {
 .notification-content {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  gap: 12px;
+  padding: var(--spacing-lg) var(--spacing-2xl); /* 12px 20px */
+  gap: var(--spacing-lg); /* 12px */
 }
 
 .notification-icon {
@@ -389,7 +391,7 @@ body {
 .notification-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-md); /* 8px */
 }
 
 .btn-notification {
@@ -397,14 +399,14 @@ body {
   border: none;
   color: white;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 4px;
+  padding: 6px var(--spacing-md); /* 6px 8px */
+  border-radius: var(--spacing-sm); /* 4px */
   font-size: 12px;
   font-weight: 500;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-sm); /* 4px */
 }
 
 .btn-notification.dismiss {
@@ -625,7 +627,7 @@ body {
 /* Expanded overlay panel */
 .sidebar.open {
   width: 320px;
-  padding: 20px;
+  padding: var(--spacing-2xl); /* 20px */
   overflow-y: auto;
   animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -633,13 +635,13 @@ body {
 /* Sidebar close button */
 .sidebar-close {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: var(--spacing-sm); /* 4px */
+  right: var(--spacing-sm); /* 4px */
   background: none;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 8px;
+  padding: var(--spacing-md); /* 8px */
   border-radius: 6px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: none;
