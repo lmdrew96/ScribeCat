@@ -14,13 +14,6 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-left">
-                <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle Sidebar">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                </button>
                 <div class="logo-container">
                     <img src="../../assets/images/nugget.png" alt="ScribeCat" class="logo" onerror="this.style.display='none'">
                     <h1 class="app-title">ScribeCat</h1>
@@ -52,6 +45,15 @@
                 </div>
             </div>
         </header>
+
+        <!-- Fixed Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle-fixed" title="Toggle Sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
 
         <!-- Error Notification Banner -->
         <div class="error-notification" id="error-notification" style="display: none;">
@@ -291,31 +293,121 @@
                                 </optgroup>
                             </select>
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z)">↶</button>
-                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Y)">↷</button>
+                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3l-3 2.7"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Y)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 7v6h-6M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/>
+                                </svg>
+                            </button>
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="bold" title="Bold (Ctrl+B)"><b>B</b></button>
-                            <button class="format-btn" data-command="italic" title="Italic (Ctrl+I)"><i>I</i></button>
-                            <button class="format-btn" data-command="underline" title="Underline (Ctrl+U)"><u>U</u></button>
-                            <button class="format-btn" data-command="strikethrough" title="Strikethrough"><s>S</s></button>
+                            <button class="format-btn" data-command="bold" title="Bold (Ctrl+B)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="italic" title="Italic (Ctrl+I)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="19" y1="4" x2="10" y2="4"/>
+                                    <line x1="14" y1="20" x2="5" y2="20"/>
+                                    <line x1="15" y1="4" x2="9" y2="20"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="underline" title="Underline (Ctrl+U)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/>
+                                    <line x1="4" y1="21" x2="20" y2="21"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="strikethrough" title="Strikethrough">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 4H9a3 3 0 00-2.83 4"/>
+                                    <path d="M14 12a4 4 0 01-0 8H6"/>
+                                    <line x1="4" y1="12" x2="20" y2="12"/>
+                                </svg>
+                            </button>
                             <div class="toolbar-separator"></div>
                             <div class="color-selector-group">
                                 <input type="color" id="font-color" class="color-selector" value="#000000" title="Font Color">
-                                <label for="font-color" class="format-btn color-btn" title="Font Color">A</label>
+                                <label for="font-color" class="format-btn color-btn" title="Font Color">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 7V4h16v3"/>
+                                        <path d="M9 20h6"/>
+                                        <path d="M12 4l-3 16"/>
+                                    </svg>
+                                </label>
                             </div>
                             <div class="color-selector-group">
                                 <input type="color" id="highlight-color" class="color-selector" value="#ffd200" title="Highlight Color">
-                                <button class="format-btn" data-command="highlight" title="Highlight">🖍</button>
+                                <button class="format-btn" data-command="highlight" title="Highlight">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 11H1l2-2 2.5 2.5L12 4.5 19.5 12 12 19.5 4.5 12 7 9.5"/>
+                                        <path d="M21 15l-6-6"/>
+                                    </svg>
+                                </button>
                             </div>
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="justifyLeft" title="Align Left">⬅</button>
-                            <button class="format-btn" data-command="justifyCenter" title="Align Center">↔</button>
-                            <button class="format-btn" data-command="justifyRight" title="Align Right">➡</button>
+                            <button class="format-btn" data-command="justifyLeft" title="Align Left">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="3" y1="6" x2="21" y2="6"/>
+                                    <line x1="3" y1="12" x2="15" y2="12"/>
+                                    <line x1="3" y1="18" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="justifyCenter" title="Align Center">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="3" y1="6" x2="21" y2="6"/>
+                                    <line x1="6" y1="12" x2="18" y2="12"/>
+                                    <line x1="3" y1="18" x2="21" y2="18"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="justifyRight" title="Align Right">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="3" y1="6" x2="21" y2="6"/>
+                                    <line x1="9" y1="12" x2="21" y2="12"/>
+                                    <line x1="6" y1="18" x2="21" y2="18"/>
+                                </svg>
+                            </button>
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="insertUnorderedList" title="Bullet List">•</button>
-                            <button class="format-btn" data-command="insertOrderedList" title="Numbered List">1.</button>
-                            <button class="format-btn" data-command="indent" title="Indent">→</button>
-                            <button class="format-btn" data-command="outdent" title="Outdent">←</button>
+                            <button class="format-btn" data-command="insertUnorderedList" title="Bullet List">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="8" y1="6" x2="21" y2="6"/>
+                                    <line x1="8" y1="12" x2="21" y2="12"/>
+                                    <line x1="8" y1="18" x2="21" y2="18"/>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"/>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"/>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="insertOrderedList" title="Numbered List">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="10" y1="6" x2="21" y2="6"/>
+                                    <line x1="10" y1="12" x2="21" y2="12"/>
+                                    <line x1="10" y1="18" x2="21" y2="18"/>
+                                    <path d="M4 6h1v4"/>
+                                    <path d="M4 10h2"/>
+                                    <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-1-1"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="indent" title="Indent">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3,8 7,12 3,16"/>
+                                    <line x1="21" y1="4" x2="11" y2="4"/>
+                                    <line x1="21" y1="12" x2="11" y2="12"/>
+                                    <line x1="21" y1="20" x2="11" y2="20"/>
+                                </svg>
+                            </button>
+                            <button class="format-btn" data-command="outdent" title="Outdent">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="7,8 3,12 7,16"/>
+                                    <line x1="21" y1="4" x2="11" y2="4"/>
+                                    <line x1="21" y1="12" x2="11" y2="12"/>
+                                    <line x1="21" y1="20" x2="11" y2="20"/>
+                                </svg>
+                            </button>
                             <div class="toolbar-separator"></div>
                             <button class="format-btn" data-shortcut="dash" title="Insert Dash">—</button>
                             <button class="format-btn" data-shortcut="arrow" title="Insert Arrow">→</button>

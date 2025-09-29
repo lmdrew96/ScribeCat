@@ -362,20 +362,26 @@ body {
   padding-top: 20px;
 }
 
-.sidebar-toggle {
-  background: none;
-  border: none;
+/* Fixed Sidebar Toggle Button */
+.sidebar-toggle-fixed {
+  position: fixed;
+  top: 12px; /* Position below minimize button area */
+  left: 12px; /* Align with left edge, centered under minimize button */
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 8px;
   border-radius: 6px;
-  margin-right: 12px;
   transition: all 0.2s;
+  z-index: 1001; /* Above other elements */
+  box-shadow: var(--shadow-sm);
 }
 
-.sidebar-toggle:hover {
+.sidebar-toggle-fixed:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
+  box-shadow: var(--shadow-md);
 }
 
 .logo-container {
@@ -951,7 +957,8 @@ body {
   margin: var(--spacing-sm); /* 4px margin around container */
   overflow: hidden;
   min-height: 0; /* Allow flex shrinking */
-  max-height: calc(100vh - 200px); /* Dynamic height leaving room for header, recording controls, and Claude FAB */
+  max-height: calc(100vh - 240px); /* Increased margin to prevent Claude FAB overlap */
+  padding-bottom: 100px; /* Extra bottom padding to ensure no overlap with Claude FAB */
   flex-direction: row; /* Horizontal layout by default */
 }
 
@@ -962,13 +969,13 @@ body {
   flex-direction: column;
   min-width: 0;
   width: calc(50vw - 20px); /* Dynamic width based on viewport */
-  height: calc(100vh - 220px); /* Dynamic height to prevent Claude button overlap */
+  height: calc(100vh - 300px); /* Increased to prevent Claude button overlap */
   background: var(--surface);
   border: 2px solid var(--border);
   border-left: 3px solid var(--accent); /* Accent border for visual pop */
   border-radius: var(--spacing-sm); /* 4px border radius */
   padding: var(--spacing-sm); /* 4px padding inside section */
-  margin: var(--spacing-sm); /* 4px margin around section */
+  margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: border-color 0.3s ease;
@@ -1134,13 +1141,13 @@ body {
   display: flex;
   flex-direction: column;
   width: calc(50vw - 20px); /* Dynamic width based on viewport */
-  height: calc(100vh - 220px); /* Dynamic height to prevent Claude button overlap, same as notes card */
+  height: calc(100vh - 300px); /* Increased to prevent Claude button overlap, same as notes card */
   background: var(--surface);
   border: 2px solid var(--border);
   border-right: 3px solid var(--primary-color); /* Primary border for balance with editor */
   border-radius: var(--spacing-sm); /* 4px border radius */
   padding: var(--spacing-sm); /* 4px padding inside section */
-  margin: var(--spacing-sm); /* 4px margin around section */
+  margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: border-color 0.3s ease;
@@ -1481,9 +1488,9 @@ body {
   .editor-section,
   .transcription-section {
     padding: var(--spacing-sm); /* Maintain 4px internal padding */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
+    margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
     width: calc(50vw - 12px); /* Adjusted for smaller screens */
-    height: calc(100vh - 200px); /* Adjusted height for smaller screens */
+    height: calc(100vh - 280px); /* Adjusted height to prevent Claude FAB overlap */
   }
   
   .header-right .clock-section {
@@ -1591,7 +1598,8 @@ body {
     flex: 1 1 50%; /* Maintain equal split even on small screens */
     min-width: 200px; /* Minimum usable width on phones */
     width: calc(50vw - 8px); /* Mobile-optimized width */
-    height: calc(100vh - 180px); /* Mobile-optimized height */
+    height: calc(100vh - 240px); /* Mobile-optimized height to prevent Claude FAB overlap */
+    margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
   }
   
   .recording-controls {
