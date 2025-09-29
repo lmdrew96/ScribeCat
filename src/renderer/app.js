@@ -102,6 +102,7 @@ class ScribeCatApp {
     this.highlightColorSelector = document.getElementById('highlight-color');
     // Chat elements
     this.aiChat = document.getElementById('ai-chat');
+    this.chatHeader = this.aiChat?.querySelector('.chat-header');
     this.chatInput = document.getElementById('chat-input');
     this.chatMessages = document.getElementById('chat-messages');
     this.toggleChatBtn = document.getElementById('toggle-chat');
@@ -380,7 +381,17 @@ class ScribeCatApp {
       this.notesEditor.addEventListener('mouseup', () => this.updateFormattingState());
     }
     if (this.toggleChatBtn) {
-      this.toggleChatBtn.addEventListener('click', () => this.toggleChat());
+      this.toggleChatBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleChat();
+      });
+    }
+    if (this.chatHeader) {
+      this.chatHeader.addEventListener('click', (e) => {
+        // Don't toggle if clicking on the drag handle
+        if (e.target.closest('.chat-drag-handle')) return;
+        this.toggleChat();
+      });
     }
     if (this.sendChatBtn) {
       this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
@@ -397,6 +408,11 @@ class ScribeCatApp {
     // Content sections resize handle
     if (this.resizeHandle) {
       this.setupContentResize();
+    }
+    
+    // Chat resize handle
+    if (this.chatDragHandle) {
+      this.setupChatResize();
     }
     
     // Chat drag functionality
@@ -1519,10 +1535,12 @@ class ScribeCatApp {
       });
       
       const polished = result.polished || result.fallback;
-      if (polished && polished !== originalText) {
+      if (polished && polished !== originalText && polished.trim()) {
         const textDiv = entry.querySelector('.transcript-text');
-        if (textDiv) textDiv.textContent = polished;
-        entry.classList.add('polished');
+        if (textDiv) {
+          textDiv.textContent = polished;
+          // Silent update - no visual indicators or notifications
+        }
       }
     } catch (err) {
       // Fail silently for polish errors
@@ -2101,6 +2119,49 @@ class ScribeCatApp {
 
   toggleChat() {
     this.aiChat.classList.toggle('collapsed');
+  }
+
+  setupChatResize() {
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    this.chatDragHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = this.aiChat.getBoundingClientRect();
+      startWidth = rect.width;
+      startHeight = rect.height;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'nw-resize';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      // Calculate new dimensions (resize from top-left)
+      const deltaX = startX - e.clientX; // Reverse for left resize
+      const deltaY = startY - e.clientY; // Reverse for top resize
+      
+      const newWidth = Math.max(280, Math.min(500, startWidth + deltaX));
+      const newHeight = Math.max(200, Math.min(600, startHeight + deltaY));
+      
+      this.aiChat.style.width = `${newWidth}px`;
+      this.aiChat.style.height = `${newHeight}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+      }
+    });
   }
 
   async sendChatMessage() {
