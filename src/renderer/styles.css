@@ -1912,3 +1912,56 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* AI-Generated Content Styling */
+.ai-generated-content {
+  transition: all 0.2s ease;
+}
+
+.ai-generated-content:hover {
+  background-color: var(--surface-hover) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.ai-generated-content h2 {
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-top: 0;
+}
+
+.ai-generated-content h3 {
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+.ai-generated-content strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-generated-content em {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.ai-generated-content ul, .ai-generated-content ol {
+  padding-left: 1.5rem;
+}
+
+.ai-generated-content li {
+  margin: 0.25rem 0;
+}
+
+/* Highlighter Button Enhancement */
+.format-btn[data-command="highlight"] {
+  position: relative;
+}
+
+.format-btn[data-command="highlight"] svg {
+  --highlight-color: #ffd200;
+}
+
+/* Ensure highlighter color is visible in all themes */
+.format-btn[data-command="highlight"]:hover {
+  background-color: var(--surface-hover);
+}
