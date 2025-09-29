@@ -63,6 +63,12 @@ class ScribeCatApp {
     this.recordingsCount = document.getElementById('recordings-count');
     this.backToListBtn = document.getElementById('back-to-list');
     
+    // Course filter elements
+    this.studyCourseFilter = document.getElementById('study-course-filter');
+    this.activeFilterIndicator = document.getElementById('active-filter-indicator');
+    this.filterBadge = document.getElementById('filter-badge');
+    this.clearFilterBtn = document.getElementById('clear-filter-btn');
+    
     // Review elements
     this.reviewCourseTitle = document.getElementById('review-course-title');
     this.reviewSessionInfo = document.getElementById('review-session-info');
@@ -118,6 +124,12 @@ class ScribeCatApp {
     this.audioDestLocalRadio = document.getElementById('audio-dest-local');
     this.audioDestDriveRadio = document.getElementById('audio-dest-drive');
     
+    // Capture page course selection
+    this.captureCourseSelect = document.getElementById('capture-course-select');
+    this.captureCustomCategory = document.getElementById('capture-custom-category');
+    this.captureCustomText = document.getElementById('capture-custom-text');
+    this.courseSelectionError = document.getElementById('course-selection-error');
+    
     // Transcription controls
     this.clearTranscriptionBtn = document.getElementById('clear-transcription');
     this.jumpLatestBtn = document.getElementById('jump-latest');
@@ -129,6 +141,19 @@ class ScribeCatApp {
     this.clearNotesConfirm = document.getElementById('clear-notes-confirm');
     this.clearNotesCancel = document.getElementById('clear-notes-cancel');
     this.clearNotesModalClose = document.getElementById('clear-notes-modal-close');
+    
+    // Export options dialog
+    this.exportOptionsModal = document.getElementById('export-options-modal');
+    this.exportOptionsClose = document.getElementById('export-options-close');
+    this.exportSkip = document.getElementById('export-skip');
+    this.exportDone = document.getElementById('export-done');
+    this.exportGoogleDrive = document.getElementById('export-google-drive');
+    this.exportDropbox = document.getElementById('export-dropbox');
+    this.exportPdf = document.getElementById('export-pdf');
+    this.exportMarkdown = document.getElementById('export-markdown');
+    this.openSettingsLink = document.getElementById('open-settings-link');
+    this.driveConnectionStatus = document.getElementById('drive-connection-status');
+    this.dropboxConnectionStatus = document.getElementById('dropbox-connection-status');
     
     // Developer settings
     this.simulationToggle = document.getElementById('simulation-toggle');
@@ -743,6 +768,15 @@ class ScribeCatApp {
     if (this.backToListBtn) {
       this.backToListBtn.addEventListener('click', () => this.showRecordingsList());
     }
+    
+    // Course filter event listeners
+    if (this.studyCourseFilter) {
+      this.studyCourseFilter.addEventListener('change', (e) => this.onStudyCourseFilterChange(e.target.value));
+    }
+    if (this.clearFilterBtn) {
+      this.clearFilterBtn.addEventListener('click', () => this.clearCourseFilter());
+    }
+    
     if (this.reviewPlayPause) {
       this.reviewPlayPause.addEventListener('click', () => this.toggleReviewPlayback());
     }
@@ -820,6 +854,9 @@ class ScribeCatApp {
     }
     if (this.courseSelect) {
       this.courseSelect.addEventListener('change', (e) => this.onCourseSelectionChange(e.target.value));
+    }
+    if (this.captureCourseSelect) {
+      this.captureCourseSelect.addEventListener('change', (e) => this.onCaptureCourseSelectionChange(e.target.value));
     }
     if (this.selectNotesDriveFolderBtn) {
       this.selectNotesDriveFolderBtn.addEventListener('click', () => this.selectNotesDriveFolder());
@@ -1039,6 +1076,43 @@ class ScribeCatApp {
       this.clearNotesModalClose.addEventListener('click', () => this.hideClearNotesModal());
     }
     
+    // Export options dialog event listeners
+    if (this.exportOptionsClose) {
+      this.exportOptionsClose.addEventListener('click', () => this.hideExportOptionsModal());
+    }
+    
+    if (this.exportSkip) {
+      this.exportSkip.addEventListener('click', () => this.hideExportOptionsModal());
+    }
+    
+    if (this.exportDone) {
+      this.exportDone.addEventListener('click', () => this.hideExportOptionsModal());
+    }
+    
+    if (this.exportGoogleDrive) {
+      this.exportGoogleDrive.addEventListener('click', () => this.exportToGoogleDrive());
+    }
+    
+    if (this.exportDropbox) {
+      this.exportDropbox.addEventListener('click', () => this.exportToDropbox());
+    }
+    
+    if (this.exportPdf) {
+      this.exportPdf.addEventListener('click', () => this.exportToPdf());
+    }
+    
+    if (this.exportMarkdown) {
+      this.exportMarkdown.addEventListener('click', () => this.exportToMarkdown());
+    }
+    
+    if (this.openSettingsLink) {
+      this.openSettingsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.hideExportOptionsModal();
+        this.openSidebar();
+      });
+    }
+    
     // Health system event listeners
     if (this.healthIndicator) {
       this.healthIndicator.addEventListener('click', () => this.showHealthDialog());
@@ -1135,6 +1209,11 @@ class ScribeCatApp {
     // Close modals and dialogs
     if (this.clearNotesModal && this.clearNotesModal.style.display !== 'none') {
       this.hideClearNotesModal();
+      return;
+    }
+    
+    if (this.exportOptionsModal && this.exportOptionsModal.style.display !== 'none') {
+      this.hideExportOptionsModal();
       return;
     }
     
@@ -1705,17 +1784,21 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         return 'Simulated_Session_Notes';
       }
       
-      // Real API mode - existing functionality
-      // Generate a brief 1-6 word blurb based on notes and transcription for file naming
+      // Real API mode - analyze ONLY notes content (not transcription) as per requirements
+      // Generate a brief 1-6 word blurb based on notes content for file naming
       const notesContent = this.notesEditor.textContent || '';
-      const transcriptContent = Array.from(this.transcriptionDisplay.children)
-        .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
-        .join('\n');
+      
+      // Handle edge case of empty/sparse notes
+      if (!notesContent.trim() || notesContent.trim().length < 10) {
+        console.log('Notes content is empty or sparse, using fallback title');
+        return 'Brief_Session_Notes';
+      }
       
       try {
         const result = await this.callBackendAPI('blurb', {
           notesContent,
-          transcriptionContent: transcriptContent
+          // Explicitly exclude transcription content as per requirements
+          transcriptionContent: '' 
         });
         
         return result.blurb || result.fallback || 'Session_Notes';
@@ -2255,6 +2338,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       // Reset session summary count for new recording
       this.currentSessionSummaries = 0;
       
+      // Reset course selection for new session
+      this.resetCourseSelection();
+      
       const constraints = {
         audio: {
           deviceId: this.microphoneSelect?.value || undefined,
@@ -2672,6 +2758,98 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
     this.hideClearNotesModal();
   }
+  
+  showExportOptionsModal() {
+    if (this.exportOptionsModal) {
+      this.exportOptionsModal.style.display = 'flex';
+      this.updateExportConnectionStatus();
+    }
+  }
+  
+  hideExportOptionsModal() {
+    if (this.exportOptionsModal) {
+      this.exportOptionsModal.style.display = 'none';
+    }
+  }
+  
+  updateExportConnectionStatus() {
+    // Update Google Drive connection status
+    if (this.driveConnectionStatus) {
+      const notesDriveFolder = this.notesDriveFolderInput?.value;
+      if (notesDriveFolder) {
+        this.driveConnectionStatus.textContent = 'Connected';
+        this.driveConnectionStatus.className = 'connection-status connected';
+      } else {
+        this.driveConnectionStatus.textContent = 'Not Connected';
+        this.driveConnectionStatus.className = 'connection-status not-connected';
+      }
+    }
+    
+    // Update Dropbox connection status (placeholder for future implementation)
+    if (this.dropboxConnectionStatus) {
+      this.dropboxConnectionStatus.textContent = 'Not Connected';
+      this.dropboxConnectionStatus.className = 'connection-status not-connected';
+    }
+  }
+  
+  async exportToGoogleDrive() {
+    try {
+      const notesDriveFolder = await window.electronAPI.storeGet('notes-drive-folder');
+      if (!notesDriveFolder) {
+        alert('Please configure Google Drive folder in Settings first.');
+        return;
+      }
+      
+      this.exportGoogleDrive.disabled = true;
+      this.exportGoogleDrive.innerHTML = 'Uploading...';
+      
+      // Use the last saved session data for export
+      if (this.lastExportData) {
+        // Save to Drive using existing functionality
+        await window.electronAPI.driveEnsureTarget(notesDriveFolder);
+        
+        // Upload notes
+        await window.electronAPI.driveSaveHtml({
+          filePath: notesDriveFolder,
+          content: this.lastExportData.notesContent,
+          fileName: this.lastExportData.baseFileName
+        });
+        
+        // Upload transcription
+        await window.electronAPI.driveSaveHtml({
+          filePath: notesDriveFolder,
+          content: this.lastExportData.transcriptionContent,
+          fileName: this.lastExportData.baseFileName
+        });
+        
+        alert('Successfully uploaded to Google Drive!');
+      }
+    } catch (error) {
+      console.error('Error uploading to Google Drive:', error);
+      alert('Error uploading to Google Drive. Please try again.');
+    } finally {
+      this.exportGoogleDrive.disabled = false;
+      this.exportGoogleDrive.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 14l5-5 5 5"/>
+          <path d="M7 14l5-5 5 5"/>
+        </svg>
+        Upload to Google Drive
+      `;
+    }
+  }
+  
+  async exportToDropbox() {
+    alert('Dropbox integration coming soon! Configure in Settings when available.');
+  }
+  
+  async exportToPdf() {
+    alert('PDF export coming soon! This will create PDF versions of your notes and transcription.');
+  }
+  
+  async exportToMarkdown() {
+    alert('Markdown export coming soon! This will create .md files from your notes and transcription.');
+  }
 
   newRecording() {
     // Clear current session
@@ -2683,6 +2861,12 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
   async saveRecording() {
     try {
+      // Show loading state
+      if (this.saveBtn) {
+        this.saveBtn.disabled = true;
+        this.saveBtn.innerHTML = 'Saving...';
+      }
+      
       // Get user's audio destination preference
       const audioDestination = await window.electronAPI.storeGet('audio-destination') || 'local';
       const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
@@ -2706,17 +2890,35 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         return;
       }
 
-      const courseInfo = await this.getCanvasInfo();
-      const courseNumber = courseInfo.courseNumber || 'UNKNOWN';
+      // Validate course selection is required
+      if (!this.captureCourseSelect || !this.captureCourseSelect.value) {
+        this.courseSelectionError.style.display = 'block';
+        alert('Please select a course before saving your session');
+        return;
+      }
+      
+      // Hide any error message
+      this.courseSelectionError.style.display = 'none';
+
+      const courseInfo = await this.getCapturePageCourseInfo();
+      const courseId = this.formatCourseIdForFileName(courseInfo);
+      
+      // Show AI title generation progress
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Generating session title...';
+      }
       
       // Generate AI blurb for filename
       const aiBlurb = await this.generateAIBlurb();
       
-      // New naming convention: CourseNumber--OpenAIBlurb
-      const baseFileName = `${courseNumber}--${aiBlurb}`;
+      // New naming convention: COURSEID–Descriptive_Title—DATE.extension
+      const currentDate = new Date();
+      const dateString = `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}-${currentDate.getFullYear()}`;
+      const formattedTitle = aiBlurb.replace(/\s+/g, '_');
+      const baseFileName = `${courseId}–${formattedTitle}—${dateString}`;
       const audioFileName = baseFileName; // .wav extension added by saveAudioFile
-      const notesFileName = `${baseFileName}_Notes`;
-      const transcriptionFileName = `${baseFileName}_Transcript`;
+      const notesFileName = baseFileName;
+      const transcriptionFileName = baseFileName;
 
       // Save audio file based on user's destination preference
       if (this.audioChunks.length > 0) {
@@ -2745,7 +2947,52 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         }
       }
 
-      // Save notes to Drive if notes folder is configured
+      // PART 4: Automatic Local Downloads with Storage Optimization
+      // Always save three files automatically to Downloads folder
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Saving files to Downloads...';
+      }
+      
+      const downloadsResult = await window.electronAPI.getDownloadsPath();
+      if (downloadsResult.success) {
+        const downloadsPath = downloadsResult.path;
+        
+        // 1. Save audio file to Downloads (optimized for speech)
+        if (this.audioChunks.length > 0) {
+          const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+          const audioBuffer = await audioBlob.arrayBuffer();
+          const audioArray = new Uint8Array(audioBuffer);
+          
+          await window.electronAPI.saveAudioFile({
+            audioData: Array.from(audioArray),
+            fileName: baseFileName,
+            folderPath: downloadsPath
+          });
+          console.log('Audio saved to Downloads:', downloadsPath);
+        }
+        
+        // 2. Save notes as DOCX to Downloads
+        const notesContent = this.generateNotesHTML();
+        await window.electronAPI.saveDocxFile({
+          content: notesContent,
+          fileName: baseFileName,
+          folderPath: downloadsPath,
+          type: 'notes'
+        });
+        console.log('Notes DOCX saved to Downloads:', downloadsPath);
+        
+        // 3. Save transcription as DOCX to Downloads  
+        const transcriptionContent = this.generateTranscriptionHTML();
+        await window.electronAPI.saveDocxFile({
+          content: transcriptionContent,
+          fileName: baseFileName,
+          folderPath: downloadsPath,
+          type: 'transcription'
+        });
+        console.log('Transcription DOCX saved to Downloads:', downloadsPath);
+      }
+
+      // Save notes to Drive if notes folder is configured (existing functionality)
       if (notesDriveFolder) {
         // Ensure target directory exists
         await window.electronAPI.driveEnsureTarget(notesDriveFolder);
@@ -2775,11 +3022,34 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         console.log('Transcription saved to Google Drive:', transcriptionDriveFolder);
       }
 
+      // Store export data for use in export dialog
+      this.lastExportData = {
+        baseFileName: baseFileName,
+        notesContent: this.generateNotesHTML(),
+        transcriptionContent: this.generateTranscriptionHTML(),
+        courseInfo: courseInfo
+      };
+
       alert('Recording saved successfully!');
+
+      // Restore save button state
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Save';
+        this.saveBtn.disabled = false;
+      }
+      
+      // PART 5: Show Export Options Dialog
+      this.showExportOptionsModal();
 
     } catch (error) {
       console.error('Error saving recording:', error);
       alert('Error saving recording. Please try again.');
+      
+      // Restore save button state on error
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Save';
+        this.saveBtn.disabled = false;
+      }
     }
   }
 
@@ -2876,6 +3146,45 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
   }
 
+  getCapturePageCourseInfo() {
+    if (this.captureCourseSelect.value === 'other') {
+      // Use custom category text or default to "Other"
+      const customText = this.captureCustomText.value.trim();
+      return {
+        courseNumber: customText || 'Other',
+        courseTitle: customText || 'Other'
+      };
+    } else if (this.captureCourseSelect.value === '') {
+      // This shouldn't happen due to validation, but handle gracefully
+      return {
+        courseNumber: 'UNKNOWN',
+        courseTitle: 'UNKNOWN'
+      };
+    } else {
+      // Parse selected course option
+      const option = this.captureCourseSelect.options[this.captureCourseSelect.selectedIndex];
+      return {
+        courseNumber: option.dataset.courseNumber || '',
+        courseTitle: option.dataset.courseTitle || option.text
+      };
+    }
+  }
+
+  formatCourseIdForFileName(courseInfo) {
+    // Create file-safe course ID, replacing spaces with underscores and removing special characters
+    const courseId = courseInfo.courseNumber || courseInfo.courseTitle || 'Other';
+    return courseId.replace(/\s+/g, '_').replace(/[^\w\-_.]/g, '');
+  }
+
+  resetCourseSelection() {
+    if (this.captureCourseSelect) {
+      this.captureCourseSelect.value = '';
+      this.captureCustomCategory.style.display = 'none';
+      this.captureCustomText.value = '';
+      this.courseSelectionError.style.display = 'none';
+    }
+  }
+
   onCourseSelectionChange(value) {
     if (value === 'other' || value === '') {
       this.manualCourseFields.style.display = 'block';
@@ -2885,6 +3194,20 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       const selectedCourse = this.getSelectedCourse();
       this.courseNumber.value = selectedCourse.courseNumber;
       this.courseTitle.value = selectedCourse.courseTitle;
+    }
+  }
+
+  onCaptureCourseSelectionChange(value) {
+    if (value === 'other') {
+      this.captureCustomCategory.style.display = 'block';
+    } else {
+      this.captureCustomCategory.style.display = 'none';
+      this.captureCustomText.value = ''; // Clear custom text when switching away from "Other"
+    }
+    
+    // Hide error message when user makes a selection
+    if (value !== '') {
+      this.courseSelectionError.style.display = 'none';
     }
   }
 
@@ -2907,14 +3230,32 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       this.courseSelect.removeChild(this.courseSelect.lastChild);
     }
     
-    // Add predefined courses
+    // Clear capture course selector options except for default ones
+    if (this.captureCourseSelect) {
+      while (this.captureCourseSelect.children.length > 2) {
+        this.captureCourseSelect.removeChild(this.captureCourseSelect.lastChild);
+      }
+    }
+    
+    // Add predefined courses to both selectors
     courses.forEach(course => {
+      // Sidebar course selector
       const option = document.createElement('option');
       option.value = course.id;
       option.textContent = `${course.courseNumber} - ${course.courseTitle}`;
       option.dataset.courseNumber = course.courseNumber;
       option.dataset.courseTitle = course.courseTitle;
       this.courseSelect.appendChild(option);
+      
+      // Capture page course selector
+      if (this.captureCourseSelect) {
+        const captureOption = document.createElement('option');
+        captureOption.value = course.id;
+        captureOption.textContent = `${course.courseNumber} - ${course.courseTitle}`;
+        captureOption.dataset.courseNumber = course.courseNumber;
+        captureOption.dataset.courseTitle = course.courseTitle;
+        this.captureCourseSelect.appendChild(captureOption);
+      }
     });
   }
 
@@ -4257,6 +4598,28 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         notesContent: 'The Renaissance period and its impact on European culture. Key figures include Leonardo da Vinci, Michelangelo, and Machiavelli.',
         transcription: '[09:10] The Renaissance was a period of cultural rebirth. [09:15] It began in Italy during the 14th century...',
         audioPath: null
+      },
+      {
+        id: '4',
+        courseNumber: 'CS 101',
+        courseTitle: 'Introduction to Computer Science',
+        date: new Date('2024-09-22T10:00:00'),
+        duration: 4200, // 70 minutes
+        notesPreview: 'Object-oriented programming concepts and inheritance...',
+        notesContent: 'Object-oriented programming concepts and inheritance. Encapsulation, polymorphism, and abstraction are the core principles.',
+        transcription: '[10:05] Today we\'ll dive into OOP concepts. [10:10] Encapsulation means bundling data and methods together...',
+        audioPath: null
+      },
+      {
+        id: '5',
+        courseNumber: 'Other',
+        courseTitle: 'Book Club Meeting',
+        date: new Date('2024-09-21T19:00:00'),
+        duration: 2100, // 35 minutes
+        notesPreview: 'Discussion of "1984" by George Orwell...',
+        notesContent: 'Discussion of "1984" by George Orwell. Themes of surveillance, totalitarianism, and the power of language.',
+        transcription: '[19:05] So what did everyone think about the ending? [19:08] I found Winston\'s transformation disturbing...',
+        audioPath: null
       }
     ];
   }
@@ -4264,12 +4627,20 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   renderRecordingsList() {
     if (!this.recordingsList) return;
     
+    // Initialize filtered data if not already set
+    if (!this.filteredRecordingsData) {
+      this.filteredRecordingsData = [...this.recordingsData];
+    }
+    
+    // Load course filter options
+    this.loadCourseFilterOptions();
+    
     // Clear existing content except loading/empty states
     const existingItems = this.recordingsList.querySelectorAll('.recording-item');
     existingItems.forEach(item => item.remove());
     
-    // Render recordings
-    this.recordingsData.forEach(recording => {
+    // Render recordings using filtered data
+    this.filteredRecordingsData.forEach(recording => {
       const recordingElement = this.createRecordingItem(recording);
       this.recordingsList.appendChild(recordingElement);
     });
@@ -4433,6 +4804,121 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     // Stop any playing audio
     if (this.isReviewPlaying) {
       this.toggleReviewPlayback();
+    }
+  }
+
+  // Course Filtering Methods
+  
+  loadCourseFilterOptions() {
+    if (!this.studyCourseFilter || !this.recordingsData) return;
+    
+    // Get unique courses from recordings data
+    const coursesMap = new Map();
+    this.recordingsData.forEach(recording => {
+      const courseKey = recording.courseNumber || 'Other';
+      const courseTitle = recording.courseTitle || 'Other';
+      const displayName = courseKey === 'Other' ? 'Other' : `${courseKey} - ${courseTitle}`;
+      
+      if (!coursesMap.has(courseKey)) {
+        coursesMap.set(courseKey, {
+          key: courseKey,
+          displayName: displayName,
+          count: 0
+        });
+      }
+      coursesMap.get(courseKey).count++;
+    });
+    
+    // Clear existing options except "All Courses"
+    while (this.studyCourseFilter.children.length > 1) {
+      this.studyCourseFilter.removeChild(this.studyCourseFilter.lastChild);
+    }
+    
+    // Add course options with counts
+    coursesMap.forEach(course => {
+      const option = document.createElement('option');
+      option.value = course.key;
+      option.textContent = `${course.displayName} (${course.count})`;
+      this.studyCourseFilter.appendChild(option);
+    });
+  }
+  
+  onStudyCourseFilterChange(selectedCourse) {
+    // Filter recordings data
+    if (selectedCourse === '') {
+      // Show all recordings
+      this.filteredRecordingsData = [...this.recordingsData];
+      this.hideActiveFilterIndicator();
+    } else {
+      // Filter by selected course
+      this.filteredRecordingsData = this.recordingsData.filter(recording => {
+        const courseKey = recording.courseNumber || 'Other';
+        return courseKey === selectedCourse;
+      });
+      this.showActiveFilterIndicator(selectedCourse);
+    }
+    
+    // Re-render the list with filtered data
+    this.renderFilteredRecordingsList();
+    this.updateRecordingsCount();
+  }
+  
+  clearCourseFilter() {
+    if (this.studyCourseFilter) {
+      this.studyCourseFilter.value = '';
+      this.onStudyCourseFilterChange('');
+    }
+  }
+  
+  showActiveFilterIndicator(courseKey) {
+    if (this.activeFilterIndicator && this.filterBadge) {
+      const selectedOption = this.studyCourseFilter.options[this.studyCourseFilter.selectedIndex];
+      const displayText = selectedOption.textContent;
+      this.filterBadge.textContent = `Showing: ${displayText}`;
+      this.activeFilterIndicator.style.display = 'flex';
+    }
+  }
+  
+  hideActiveFilterIndicator() {
+    if (this.activeFilterIndicator) {
+      this.activeFilterIndicator.style.display = 'none';
+    }
+  }
+  
+  renderFilteredRecordingsList() {
+    if (!this.recordingsList) return;
+    
+    // Clear existing content except loading/empty states
+    const existingItems = this.recordingsList.querySelectorAll('.recording-item');
+    existingItems.forEach(item => item.remove());
+    
+    const dataToRender = this.filteredRecordingsData || this.recordingsData;
+    
+    if (dataToRender.length === 0) {
+      this.recordingsEmpty.style.display = 'flex';
+      return;
+    } else {
+      this.recordingsEmpty.style.display = 'none';
+    }
+    
+    // Render filtered recordings
+    dataToRender.forEach(recording => {
+      const recordingElement = this.createRecordingItem(recording);
+      this.recordingsList.appendChild(recordingElement);
+    });
+  }
+  
+  updateRecordingsCount() {
+    if (this.recordingsCount) {
+      const dataToCount = this.filteredRecordingsData || this.recordingsData;
+      const totalCount = this.recordingsData.length;
+      const filteredCount = dataToCount.length;
+      
+      if (this.filteredRecordingsData && filteredCount < totalCount) {
+        this.recordingsCount.textContent = `${filteredCount} of ${totalCount} recordings`;
+      } else {
+        this.recordingsCount.textContent = `${totalCount} recording${totalCount === 1 ? '' : 's'}`;
+      }
     }
   }
 

@@ -24,6 +24,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Audio file operations
   saveAudioFile: (data) => ipcRenderer.invoke('save-audio-file', data),
 
+  // Local downloads for automatic session saves
+  getDownloadsPath: () => ipcRenderer.invoke('get-downloads-path'),
+  saveDocxFile: (data) => ipcRenderer.invoke('save-docx-file', data),
+
   // Keytar (secure credential storage)
   keytarGet: ({ service, account }) => ipcRenderer.invoke('keytar:get', { service, account }),
   keytarSet: (service, account, password) => ipcRenderer.invoke('keytar:set', { service, account, password }),

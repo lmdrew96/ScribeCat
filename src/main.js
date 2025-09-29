@@ -295,6 +295,122 @@ ipcMain.handle('save-audio-file', async (event, { audioData, fileName, folderPat
   }
 });
 
+// Get Downloads directory
+ipcMain.handle('get-downloads-path', async () => {
+  try {
+    const downloadsPath = app.getPath('downloads');
+    return { success: true, path: downloadsPath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Save DOCX files for automatic local downloads
+ipcMain.handle('save-docx-file', async (event, { content, fileName, folderPath, type }) => {
+  try {
+    const outPath = path.join(folderPath, `${fileName}.docx`);
+    
+    // Create DOCX document
+    let paragraphs = [];
+    
+    if (type === 'notes') {
+      // Parse HTML content for notes
+      const $ = cheerio.load(content);
+      const courseNumber = $('.course-info').first().text().replace('Course: ', '').trim() || 'N/A';
+      const courseTitle = $('.course-info').eq(1).text().replace('Title: ', '').trim() || 'Untitled';
+      const date = $('.date').text().replace('Date: ', '').trim() || new Date().toLocaleDateString();
+      
+      // Add header information
+      paragraphs.push(
+        new Paragraph({
+          children: [new TextRun({ text: `Course: ${courseNumber}`, bold: true })],
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Title: ${courseTitle}`, bold: true })],
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Date: ${date}`, bold: true })],
+        }),
+        new Paragraph({ children: [new TextRun("")] }) // Empty line
+      );
+      
+      // Extract and add content
+      const contentDiv = $('.content');
+      if (contentDiv.length > 0) {
+        const textContent = contentDiv.text().trim();
+        if (textContent) {
+          textContent.split('\n').forEach(line => {
+            paragraphs.push(new Paragraph({
+              children: [new TextRun(line.trim())],
+            }));
+          });
+        } else {
+          paragraphs.push(new Paragraph({
+            children: [new TextRun("No notes recorded.")],
+          }));
+        }
+      }
+    } else if (type === 'transcription') {
+      // Parse HTML content for transcription
+      const $ = cheerio.load(content);
+      const courseNumber = $('.course-info').first().text().replace('Course: ', '').trim() || 'N/A';
+      const courseTitle = $('.course-info').eq(1).text().replace('Title: ', '').trim() || 'Untitled';
+      const date = $('.date').text().replace('Date: ', '').trim() || new Date().toLocaleDateString();
+      
+      // Add header information
+      paragraphs.push(
+        new Paragraph({
+          children: [new TextRun({ text: `Course: ${courseNumber}`, bold: true })],
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Title: ${courseTitle}`, bold: true })],
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Date: ${date}`, bold: true })],
+        }),
+        new Paragraph({ children: [new TextRun("")] }) // Empty line
+      );
+      
+      // Extract transcription entries
+      const entries = $('.entry');
+      if (entries.length > 0) {
+        entries.each((i, entry) => {
+          const $entry = $(entry);
+          const timestamp = $entry.find('strong').text();
+          const text = $entry.text().replace(timestamp, '').trim();
+          
+          paragraphs.push(new Paragraph({
+            children: [
+              new TextRun({ text: timestamp, bold: true }),
+              new TextRun({ text: ` ${text}` })
+            ],
+          }));
+        });
+      } else {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun("No transcription available.")],
+        }));
+      }
+    }
+    
+    // Create document
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: paragraphs
+      }]
+    });
+    
+    // Generate and save the document
+    const buffer = await Packer.toBuffer(doc);
+    fs.writeFileSync(outPath, buffer);
+    
+    return { success: true, path: outPath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // Subscription management IPC handlers
 ipcMain.handle('subscription:get-status', async () => {
   try {

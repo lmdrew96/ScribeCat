@@ -1209,6 +1209,69 @@ body {
   border-radius: 1px;
 }
 
+/* Course Selection Container */
+.course-selection-container {
+  padding: 12px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  margin: var(--spacing-sm);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(100vw - 16px);
+  position: relative;
+  left: 0;
+}
+
+.course-selection-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.course-selection-label label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.course-selection-label .required {
+  color: var(--danger-color);
+  font-weight: 700;
+}
+
+.course-selection-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-selector {
+  min-width: 250px;
+  max-width: 400px;
+}
+
+.custom-category-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-category-input .input-field {
+  max-width: 300px;
+}
+
+.course-selection-error {
+  color: var(--danger-color);
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
 /* Content container */
 .content-container {
   flex: 1;
@@ -1366,6 +1429,119 @@ body {
   gap: 8px;
   padding: 16px;
   border-top: 1px solid var(--border);
+}
+
+/* Export Options Dialog */
+.export-options-modal {
+  max-width: 600px;
+  width: 95%;
+}
+
+.export-intro {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.export-section {
+  margin-bottom: 24px;
+}
+
+.export-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.export-options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.export-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.export-btn {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-btn svg {
+  flex-shrink: 0;
+}
+
+.connection-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.connection-status.connected {
+  background: var(--success-color);
+  color: white;
+}
+
+.connection-status.not-connected {
+  background: var(--text-muted);
+  color: white;
+}
+
+.setup-links {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 20px;
+}
+
+.setup-note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.setup-note a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.setup-note a:hover {
+  text-decoration: underline;
+}
+
+@media (min-width: 500px) {
+  .export-options-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .format-btn:hover {
@@ -2630,6 +2806,84 @@ body {
 .recordings-meta {
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+/* Course Filter */
+.course-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--spacing-xl);
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.course-filter-label {
+  display: flex;
+  align-items: center;
+}
+
+.course-filter-label label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.course-filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-filter-select {
+  max-width: 300px;
+}
+
+.active-filter-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.clear-filter-btn {
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+@media (min-width: 600px) {
+  .course-filter-controls {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .active-filter-indicator {
+    margin-left: auto;
+  }
 }
 
 .recordings-list {
