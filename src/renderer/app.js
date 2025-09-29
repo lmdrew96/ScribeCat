@@ -2572,6 +2572,12 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
   async saveRecording() {
     try {
+      // Show loading state
+      if (this.saveBtn) {
+        this.saveBtn.disabled = true;
+        this.saveBtn.innerHTML = 'Saving...';
+      }
+      
       // Get user's audio destination preference
       const audioDestination = await window.electronAPI.storeGet('audio-destination') || 'local';
       const localAudioFolder = await window.electronAPI.storeGet('local-audio-folder');
@@ -2607,6 +2613,11 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
       const courseInfo = await this.getCapturePageCourseInfo();
       const courseId = this.formatCourseIdForFileName(courseInfo);
+      
+      // Show AI title generation progress
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Generating session title...';
+      }
       
       // Generate AI blurb for filename
       const aiBlurb = await this.generateAIBlurb();
@@ -2647,7 +2658,52 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         }
       }
 
-      // Save notes to Drive if notes folder is configured
+      // PART 4: Automatic Local Downloads with Storage Optimization
+      // Always save three files automatically to Downloads folder
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Saving files to Downloads...';
+      }
+      
+      const downloadsResult = await window.electronAPI.getDownloadsPath();
+      if (downloadsResult.success) {
+        const downloadsPath = downloadsResult.path;
+        
+        // 1. Save audio file to Downloads (optimized for speech)
+        if (this.audioChunks.length > 0) {
+          const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+          const audioBuffer = await audioBlob.arrayBuffer();
+          const audioArray = new Uint8Array(audioBuffer);
+          
+          await window.electronAPI.saveAudioFile({
+            audioData: Array.from(audioArray),
+            fileName: baseFileName,
+            folderPath: downloadsPath
+          });
+          console.log('Audio saved to Downloads:', downloadsPath);
+        }
+        
+        // 2. Save notes as DOCX to Downloads
+        const notesContent = this.generateNotesHTML();
+        await window.electronAPI.saveDocxFile({
+          content: notesContent,
+          fileName: baseFileName,
+          folderPath: downloadsPath,
+          type: 'notes'
+        });
+        console.log('Notes DOCX saved to Downloads:', downloadsPath);
+        
+        // 3. Save transcription as DOCX to Downloads  
+        const transcriptionContent = this.generateTranscriptionHTML();
+        await window.electronAPI.saveDocxFile({
+          content: transcriptionContent,
+          fileName: baseFileName,
+          folderPath: downloadsPath,
+          type: 'transcription'
+        });
+        console.log('Transcription DOCX saved to Downloads:', downloadsPath);
+      }
+
+      // Save notes to Drive if notes folder is configured (existing functionality)
       if (notesDriveFolder) {
         // Ensure target directory exists
         await window.electronAPI.driveEnsureTarget(notesDriveFolder);
@@ -2679,9 +2735,21 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
       alert('Recording saved successfully!');
 
+      // Restore save button state
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Save';
+        this.saveBtn.disabled = false;
+      }
+
     } catch (error) {
       console.error('Error saving recording:', error);
       alert('Error saving recording. Please try again.');
+      
+      // Restore save button state on error
+      if (this.saveBtn) {
+        this.saveBtn.innerHTML = 'Save';
+        this.saveBtn.disabled = false;
+      }
     }
   }
 
