@@ -1,0 +1,399 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5B1B1B1B2B5B1B1B0B5B1B1B /* ScribeCat_iPadOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B1B2B5B1B1B0B5B1B19 /* ScribeCat_iPadOSApp.swift */; };
+		5B1B1B1C2B5B1B1B0B5B1B1B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B1B2B5B1B1B0B5B1B1B /* ContentView.swift */; };
+		5B1B1B1E2B5B1B1B0B5B1B1B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B1B1B1D2B5B1B1B0B5B1B1B /* Assets.xcassets */; };
+		5B1B1B212B5B1B1B0B5B1B1B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B1B1B202B5B1B1B0B5B1B1B /* Preview Assets.xcassets */; };
+		5B1B1B282B5B1B1B0B5B1B1B /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B272B5B1B1B0B5B1B1B /* HomeView.swift */; };
+		5B1B1B2A2B5B1B1B0B5B1B1B /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B292B5B1B1B0B5B1B1B /* EditorView.swift */; };
+		5B1B1B2C2B5B1B1B0B5B1B1B /* TranscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B2B2B5B1B1B0B5B1B1B /* TranscriptionView.swift */; };
+		5B1B1B2E2B5B1B1B0B5B1B1B /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B2D2B5B1B1B0B5B1B1B /* AIChatView.swift */; };
+		5B1B1B302B5B1B1B0B5B1B1B /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B2F2B5B1B1B0B5B1B1B /* SidebarView.swift */; };
+		5B1B1B322B5B1B1B0B5B1B1B /* ThemeSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B312B5B1B1B0B5B1B1B /* ThemeSystem.swift */; };
+		5B1B1B342B5B1B1B0B5B1B1B /* DataController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B332B5B1B1B0B5B1B1B /* DataController.swift */; };
+		5B1B1B362B5B1B1B0B5B1B1B /* PlaceholderViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B352B5B1B1B0B5B1B1B /* PlaceholderViews.swift */; };
+		5B1B1B562B5B1B1B0B5B1B1B /* ScribeCatiPadOS.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 5B1B1B552B5B1B1B0B5B1B1B /* ScribeCatiPadOS.xcdatamodeld */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5B1B1B162B5B1B1B0B5B1B1B /* ScribeCat-iPadOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ScribeCat-iPadOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B1B1B192B5B1B1B0B5B1B19 /* ScribeCat_iPadOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScribeCat_iPadOSApp.swift; sourceTree = "<group>"; };
+		5B1B1B1B2B5B1B1B0B5B1B1B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5B1B1B1D2B5B1B1B0B5B1B1B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5B1B1B202B5B1B1B0B5B1B1B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		5B1B1B272B5B1B1B0B5B1B1B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		5B1B1B292B5B1B1B0B5B1B1B /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		5B1B1B2B2B5B1B1B0B5B1B1B /* TranscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionView.swift; sourceTree = "<group>"; };
+		5B1B1B2D2B5B1B1B0B5B1B1B /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
+		5B1B1B2F2B5B1B1B0B5B1B1B /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		5B1B1B312B5B1B1B0B5B1B1B /* ThemeSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSystem.swift; sourceTree = "<group>"; };
+		5B1B1B332B5B1B1B0B5B1B1B /* DataController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataController.swift; sourceTree = "<group>"; };
+		5B1B1B352B5B1B1B0B5B1B1B /* PlaceholderViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderViews.swift; sourceTree = "<group>"; };
+		5B1B1B362B5B1B1B0B5B1B1B /* ScribeCat-iPadOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ScribeCat-iPadOS.entitlements"; sourceTree = "<group>"; };
+		5B1B1B552B5B1B1B0B5B1B1B /* ScribeCatiPadOS.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ScribeCatiPadOS.xcdatamodeld; sourceTree = "<group>"; };
+		5B1B1B572B5B1B1B0B5B1B1B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5B1B1B132B5B1B1B0B5B1B1B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5B1B1B0D2B5B1B1B0B5B1B1B = {
+			isa = PBXGroup;
+			children = (
+				5B1B1B182B5B1B1B0B5B1B1B /* ScribeCat-iPadOS */,
+				5B1B1B172B5B1B1B0B5B1B1B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5B1B1B172B5B1B1B0B5B1B1B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5B1B1B162B5B1B1B0B5B1B1B /* ScribeCat-iPadOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5B1B1B182B5B1B1B0B5B1B1B /* ScribeCat-iPadOS */ = {
+			isa = PBXGroup;
+			children = (
+				5B1B1B192B5B1B1B0B5B1B19 /* ScribeCat_iPadOSApp.swift */,
+				5B1B1B1B2B5B1B1B0B5B1B1B /* ContentView.swift */,
+				5B1B1B2F2B5B1B1B0B5B1B1B /* SidebarView.swift */,
+				5B1B1B272B5B1B1B0B5B1B1B /* HomeView.swift */,
+				5B1B1B292B5B1B1B0B5B1B1B /* EditorView.swift */,
+				5B1B1B2B2B5B1B1B0B5B1B1B /* TranscriptionView.swift */,
+				5B1B1B2D2B5B1B1B0B5B1B1B /* AIChatView.swift */,
+				5B1B1B312B5B1B1B0B5B1B1B /* ThemeSystem.swift */,
+				5B1B1B332B5B1B1B0B5B1B1B /* DataController.swift */,
+				5B1B1B352B5B1B1B0B5B1B1B /* PlaceholderViews.swift */,
+				5B1B1B552B5B1B1B0B5B1B1B /* ScribeCatiPadOS.xcdatamodeld */,
+				5B1B1B362B5B1B1B0B5B1B1B /* ScribeCat-iPadOS.entitlements */,
+				5B1B1B572B5B1B1B0B5B1B1B /* Info.plist */,
+				5B1B1B1D2B5B1B1B0B5B1B1B /* Assets.xcassets */,
+				5B1B1B1F2B5B1B1B0B5B1B1B /* Preview Content */,
+			);
+			path = "ScribeCat-iPadOS";
+			sourceTree = "<group>";
+		};
+		5B1B1B1F2B5B1B1B0B5B1B1B /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				5B1B1B202B5B1B1B0B5B1B1B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5B1B1B152B5B1B1B0B5B1B1B /* ScribeCat-iPadOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5B1B1B4A2B5B1B1B0B5B1B1B /* Build configuration list for PBXNativeTarget "ScribeCat-iPadOS" */;
+			buildPhases = (
+				5B1B1B122B5B1B1B0B5B1B1B /* Sources */,
+				5B1B1B132B5B1B1B0B5B1B1B /* Frameworks */,
+				5B1B1B142B5B1B1B0B5B1B1B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ScribeCat-iPadOS";
+			productName = "ScribeCat-iPadOS";
+			productReference = 5B1B1B162B5B1B1B0B5B1B1B /* ScribeCat-iPadOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5B1B1B0E2B5B1B1B0B5B1B1B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					5B1B1B152B5B1B1B0B5B1B1B = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 5B1B1B112B5B1B1B0B5B1B1B /* Build configuration list for PBXProject "ScribeCat-iPadOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5B1B1B0D2B5B1B1B0B5B1B1B;
+			productRefGroup = 5B1B1B172B5B1B1B0B5B1B1B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5B1B1B152B5B1B1B0B5B1B1B /* ScribeCat-iPadOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5B1B1B142B5B1B1B0B5B1B1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B1B1B212B5B1B1B0B5B1B1B /* Preview Assets.xcassets in Resources */,
+				5B1B1B1E2B5B1B1B0B5B1B1B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5B1B1B122B5B1B1B0B5B1B1B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B1B1B1C2B5B1B1B0B5B1B1B /* ContentView.swift in Sources */,
+				5B1B1B2A2B5B1B1B0B5B1B1B /* EditorView.swift in Sources */,
+				5B1B1B2C2B5B1B1B0B5B1B1B /* TranscriptionView.swift in Sources */,
+				5B1B1B2E2B5B1B1B0B5B1B1B /* AIChatView.swift in Sources */,
+				5B1B1B302B5B1B1B0B5B1B1B /* SidebarView.swift in Sources */,
+				5B1B1B322B5B1B1B0B5B1B1B /* ThemeSystem.swift in Sources */,
+				5B1B1B342B5B1B1B0B5B1B1B /* DataController.swift in Sources */,
+				5B1B1B362B5B1B1B0B5B1B1B /* PlaceholderViews.swift in Sources */,
+				5B1B1B282B5B1B1B0B5B1B1B /* HomeView.swift in Sources */,
+				5B1B1B1B2B5B1B1B0B5B1B1B /* ScribeCat_iPadOSApp.swift in Sources */,
+				5B1B1B562B5B1B1B0B5B1B1B /* ScribeCatiPadOS.xcdatamodeld in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5B1B1B482B5B1B1B0B5B1B1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5B1B1B492B5B1B1B0B5B1B1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5B1B1B4B2B5B1B1B0B5B1B1B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ScribeCat-iPadOS/ScribeCat-iPadOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"ScribeCat-iPadOS/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ScribeCat-iPadOS/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceIdiom = pad;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iPadOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		5B1B1B4C2B5B1B1B0B5B1B1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ScribeCat-iPadOS/ScribeCat-iPadOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"ScribeCat-iPadOS/Preview Content\"";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ScribeCat-iPadOS/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceIdiom = pad;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iPadOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5B1B1B112B5B1B1B0B5B1B1B /* Build configuration list for PBXProject "ScribeCat-iPadOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B1B1B482B5B1B1B0B5B1B1B /* Debug */,
+				5B1B1B492B5B1B1B0B5B1B1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5B1B1B4A2B5B1B1B0B5B1B1B /* Build configuration list for PBXNativeTarget "ScribeCat-iPadOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B1B1B4B2B5B1B1B0B5B1B1B /* Debug */,
+				5B1B1B4C2B5B1B1B0B5B1B1B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5B1B1B0E2B5B1B1B0B5B1B1B /* Project object */;
+}
