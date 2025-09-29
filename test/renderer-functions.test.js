@@ -297,13 +297,12 @@ async function main() {
     if (!app.aiSummary.innerHTML) throw new Error('No summary');
   });
 
-  harness.test('toggle chat button toggles collapsed', () => {
-    const btn = document.getElementById('toggle-chat');
-    app.aiChat.classList.remove('collapsed');
+  harness.test('claude fab button expands chat panel', () => {
+    const btn = document.getElementById('claude-fab');
+    if (!btn || !app.aiChatPanel) return false;
+    app.aiChatPanel.classList.remove('expanded');
     btn.click();
-    if (!app.aiChat.classList.contains('collapsed')) return false;
-    btn.click();
-    return !app.aiChat.classList.contains('collapsed');
+    return app.aiChatPanel.classList.contains('expanded');
   });
 
   await harness.testAsync('send chat button appends user and AI messages', async () => {
@@ -363,12 +362,12 @@ async function main() {
     return app.isRecording === true;
   });
 
-  harness.test('toggleChat toggles collapsed class', () => {
-    app.aiChat.classList.add('collapsed');
-    app.toggleChat();
-    if (!app.aiChat.classList.contains('collapsed')) return true;
-    app.toggleChat();
-    return !app.aiChat.classList.contains('collapsed');
+  harness.test('expandChatPanel and collapseChatPanel work correctly', () => {
+    if (!app.aiChatPanel) return false;
+    app.collapseChatPanel();
+    if (app.aiChatPanel.classList.contains('expanded')) return false;
+    app.expandChatPanel();
+    return app.aiChatPanel.classList.contains('expanded');
   });
 
   await harness.testAsync('changeTranscriptionBackend sets flags and persists', async () => {

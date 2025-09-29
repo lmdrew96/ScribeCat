@@ -347,21 +347,31 @@
                 </div>
 
                 <!-- AI Chat Window -->
-                <div class="ai-chat collapsed" id="ai-chat">
-                    <div class="chat-header">
-                        <div class="chat-drag-handle" id="chat-drag-handle" title="Drag to move chat"></div>
-                        <h3>Ask AI</h3>
-                        <button id="toggle-chat" class="chat-toggle" title="Expand or collapse Ask AI chat">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6,9 12,15 18,9"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="chat-content" id="chat-content">
+                <!-- AI Chat Floating Button -->
+                <div class="ai-chat-container" id="ai-chat-container">
+                    <!-- Floating Claude Button -->
+                    <button class="claude-fab" id="claude-fab" title="Ask Claude AI">
+                        <img class="claude-icon" src="../../assets/images/AskAI-logo.jpeg" alt="Ask AI" onerror="this.style.display='none'">
+                    </button>
+                    
+                    <!-- Expanded Chat Panel -->
+                    <div class="ai-chat-panel" id="ai-chat-panel">
+                        <div class="chat-header">
+                            <div class="chat-title">
+                                <img class="claude-icon-small" src="../../assets/images/AskAI-logo.jpeg" alt="Ask AI">
+                                <h3>Ask Claude</h3>
+                            </div>
+                            <button class="chat-close" id="chat-close" title="Close chat">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-container">
                             <input type="text" id="chat-input" placeholder="Ask about your notes or transcription..." class="chat-input">
-                            <button id="send-chat" class="btn btn-primary btn-small" title="Send message to AI assistant">Send</button>
+                            <button id="send-chat" class="btn btn-primary btn-small" title="Send message">Send</button>
                         </div>
                     </div>
                 </div>

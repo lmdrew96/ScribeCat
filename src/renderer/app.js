@@ -101,13 +101,12 @@ class ScribeCatApp {
     this.fontColorSelector = document.getElementById('font-color');
     this.highlightColorSelector = document.getElementById('highlight-color');
     // Chat elements
-    this.aiChat = document.getElementById('ai-chat');
-    this.chatHeader = this.aiChat?.querySelector('.chat-header');
+    this.claudeFab = document.getElementById('claude-fab');
+    this.aiChatPanel = document.getElementById('ai-chat-panel');
     this.chatInput = document.getElementById('chat-input');
     this.chatMessages = document.getElementById('chat-messages');
-    this.toggleChatBtn = document.getElementById('toggle-chat');
+    this.chatCloseBtn = document.getElementById('chat-close');
     this.sendChatBtn = document.getElementById('send-chat');
-    this.chatDragHandle = document.getElementById('chat-drag-handle');
     
     // Resize handle elements
     this.resizeHandle = document.getElementById('resize-handle');
@@ -380,22 +379,28 @@ class ScribeCatApp {
       this.notesEditor.addEventListener('keyup', () => this.updateFormattingState());
       this.notesEditor.addEventListener('mouseup', () => this.updateFormattingState());
     }
-    if (this.toggleChatBtn) {
-      this.toggleChatBtn.addEventListener('click', (e) => {
+    // Claude FAB click to expand
+    if (this.claudeFab) {
+      this.claudeFab.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.toggleChat();
+        this.expandChatPanel();
       });
     }
-    if (this.chatHeader) {
-      this.chatHeader.addEventListener('click', (e) => {
-        // Don't toggle if clicking on the drag handle
-        if (e.target.closest('.chat-drag-handle')) return;
-        this.toggleChat();
+    
+    // Chat close button
+    if (this.chatCloseBtn) {
+      this.chatCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.collapseChatPanel();
       });
     }
+    
+    // Send chat message
     if (this.sendChatBtn) {
       this.sendChatBtn.addEventListener('click', () => this.sendChatMessage());
     }
+    
+    // Chat input enter key
     if (this.chatInput) {
       this.chatInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -405,20 +410,21 @@ class ScribeCatApp {
       });
     }
     
+    // Click outside to close chat panel
+    document.addEventListener('click', (e) => {
+      if (this.aiChatPanel && this.aiChatPanel.classList.contains('expanded')) {
+        if (!e.target.closest('.ai-chat-container')) {
+          this.collapseChatPanel();
+        }
+      }
+    });
+    
     // Content sections resize handle
     if (this.resizeHandle) {
       this.setupContentResize();
     }
     
-    // Chat resize handle
-    if (this.chatDragHandle) {
-      this.setupChatResize();
-    }
-    
-    // Chat drag functionality
-    if (this.chatDragHandle && this.aiChat) {
-      this.setupChatDrag();
-    }
+
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       mainContent.addEventListener('click', () => {
@@ -543,66 +549,35 @@ class ScribeCatApp {
     };
   }
 
-  setupChatDrag() {
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startBottom = 0;
+  expandChatPanel() {
+    if (!this.aiChatPanel || !this.claudeFab) return;
+    
+    // Add expanding animation class to FAB
+    this.claudeFab.classList.add('expanding');
+    
+    // Expand the chat panel with animation
+    setTimeout(() => {
+      this.aiChatPanel.classList.add('expanded');
+    }, 150);
+    
+    // Focus the chat input after animation
+    setTimeout(() => {
+      if (this.chatInput) {
+        this.chatInput.focus();
+      }
+    }, 400);
+  }
 
-    this.chatDragHandle.addEventListener('mousedown', (e) => {
-      // Only drag when chat is expanded
-      if (this.aiChat.classList.contains('collapsed')) return;
-      
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      
-      const chatRect = this.aiChat.getBoundingClientRect();
-      startLeft = chatRect.left;
-      startBottom = window.innerHeight - chatRect.bottom;
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      // Prevent text selection during drag
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'move';
-      
-      e.preventDefault();
-    });
-
-    const handleMouseMove = (e) => {
-      if (!isDragging) return;
-
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-      
-      const newLeft = startLeft + deltaX;
-      const newBottom = startBottom - deltaY;
-      
-      // Keep chat within viewport bounds
-      const chatRect = this.aiChat.getBoundingClientRect();
-      const maxLeft = window.innerWidth - chatRect.width - 20;
-      const maxBottom = window.innerHeight - chatRect.height - 20;
-      
-      const boundedLeft = Math.max(20, Math.min(newLeft, maxLeft));
-      const boundedBottom = Math.max(20, Math.min(newBottom, maxBottom));
-      
-      this.aiChat.style.left = `${boundedLeft}px`;
-      this.aiChat.style.right = 'auto';
-      this.aiChat.style.bottom = `${boundedBottom}px`;
-    };
-
-    const handleMouseUp = () => {
-      isDragging = false;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      
-      // Restore text selection and cursor
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
+  collapseChatPanel() {
+    if (!this.aiChatPanel || !this.claudeFab) return;
+    
+    // Collapse the chat panel
+    this.aiChatPanel.classList.remove('expanded');
+    
+    // Remove expanding class from FAB after panel is hidden
+    setTimeout(() => {
+      this.claudeFab.classList.remove('expanding');
+    }, 400);
   }
 
   async loadSettings() {
@@ -2037,13 +2012,29 @@ class ScribeCatApp {
   }
 
   handleKeyDown(e) {
-    // Handle Tab key for indentation
+    // Handle Tab key for standard tab character insertion (like Word)
     if (e.key === 'Tab') {
       e.preventDefault();
-      if (e.shiftKey) {
-        document.execCommand('outdent', false, null);
+      if (!e.shiftKey) {
+        // Insert a standard tab character at cursor position
+        document.execCommand('insertText', false, '\t');
       } else {
-        document.execCommand('indent', false, null);
+        // For Shift+Tab, remove one tab character before cursor if present
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          if (range.collapsed && range.startOffset > 0) {
+            const textNode = range.startContainer;
+            if (textNode.nodeType === Node.TEXT_NODE) {
+              const text = textNode.textContent;
+              const cursorPos = range.startOffset;
+              if (text[cursorPos - 1] === '\t') {
+                range.setStart(textNode, cursorPos - 1);
+                range.deleteContents();
+              }
+            }
+          }
+        }
       }
       this.saveNotesDraft();
       return;
@@ -2117,52 +2108,7 @@ class ScribeCatApp {
     await window.electronAPI.storeSet('notes-draft', content);
   }
 
-  toggleChat() {
-    this.aiChat.classList.toggle('collapsed');
-  }
 
-  setupChatResize() {
-    let isResizing = false;
-    let startX, startY, startWidth, startHeight;
-
-    this.chatDragHandle.addEventListener('mousedown', (e) => {
-      isResizing = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      
-      const rect = this.aiChat.getBoundingClientRect();
-      startWidth = rect.width;
-      startHeight = rect.height;
-      
-      e.preventDefault();
-      e.stopPropagation();
-      
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'nw-resize';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isResizing) return;
-      
-      // Calculate new dimensions (resize from top-left)
-      const deltaX = startX - e.clientX; // Reverse for left resize
-      const deltaY = startY - e.clientY; // Reverse for top resize
-      
-      const newWidth = Math.max(280, Math.min(500, startWidth + deltaX));
-      const newHeight = Math.max(200, Math.min(600, startHeight + deltaY));
-      
-      this.aiChat.style.width = `${newWidth}px`;
-      this.aiChat.style.height = `${newHeight}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isResizing) {
-        isResizing = false;
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
-      }
-    });
-  }
 
   async sendChatMessage() {
     const message = this.chatInput.value.trim();
