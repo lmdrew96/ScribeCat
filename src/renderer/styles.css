@@ -591,7 +591,7 @@ body {
   position: fixed;
   top: 30px; /* centered vertically in 90px header */
   left: 25px; /* center positioned 40px from left edge (40px - 15px for center) */
-  height: auto;
+  height: 30px; /* Fixed height for collapsed state */
   max-height: calc(100vh - 40px);
   width: 30px; /* collapsed square */
   background: var(--surface);
@@ -604,6 +604,7 @@ body {
   margin: var(--spacing-sm); /* 4px margin around sidebar */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: top left;
+  pointer-events: auto; /* Ensure clicks are captured */
 }
 
 /* Collapsed state shows a simple icon */
@@ -612,6 +613,8 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  pointer-events: auto; /* Ensure clicks work in collapsed state */
+  user-select: none; /* Prevent text selection */
 }
 
 .sidebar:not(.open) * {
@@ -1099,9 +1102,11 @@ body {
   flex-shrink: 0;
   transition: border-color 0.3s ease;
   height: 56px; /* Reduced by 20% from default ~70px */
-  width: calc(100vw - 16px); /* Dynamic width spanning from left edge to right edge */
+  width: calc(100% - 8px); /* Use percentage width instead of viewport width */
+  max-width: 100%; /* Ensure it doesn't overflow */
   position: relative;
   left: 0;
+  box-sizing: border-box; /* Include padding and borders in width calculation */
 }
 
 .record-btn {
@@ -1220,9 +1225,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: calc(100vw - 16px);
+  width: calc(100% - 8px); /* Use percentage width instead of viewport width */
+  max-width: 100%; /* Ensure it doesn't overflow */
   position: relative;
   left: 0;
+  box-sizing: border-box; /* Include padding and borders in width calculation */
 }
 
 .course-selection-label {
@@ -1284,6 +1291,7 @@ body {
   max-height: calc(100vh - 240px); /* Increased margin to prevent Claude FAB overlap */
   padding-bottom: 100px; /* Extra bottom padding to ensure no overlap with Claude FAB */
   flex-direction: row; /* Horizontal layout by default */
+  position: relative; /* Enable scrolling context */
 }
 
 /* Editor section */
@@ -2390,6 +2398,7 @@ body {
     gap: var(--spacing-sm); /* Maintain 4px gap */
     margin: var(--spacing-sm); /* Maintain 4px margin */
     max-height: calc(100vh - 160px); /* Adjusted for mobile */
+    overflow-y: auto; /* Enable scrolling when content overflows */
   }
   
   .editor-section,
@@ -2399,11 +2408,28 @@ body {
     width: calc(50vw - 8px); /* Mobile-optimized width */
     height: calc(100vh - 240px); /* Mobile-optimized height to prevent Claude FAB overlap */
     margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
+    overflow-y: auto; /* Enable scrolling within sections */
   }
   
   .recording-controls {
-    padding: var(--spacing-sm); /* Maintain 4px padding for phones */
+    padding: 8px; /* Reduced padding for mobile */
     margin: var(--spacing-sm); /* Maintain 4px margin for mobile */
+    flex-wrap: wrap; /* Allow wrapping on very small screens */
+    gap: 6px; /* Smaller gap between controls */
+    height: auto; /* Allow height to adjust */
+    min-height: 48px; /* Minimum height */
+  }
+  
+  .recording-controls .btn {
+    padding: 6px 8px; /* Smaller button padding */
+    font-size: 11px; /* Smaller font size */
+    min-width: 32px; /* Minimum touch target */
+    flex-shrink: 1; /* Allow buttons to shrink */
+  }
+  
+  .recording-time {
+    font-size: 12px; /* Smaller time display */
+    min-width: 40px; /* Smaller minimum width */
   }
   
   .app-header {
@@ -2434,17 +2460,57 @@ body {
     flex-direction: column; /* Finally switch to vertical stacking */
     gap: clamp(4px, 2vw, 8px); /* Adequate spacing between stacked cards */
     padding: clamp(4px, 2vw, 8px);
+    overflow-y: auto; /* Enable vertical scrolling for stacked layout */
+    max-height: calc(100vh - 120px); /* Allow more height for scrolling */
   }
   
   .editor-section,
   .transcription-section {
     flex: none; /* Remove flex sizing for stacked layout */
     width: 100%; /* Full width when stacked */
-    max-height: 40vh; /* Limit height so both cards are visible */
+    min-height: 200px; /* Minimum height for usability */
+    max-height: 50vh; /* Allow more height when scrolling is available */
+    overflow-y: auto; /* Enable scrolling within each section */
   }
   
   .resize-handle {
     display: none; /* Hide resize handle in vertical layout */
+  }
+  
+  /* Ultra-compact recording controls for very small screens */
+  .recording-controls {
+    padding: 6px; /* Minimal padding */
+    gap: 4px; /* Minimal gap */
+    height: auto; /* Flexible height */
+    min-height: 44px; /* Minimum touch target height */
+  }
+  
+  .recording-controls .btn {
+    padding: 4px 6px; /* Minimal button padding */
+    font-size: 10px; /* Very small font */
+    min-width: 28px; /* Smaller minimum width */
+    flex: 1; /* Allow buttons to grow equally */
+  }
+  
+  .recording-controls .btn:first-child {
+    flex: 1.5; /* Record button gets more space */
+  }
+  
+  .recording-time {
+    font-size: 10px; /* Very small time display */
+    min-width: 35px; /* Smaller minimum width */
+    flex-shrink: 0; /* Don't shrink time display */
+  }
+  
+  /* Hide less critical buttons on very small screens */
+  .recording-controls .btn:nth-child(n+4) {
+    display: none; /* Hide pause, resume, stop, save buttons */
+  }
+  
+  /* Show only essential buttons: Record, Time, and Save */
+  .recording-controls .btn:nth-child(1),
+  .recording-controls .btn:nth-child(6) {
+    display: flex; /* Show record and save buttons */
   }
 }
 
