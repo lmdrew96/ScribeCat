@@ -64,6 +64,12 @@ class ScribeCatApp {
     this.recordingsCount = document.getElementById('recordings-count');
     this.backToListBtn = document.getElementById('back-to-list');
     
+    // Course filter elements
+    this.studyCourseFilter = document.getElementById('study-course-filter');
+    this.activeFilterIndicator = document.getElementById('active-filter-indicator');
+    this.filterBadge = document.getElementById('filter-badge');
+    this.clearFilterBtn = document.getElementById('clear-filter-btn');
+    
     // Review elements
     this.reviewCourseTitle = document.getElementById('review-course-title');
     this.reviewSessionInfo = document.getElementById('review-session-info');
@@ -764,6 +770,15 @@ class ScribeCatApp {
     if (this.backToListBtn) {
       this.backToListBtn.addEventListener('click', () => this.showRecordingsList());
     }
+    
+    // Course filter event listeners
+    if (this.studyCourseFilter) {
+      this.studyCourseFilter.addEventListener('change', (e) => this.onStudyCourseFilterChange(e.target.value));
+    }
+    if (this.clearFilterBtn) {
+      this.clearFilterBtn.addEventListener('click', () => this.clearCourseFilter());
+    }
+    
     if (this.reviewPlayPause) {
       this.reviewPlayPause.addEventListener('click', () => this.toggleReviewPlayback());
     }
@@ -4460,6 +4475,28 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         notesContent: 'The Renaissance period and its impact on European culture. Key figures include Leonardo da Vinci, Michelangelo, and Machiavelli.',
         transcription: '[09:10] The Renaissance was a period of cultural rebirth. [09:15] It began in Italy during the 14th century...',
         audioPath: null
+      },
+      {
+        id: '4',
+        courseNumber: 'CS 101',
+        courseTitle: 'Introduction to Computer Science',
+        date: new Date('2024-09-22T10:00:00'),
+        duration: 4200, // 70 minutes
+        notesPreview: 'Object-oriented programming concepts and inheritance...',
+        notesContent: 'Object-oriented programming concepts and inheritance. Encapsulation, polymorphism, and abstraction are the core principles.',
+        transcription: '[10:05] Today we\'ll dive into OOP concepts. [10:10] Encapsulation means bundling data and methods together...',
+        audioPath: null
+      },
+      {
+        id: '5',
+        courseNumber: 'Other',
+        courseTitle: 'Book Club Meeting',
+        date: new Date('2024-09-21T19:00:00'),
+        duration: 2100, // 35 minutes
+        notesPreview: 'Discussion of "1984" by George Orwell...',
+        notesContent: 'Discussion of "1984" by George Orwell. Themes of surveillance, totalitarianism, and the power of language.',
+        transcription: '[19:05] So what did everyone think about the ending? [19:08] I found Winston\'s transformation disturbing...',
+        audioPath: null
       }
     ];
   }
@@ -4467,12 +4504,20 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   renderRecordingsList() {
     if (!this.recordingsList) return;
     
+    // Initialize filtered data if not already set
+    if (!this.filteredRecordingsData) {
+      this.filteredRecordingsData = [...this.recordingsData];
+    }
+    
+    // Load course filter options
+    this.loadCourseFilterOptions();
+    
     // Clear existing content except loading/empty states
     const existingItems = this.recordingsList.querySelectorAll('.recording-item');
     existingItems.forEach(item => item.remove());
     
-    // Render recordings
-    this.recordingsData.forEach(recording => {
+    // Render recordings using filtered data
+    this.filteredRecordingsData.forEach(recording => {
       const recordingElement = this.createRecordingItem(recording);
       this.recordingsList.appendChild(recordingElement);
     });
@@ -4636,6 +4681,121 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     // Stop any playing audio
     if (this.isReviewPlaying) {
       this.toggleReviewPlayback();
+    }
+  }
+
+  // Course Filtering Methods
+  
+  loadCourseFilterOptions() {
+    if (!this.studyCourseFilter || !this.recordingsData) return;
+    
+    // Get unique courses from recordings data
+    const coursesMap = new Map();
+    this.recordingsData.forEach(recording => {
+      const courseKey = recording.courseNumber || 'Other';
+      const courseTitle = recording.courseTitle || 'Other';
+      const displayName = courseKey === 'Other' ? 'Other' : `${courseKey} - ${courseTitle}`;
+      
+      if (!coursesMap.has(courseKey)) {
+        coursesMap.set(courseKey, {
+          key: courseKey,
+          displayName: displayName,
+          count: 0
+        });
+      }
+      coursesMap.get(courseKey).count++;
+    });
+    
+    // Clear existing options except "All Courses"
+    while (this.studyCourseFilter.children.length > 1) {
+      this.studyCourseFilter.removeChild(this.studyCourseFilter.lastChild);
+    }
+    
+    // Add course options with counts
+    coursesMap.forEach(course => {
+      const option = document.createElement('option');
+      option.value = course.key;
+      option.textContent = `${course.displayName} (${course.count})`;
+      this.studyCourseFilter.appendChild(option);
+    });
+  }
+  
+  onStudyCourseFilterChange(selectedCourse) {
+    // Filter recordings data
+    if (selectedCourse === '') {
+      // Show all recordings
+      this.filteredRecordingsData = [...this.recordingsData];
+      this.hideActiveFilterIndicator();
+    } else {
+      // Filter by selected course
+      this.filteredRecordingsData = this.recordingsData.filter(recording => {
+        const courseKey = recording.courseNumber || 'Other';
+        return courseKey === selectedCourse;
+      });
+      this.showActiveFilterIndicator(selectedCourse);
+    }
+    
+    // Re-render the list with filtered data
+    this.renderFilteredRecordingsList();
+    this.updateRecordingsCount();
+  }
+  
+  clearCourseFilter() {
+    if (this.studyCourseFilter) {
+      this.studyCourseFilter.value = '';
+      this.onStudyCourseFilterChange('');
+    }
+  }
+  
+  showActiveFilterIndicator(courseKey) {
+    if (this.activeFilterIndicator && this.filterBadge) {
+      const selectedOption = this.studyCourseFilter.options[this.studyCourseFilter.selectedIndex];
+      const displayText = selectedOption.textContent;
+      this.filterBadge.textContent = `Showing: ${displayText}`;
+      this.activeFilterIndicator.style.display = 'flex';
+    }
+  }
+  
+  hideActiveFilterIndicator() {
+    if (this.activeFilterIndicator) {
+      this.activeFilterIndicator.style.display = 'none';
+    }
+  }
+  
+  renderFilteredRecordingsList() {
+    if (!this.recordingsList) return;
+    
+    // Clear existing content except loading/empty states
+    const existingItems = this.recordingsList.querySelectorAll('.recording-item');
+    existingItems.forEach(item => item.remove());
+    
+    const dataToRender = this.filteredRecordingsData || this.recordingsData;
+    
+    if (dataToRender.length === 0) {
+      this.recordingsEmpty.style.display = 'flex';
+      return;
+    } else {
+      this.recordingsEmpty.style.display = 'none';
+    }
+    
+    // Render filtered recordings
+    dataToRender.forEach(recording => {
+      const recordingElement = this.createRecordingItem(recording);
+      this.recordingsList.appendChild(recordingElement);
+    });
+  }
+  
+  updateRecordingsCount() {
+    if (this.recordingsCount) {
+      const dataToCount = this.filteredRecordingsData || this.recordingsData;
+      const totalCount = this.recordingsData.length;
+      const filteredCount = dataToCount.length;
+      
+      if (this.filteredRecordingsData && filteredCount < totalCount) {
+        this.recordingsCount.textContent = `${filteredCount} of ${totalCount} recordings`;
+      } else {
+        this.recordingsCount.textContent = `${totalCount} recording${totalCount === 1 ? '' : 's'}`;
+      }
     }
   }
 

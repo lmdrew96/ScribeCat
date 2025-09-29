@@ -2718,6 +2718,84 @@ body {
   font-size: 14px;
 }
 
+/* Course Filter */
+.course-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--spacing-xl);
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.course-filter-label {
+  display: flex;
+  align-items: center;
+}
+
+.course-filter-label label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.course-filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-filter-select {
+  max-width: 300px;
+}
+
+.active-filter-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.clear-filter-btn {
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+@media (min-width: 600px) {
+  .course-filter-controls {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .active-filter-indicator {
+    margin-left: auto;
+  }
+}
+
 .recordings-list {
   flex: 1;
   display: flex;

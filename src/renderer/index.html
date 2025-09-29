@@ -584,6 +584,27 @@
                         </div>
                     </div>
                     
+                    <!-- Course Filter -->
+                    <div class="course-filter-container">
+                        <div class="course-filter-label">
+                            <label for="study-course-filter">Filter by Course:</label>
+                        </div>
+                        <div class="course-filter-controls">
+                            <select id="study-course-filter" class="input-field course-filter-select">
+                                <option value="">All Courses</option>
+                            </select>
+                            <div class="active-filter-indicator" id="active-filter-indicator" style="display: none;">
+                                <span class="filter-badge" id="filter-badge">Showing: All Courses</span>
+                                <button class="clear-filter-btn" id="clear-filter-btn" title="Clear filter">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="recordings-list" id="recordings-list">
                         <!-- Recordings will be populated by JavaScript -->
                         <div class="recordings-loading" id="recordings-loading">
