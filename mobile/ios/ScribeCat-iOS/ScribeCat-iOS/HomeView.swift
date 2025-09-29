@@ -15,29 +15,121 @@ struct HomeView: View {
         animation: .default)
     private var sessions: FetchedResults<Session>
     
+    @StateObject private var driveManager = GoogleDriveManager()
+    @StateObject private var cacheManager = CacheManager(context: PersistenceController.shared.container.viewContext)
+    
     var body: some View {
         NavigationView {
             VStack {
-                // App overview section
+                // App overview section with sync status
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Welcome to ScribeCat")
-                        .font(.title)
-                        .fontWeight(.bold)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Welcome to ScribeCat")
+                                .font(.title)
+                                .fontWeight(.bold)
+                            
+                            Text("M4: Drive sync, caching, and AskAI")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        // Sync status indicator
+                        VStack(alignment: .trailing, spacing: 4) {
+                            if driveManager.isSignedIn {
+                                HStack {
+                                    Circle()
+                                        .fill(driveManager.syncStatus == .online ? Color.green : Color.orange)
+                                        .frame(width: 8, height: 8)
+                                    Text(driveManager.syncStatus.displayText)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                if let lastSync = driveManager.lastSyncDate {
+                                    Text("Last sync: \(lastSync, style: .relative)")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            } else {
+                                HStack {
+                                    Circle()
+                                        .fill(Color.gray)
+                                        .frame(width: 8, height: 8)
+                                    Text("Not signed in")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
                     
-                    Text("Your mobile companion for transcription and note-taking")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                    
-                    // Quick stats
+                    // Quick stats with cache info
                     HStack(spacing: 20) {
                         StatCard(title: "Sessions", count: sessions.count, icon: "waveform")
                         StatCard(title: "Notes", count: sessions.filter { !($0.notes?.isEmpty ?? true) }.count, icon: "note.text")
+                        StatCard(title: "Cache", count: Int(cacheManager.totalCacheSize / (1024 * 1024)), icon: "internaldrive", suffix: "MB")
                     }
                     .padding(.top)
                 }
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
+                .padding(.horizontal)
+                
+                // Quick actions for M4
+                HStack(spacing: 12) {
+                    if driveManager.isSignedIn {
+                        Button(action: {
+                            driveManager.performManualSync()
+                        }) {
+                            HStack {
+                                Image(systemName: driveManager.isManualSyncInProgress ? "arrow.triangle.2.circlepath" : "icloud.and.arrow.down")
+                                Text(driveManager.isManualSyncInProgress ? "Syncing..." : "Sync Now")
+                            }
+                            .font(.caption)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                        }
+                        .disabled(driveManager.isManualSyncInProgress)
+                    } else {
+                        NavigationLink(destination: SettingsView()) {
+                            HStack {
+                                Image(systemName: "icloud.slash")
+                                Text("Sign in to Drive")
+                            }
+                            .font(.caption)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        cacheManager.performManualCleanup()
+                    }) {
+                        HStack {
+                            Image(systemName: cacheManager.isCleaningUp ? "arrow.triangle.2.circlepath" : "trash")
+                            Text(cacheManager.isCleaningUp ? "Cleaning..." : "Clean Cache")
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.gray)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                    }
+                    .disabled(cacheManager.isCleaningUp)
+                }
                 .padding(.horizontal)
                 
                 Spacer()
@@ -57,21 +149,32 @@ struct HomeView: View {
                     
                     if sessions.isEmpty {
                         VStack(spacing: 12) {
-                            Image(systemName: "mic.slash")
+                            Image(systemName: "icloud")
                                 .font(.system(size: 40))
                                 .foregroundColor(.secondary)
                             Text("No sessions yet")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
-                            Text("Tap the Record tab to start your first session")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
+                            if driveManager.isSignedIn {
+                                Text("Sessions from Google Drive will appear here")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            } else {
+                                Text("Sign in to Google Drive to sync your sessions")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
                         }
                         .padding(.vertical, 40)
                     } else {
                         List(sessions.prefix(5), id: \.self) { session in
                             SessionRowView(session: session)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    cacheManager.recordSessionAccess(session.id ?? UUID())
+                                }
                         }
                         .listStyle(PlainListStyle())
                         .frame(maxHeight: 300)
@@ -82,6 +185,12 @@ struct HomeView: View {
             }
             .navigationTitle("")
             .navigationBarHidden(true)
+            .onAppear {
+                cacheManager.updateCacheStats()
+                if driveManager.isSignedIn {
+                    driveManager.performBackgroundSync()
+                }
+            }
         }
     }
 }
@@ -90,13 +199,21 @@ struct StatCard: View {
     let title: String
     let count: Int
     let icon: String
+    let suffix: String
+    
+    init(title: String, count: Int, icon: String, suffix: String = "") {
+        self.title = title
+        self.count = count
+        self.icon = icon
+        self.suffix = suffix
+    }
     
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundColor(.blue)
-            Text("\(count)")
+            Text("\(count)\(suffix)")
                 .font(.title2)
                 .fontWeight(.bold)
             Text(title)
@@ -126,8 +243,8 @@ struct SessionRowView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                if let duration = session.duration, duration > 0 {
-                    Text("Duration: \(Int(duration))s")
+                if session.duration > 0 {
+                    Text("Duration: \(Int(session.duration / 60))m")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -135,16 +252,27 @@ struct SessionRowView: View {
             
             Spacer()
             
+            // M4 indicators
             if session.hasNotes {
                 Image(systemName: "note.text")
                     .foregroundColor(.blue)
                     .font(.caption)
             }
             
-            if session.hasAudio {
-                Image(systemName: "waveform")
+            if !session.transcription?.isEmpty ?? true {
+                Image(systemName: "text.quote")
                     .foregroundColor(.green)
                     .font(.caption)
+            }
+            
+            // AskAI button for sessions with content
+            if !(session.transcription?.isEmpty ?? true) || !(session.notes?.isEmpty ?? true) {
+                NavigationLink(destination: AskAISessionView(session: session)) {
+                    Image(systemName: "brain.head.profile")
+                        .foregroundColor(.purple)
+                        .font(.caption)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.vertical, 4)

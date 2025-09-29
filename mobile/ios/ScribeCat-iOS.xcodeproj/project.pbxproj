@@ -12,6 +12,13 @@
 		5A1A1A1E2A5A1A1A0A5A1A1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A1A1A1D2A5A1A1A0A5A1A1A /* Assets.xcassets */; };
 		5A1A1A212A5A1A1A0A5A1A1A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A1A1A202A5A1A1A0A5A1A1A /* Preview Assets.xcassets */; };
 		5A1A1A282A5A1A1A0A5A1A1A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A272A5A1A1A0A5A1A1A /* HomeView.swift */; };
+		7CA807D84AFB465481611377 /* HelpAboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA807D84AFB465481611376 /* HelpAboutView.swift */; };
+		F01F2A89DF244894A33854F0 /* GoogleDriveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01F2A89DF244894A33854EF /* GoogleDriveManager.swift */; };
+		2A973C7D1246403E8E0DCEF4 /* CacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A973C7D1246403E8E0DCEF3 /* CacheManager.swift */; };
+		88E8333D508145A0BF6A63B0 /* AskAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E8333D508145A0BF6A63AF /* AskAIManager.swift */; };
+		F4883C3FE6BB4E37B3F5D77A /* CacheSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4883C3FE6BB4E37B3F5D779 /* CacheSettingsView.swift */; };
+		FF156AEAB49B408FA889DAF9 /* AskAISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF156AEAB49B408FA889DAF8 /* AskAISettingsView.swift */; };
+		DBC307ED3A9C48548A6E7ACB /* AskAISessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC307ED3A9C48548A6E7ACA /* AskAISessionView.swift */; };
 		5A1A1A2A2A5A1A1A0A5A1A1A /* RecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */; };
 		5A1A1A2C2A5A1A1A0A5A1A1A /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */; };
 		5A1A1A2E2A5A1A1A0A5A1A1A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */; };
@@ -50,6 +57,13 @@
 		5A1A1A1D2A5A1A1A0A5A1A1A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5A1A1A202A5A1A1A0A5A1A1A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		5A1A1A272A5A1A1A0A5A1A1A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		7CA807D84AFB465481611376 /* HelpAboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpAboutView.swift; sourceTree = "<group>"; };
+		F01F2A89DF244894A33854EF /* GoogleDriveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleDriveManager.swift; sourceTree = "<group>"; };
+		2A973C7D1246403E8E0DCEF3 /* CacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManager.swift; sourceTree = "<group>"; };
+		88E8333D508145A0BF6A63AF /* AskAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAIManager.swift; sourceTree = "<group>"; };
+		F4883C3FE6BB4E37B3F5D779 /* CacheSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheSettingsView.swift; sourceTree = "<group>"; };
+		FF156AEAB49B408FA889DAF8 /* AskAISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAISettingsView.swift; sourceTree = "<group>"; };
+		DBC307ED3A9C48548A6E7ACA /* AskAISessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAISessionView.swift; sourceTree = "<group>"; };
 		5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordView.swift; sourceTree = "<group>"; };
 		5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -119,6 +133,13 @@
 				5A1A1A192A5A1A1A0A5A1A19 /* ScribeCat_iOSApp.swift */,
 				5A1A1A1B2A5A1A1A0A5A1A1A /* ContentView.swift */,
 				5A1A1A272A5A1A1A0A5A1A1A /* HomeView.swift */,
+				7CA807D84AFB465481611376 /* HelpAboutView.swift */,
+				F01F2A89DF244894A33854EF /* GoogleDriveManager.swift */,
+				2A973C7D1246403E8E0DCEF3 /* CacheManager.swift */,
+				88E8333D508145A0BF6A63AF /* AskAIManager.swift */,
+				F4883C3FE6BB4E37B3F5D779 /* CacheSettingsView.swift */,
+				FF156AEAB49B408FA889DAF8 /* AskAISettingsView.swift */,
+				DBC307ED3A9C48548A6E7ACA /* AskAISessionView.swift */,
 				5A1A1A292A5A1A1A0A5A1A1A /* RecordView.swift */,
 				5A1A1A2B2A5A1A1A0A5A1A1A /* NotesView.swift */,
 				5A1A1A2D2A5A1A1A0A5A1A1A /* SettingsView.swift */,
@@ -294,6 +315,13 @@
 			files = (
 				5A1A1A1C2A5A1A1A0A5A1A1A /* ContentView.swift in Sources */,
 				5A1A1A282A5A1A1A0A5A1A1A /* HomeView.swift in Sources */,
+				7CA807D84AFB465481611377 /* HelpAboutView.swift in Sources */,
+				F01F2A89DF244894A33854F0 /* GoogleDriveManager.swift in Sources */,
+				2A973C7D1246403E8E0DCEF4 /* CacheManager.swift in Sources */,
+				88E8333D508145A0BF6A63B0 /* AskAIManager.swift in Sources */,
+				F4883C3FE6BB4E37B3F5D77A /* CacheSettingsView.swift in Sources */,
+				FF156AEAB49B408FA889DAF9 /* AskAISettingsView.swift in Sources */,
+				DBC307ED3A9C48548A6E7ACB /* AskAISessionView.swift in Sources */,
 				5A1A1A302A5A1A1A0A5A1A1A /* DataModel.swift in Sources */,
 				5A1A1A342A5A1A1A0A5A1A1A /* MockAPI.swift in Sources */,
 				5A1A1A2E2A5A1A1A0A5A1A1A /* SettingsView.swift in Sources */,
@@ -391,7 +419,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -448,7 +476,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -531,7 +559,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -551,7 +579,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.scribecat.ScribeCat-iOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
