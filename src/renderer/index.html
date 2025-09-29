@@ -215,7 +215,7 @@
         <main class="main-content" id="main-content">
                 <!-- Recording Controls -->
                 <div class="recording-controls">
-                    <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription">
+                    <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription (Ctrl+R / ⌘R)">
                         <svg class="record-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10"/>
                         </svg>
@@ -231,10 +231,10 @@
                         </div>
                     </div>
                     
-                    <button id="pause-btn" class="btn" disabled title="Pause current recording">Pause</button>
-                    <button id="resume-btn" class="btn" disabled title="Resume paused recording">Resume</button>
+                    <button id="pause-btn" class="btn" disabled title="Pause current recording (Ctrl+P / ⌘P)">Pause</button>
+                    <button id="resume-btn" class="btn" disabled title="Resume paused recording (Ctrl+P / ⌘P)">Resume</button>
                     <button id="stop-btn" class="btn btn-danger" disabled title="Stop recording and enable save">Stop</button>
-                    <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription">Save</button>
+                    <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription (Ctrl+S / ⌘S)">Save</button>
                 </div>
 
                 <!-- Content Container -->
@@ -286,30 +286,30 @@
                                 </optgroup>
                             </select>
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z)">
+                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z / ⌘Z)">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3l-3 2.7"/>
                                 </svg>
                             </button>
-                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Y)">
+                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Shift+Z / ⌘Shift+Z)">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M21 7v6h-6M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/>
                                 </svg>
                             </button>
                             <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="bold" title="Bold (Ctrl+B)">
+                            <button class="format-btn" data-command="bold" title="Bold (Ctrl+B / ⌘B)">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/>
                                 </svg>
                             </button>
-                            <button class="format-btn" data-command="italic" title="Italic (Ctrl+I)">
+                            <button class="format-btn" data-command="italic" title="Italic (Ctrl+I / ⌘I)">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="19" y1="4" x2="10" y2="4"/>
                                     <line x1="14" y1="20" x2="5" y2="20"/>
                                     <line x1="15" y1="4" x2="9" y2="20"/>
                                 </svg>
                             </button>
-                            <button class="format-btn" data-command="underline" title="Underline (Ctrl+U)">
+                            <button class="format-btn" data-command="underline" title="Underline (Ctrl+U / ⌘U)">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/>
                                     <line x1="4" y1="21" x2="20" y2="21"/>
@@ -411,7 +411,7 @@
                             <button class="format-btn" data-shortcut="dash" title="Insert Dash">—</button>
                             <button class="format-btn" data-shortcut="arrow" title="Insert Arrow">→</button>
                             <div class="toolbar-separator"></div>
-                            <button id="clear-notes" class="format-btn clear-notes-btn" title="Clear all notes (Ctrl+Shift+Delete)">
+                            <button id="clear-notes" class="format-btn clear-notes-btn" title="Clear all notes (Ctrl+Shift+Delete / ⌘Shift+Delete)">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3,6 5,6 21,6"></polyline>
                                     <path d="M19,6v14a2,2 0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
@@ -424,7 +424,7 @@
                         <div id="notes-editor" class="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>
                         <div id="ai-summary-container" style="margin-top:24px;">
-                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;" title="Generate AI summary of notes and transcription">Generate AI Summary</button>
+                            <button id="generate-summary" class="btn btn-primary" style="width:100%;margin-bottom:12px;" title="Generate AI summary of notes and transcription (Ctrl+Shift+S / ⌘Shift+S)">Generate AI Summary</button>
                             <div id="ai-summary" class="notes-editor" style="min-height:80px;background:#f8fafc;border:1px solid #e2e8f0;"></div>
                         </div>
                     </div>
