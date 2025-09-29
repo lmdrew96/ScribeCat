@@ -28,7 +28,6 @@ class ScribeCatApp {
     this.isUsingDeveloperKey = false;
     this.simulationMode = true; // Default to simulation mode enabled
     this.currentTheme = 'default';
-    this.simulationMode = true; // Default to simulation mode enabled
     this.simulatedTranscriptionInterval = null;
     
     // Audio analysis for VU meter
@@ -78,7 +77,6 @@ class ScribeCatApp {
     
     // Core UI elements
     this.recordBtn = document.getElementById('record-btn');
-    this.saveBtn = document.getElementById('save-btn');
     this.saveBtn = document.getElementById('save-btn');
     this.recordingTime = document.getElementById('recording-time');
     this.notesEditor = document.getElementById('notes-editor');
@@ -1880,7 +1878,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       this.themeGrid.appendChild(themeOption);
     });
   }
-  }
+  
 
   updateThemeSelection(themeId) {
     const themeOptions = this.themeGrid.querySelectorAll('.theme-option');
@@ -1897,21 +1895,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
   }
 
-  async toggleSimulationMode(enabled) {
-    this.simulationMode = enabled;
-    await window.electronAPI.storeSet('simulation-mode', enabled);
-    
-    // Show notification about the mode change
-    this.showNotification(
-      enabled ? 'Simulation mode enabled' : 'Simulation mode disabled - using real APIs',
-      enabled ? 'success' : 'warning'
-    );
-    
-    // Update status indicators to reflect current mode
-    this.updateStatusIndicators();
-    
-    console.log(`Simulation mode ${enabled ? 'enabled' : 'disabled'}`);
-  }
+  
 
   showNotification(message, type = 'info') {
     // Create notification element
@@ -3511,11 +3495,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     this.saveNotesDraft();
   }
 
-  generateAISummary() {
-    if (this.generateSummaryBtn) {
-      this.generateSummaryBtn.click();
-    }
-  }
+  
 
   toggleHighlighterMode() {
     // Toggle highlighter mode - find the highlight button and activate it
