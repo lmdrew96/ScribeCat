@@ -10,6 +10,10 @@ const ElectronStore = require('electron-store');
 const Store = ElectronStore.default || ElectronStore;
 const store = new Store({ name: 'settings' });
 
+// Import subscription manager
+const SubscriptionManager = require('./shared/subscription-manager.js');
+const subscriptionManager = new SubscriptionManager();
+
 let mainWindow;
 
 // Enable live reload for development (optional)
@@ -286,6 +290,74 @@ ipcMain.handle('save-audio-file', async (event, { audioData, fileName, folderPat
     const buffer = Buffer.from(audioData);
     fs.writeFileSync(outPath, buffer);
     return { success: true, path: outPath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Subscription management IPC handlers
+ipcMain.handle('subscription:get-status', async () => {
+  try {
+    await subscriptionManager.initialize(store);
+    return { success: true, status: subscriptionManager.getSubscriptionStatus() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('subscription:set-tier', async (event, tier) => {
+  try {
+    await subscriptionManager.initialize(store);
+    await subscriptionManager.setSubscriptionTier(tier);
+    return { success: true, status: subscriptionManager.getSubscriptionStatus() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('subscription:add-unlock', async (event, unlockId) => {
+  try {
+    await subscriptionManager.initialize(store);
+    await subscriptionManager.addPremiumUnlock(unlockId);
+    return { success: true, status: subscriptionManager.getSubscriptionStatus() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('subscription:can-use-feature', async (event, feature) => {
+  try {
+    await subscriptionManager.initialize(store);
+    
+    if (feature === 'askAI') {
+      return { success: true, result: subscriptionManager.canUseAskAI() };
+    } else if (feature === 'aiSummary') {
+      return { success: true, result: subscriptionManager.canGenerateAISummary() };
+    } else {
+      return { 
+        success: true, 
+        result: { 
+          allowed: subscriptionManager.hasFeatureAccess(feature),
+          reason: subscriptionManager.getUpgradeMessage(feature)
+        }
+      };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('subscription:track-usage', async (event, feature, amount) => {
+  try {
+    await subscriptionManager.initialize(store);
+    
+    if (feature === 'askAI') {
+      await subscriptionManager.trackAskAIUsage(amount);
+    } else if (feature === 'aiSummary') {
+      await subscriptionManager.trackAISummaryUsage();
+    }
+    
+    return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }

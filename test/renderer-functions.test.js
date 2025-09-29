@@ -76,6 +76,35 @@ async function main() {
     stopTranscription: async () => true,
     keytarGet: async () => 'test-key',
     keytarSet: async () => true,
+    // Subscription API mocks
+    subscriptionGetStatus: async () => ({ 
+      success: true, 
+      status: {
+        tier: 'free',
+        tierDisplayName: 'Free',
+        premiumUnlocks: [],
+        features: {
+          askAIAccess: false,
+          aiSummariesPerSession: 1,
+          aiAutopolish: false,
+          proThemes: false,
+          customStudyPlans: false,
+          proBadge: false,
+          earlyAccess: false
+        }
+      }
+    }),
+    subscriptionSetTier: async (tier) => ({ success: true }),
+    subscriptionAddUnlock: async (unlockId) => ({ success: true }),
+    subscriptionCanUseFeature: async (feature) => {
+      if (feature === 'askAI') {
+        return { success: true, result: { allowed: false, reason: 'AskAI is for Plus/Pro users' } };
+      } else if (feature === 'aiSummary') {
+        return { success: true, result: { allowed: true } };
+      }
+      return { success: true, result: { allowed: false } };
+    },
+    subscriptionTrackUsage: async (feature, amount) => ({ success: true }),
   };
   // Provide require('keytar') used by app.js
   const keytarStub = {
@@ -112,6 +141,10 @@ async function main() {
   document.queryCommandState = () => false;
   // alert noop
   window.alert = () => {};
+
+  // Load subscription manager first
+  const subscriptionManagerJs = fs.readFileSync(path.join(root, 'src/shared/subscription-manager.js'), 'utf8');
+  window.eval(subscriptionManagerJs);
 
   // Evaluate app.js after mocks are in place
   const appJs = fs.readFileSync(path.join(root, 'src/renderer/app.js'), 'utf8');

@@ -34,6 +34,11 @@ class ScribeCatApp {
     this.audioContext = null;
     this.analyserNode = null;
     this.vuMeterInterval = null;
+    
+    // Subscription management
+    this.subscriptionManager = new SubscriptionManager();
+    this.currentSessionSummaries = 0; // Track summaries in current recording session
+    
     this.init();
   }
 
@@ -141,6 +146,10 @@ class ScribeCatApp {
     this.initializeElements();
     this.setupEventListeners();
     await this.loadSettings();
+    
+    // Initialize subscription manager
+    await this.initializeSubscriptionManager();
+    
     this.initializeClock();
     await this.initializeAudioDevices();
     this.updateVersionInfo();
@@ -165,6 +174,89 @@ class ScribeCatApp {
       this.generateSummaryBtn.style.display = 'none';
     }
     console.log('ScribeCat initialized successfully');
+  }
+
+  // Initialize subscription manager with IPC communication
+  async initializeSubscriptionManager() {
+    // Set reference for session tracking
+    window.scribeCatApp = this;
+    
+    // Get subscription status from main process
+    const statusResponse = await window.electronAPI.subscriptionGetStatus();
+    if (statusResponse.success) {
+      this.subscriptionStatus = statusResponse.status;
+      console.log('Subscription tier:', this.subscriptionStatus.tier);
+    } else {
+      console.error('Failed to load subscription status:', statusResponse.error);
+      // Default to free tier if there's an error
+      this.subscriptionStatus = {
+        tier: 'free',
+        tierDisplayName: 'Free',
+        premiumUnlocks: [],
+        features: {
+          askAIAccess: false,
+          aiSummariesPerSession: 1,
+          aiAutopolish: false,
+          proThemes: false,
+          customStudyPlans: false,
+          proBadge: false,
+          earlyAccess: false
+        }
+      };
+    }
+    
+    // Apply initial feature restrictions
+    this.applyFeatureRestrictions();
+  }
+
+  // Apply feature restrictions based on subscription tier
+  applyFeatureRestrictions() {
+    if (!this.subscriptionStatus) return;
+    
+    // Disable AskAI chat for free users
+    if (!this.subscriptionStatus.features.askAIAccess) {
+      this.disableAskAIChat();
+    }
+    
+    // Update UI elements based on tier
+    this.updateTierBasedUI();
+  }
+
+  // Disable AskAI chat with upgrade prompt  
+  disableAskAIChat() {
+    if (this.claudeFab) {
+      // Remove existing event listeners and add upgrade prompt
+      this.claudeFab.removeEventListener('click', this.expandChatPanel);
+      
+      // Add visual indicator
+      this.claudeFab.classList.add('disabled-feature');
+      this.claudeFab.title = 'AskAI chat is available for Plus and Pro subscribers';
+      
+      // Override click behavior will be handled in expandChatPanel method
+    }
+  }
+
+  // Show upgrade prompt for restricted features
+  showUpgradePrompt(feature) {
+    const messages = {
+      askAI: 'AskAI chat is available for Plus and Pro subscribers. Upgrade to unlock unlimited AI conversations with your notes and transcriptions!',
+      aiSummary: 'You\'ve reached your AI summary limit for this recording session. Upgrade to Plus for unlimited summaries!',
+      aiAutopolish: 'AI Autopolish automatically enhances your transcriptions. Available in Plus and Pro plans.',
+      proThemes: 'Exclusive Pro themes help you personalize your workspace. Available in Pro plan.'
+    };
+    
+    const message = messages[feature] || 'This feature is available in paid plans. Upgrade to unlock!';
+    
+    // For now, show a simple alert. Later this can be replaced with a modal
+    alert(message + '\n\nVisit Settings > Subscription to learn more about upgrading.');
+  }
+
+  // Update UI elements based on tier
+  updateTierBasedUI() {
+    // This will be expanded as we add more tier-specific UI elements
+    if (this.subscriptionStatus.features.proBadge) {
+      // Add Pro badge to UI when implemented
+    }
   }
 
   // Local backend API helper function
@@ -885,8 +977,21 @@ class ScribeCatApp {
     };
   }
 
-  expandChatPanel() {
+  async expandChatPanel() {
     if (!this.aiChatPanel || !this.claudeFab) return;
+    
+    // Check subscription access for AskAI
+    const canUseResponse = await window.electronAPI.subscriptionCanUseFeature('askAI');
+    if (!canUseResponse.success) {
+      console.error('Failed to check AskAI permissions:', canUseResponse.error);
+      this.showUpgradePrompt('askAI');
+      return;
+    }
+    
+    if (!canUseResponse.result.allowed) {
+      this.showUpgradePrompt('askAI');
+      return;
+    }
     
     // Add expanding animation class to FAB
     this.claudeFab.classList.add('expanding');
@@ -1026,6 +1131,19 @@ class ScribeCatApp {
       // Prevent duplicate requests
       if (this.generateSummaryBtn.disabled) return;
       
+      // Check subscription limits for AI summary
+      const canUseResponse = await window.electronAPI.subscriptionCanUseFeature('aiSummary');
+      if (!canUseResponse.success) {
+        console.error('Failed to check AI summary permissions:', canUseResponse.error);
+        this.showUpgradePrompt('aiSummary');
+        return;
+      }
+      
+      if (!canUseResponse.result.allowed) {
+        this.showUpgradePrompt('aiSummary');
+        return;
+      }
+      
       // Gather context from notes and transcription
       const notesContent = this.notesEditor.textContent || '';
       const transcriptContent = Array.from(this.transcriptionDisplay.children)
@@ -1093,6 +1211,10 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       
       // Insert horizontal line and summary into notes editor for new feature
       this.insertAISummaryIntoEditor(summaryMarkdown);
+      
+      // Track AI summary usage
+      this.currentSessionSummaries++;
+      await window.electronAPI.subscriptionTrackUsage('aiSummary', 1);
       
       this.generateSummaryBtn.disabled = false;
     }
@@ -1572,6 +1694,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
 
   async startRecording() {
     try {
+      // Reset session summary count for new recording
+      this.currentSessionSummaries = 0;
+      
       const constraints = {
         audio: {
           deviceId: this.microphoneSelect?.value || undefined,
@@ -2610,6 +2735,19 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     const message = this.chatInput.value.trim();
     if (!message) return;
 
+    // Check subscription access for AskAI
+    const canUseResponse = await window.electronAPI.subscriptionCanUseFeature('askAI');
+    if (!canUseResponse.success) {
+      console.error('Failed to check AskAI permissions:', canUseResponse.error);
+      this.showUpgradePrompt('askAI');
+      return;
+    }
+    
+    if (!canUseResponse.result.allowed) {
+      this.showUpgradePrompt('askAI');
+      return;
+    }
+
     // Add user message
     this.addChatMessage(message, 'user');
     this.chatInput.value = '';
@@ -2623,6 +2761,10 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     // Simulate AI response (in real implementation, this would call OpenAI API)
     const aiResponse = await this.getAIResponse(message, notesContent, transcriptionContent);
     this.addChatMessage(aiResponse, 'ai');
+    
+    // Track token usage (estimated)
+    const estimatedTokens = Math.ceil((message.length + aiResponse.length) / 4); // Rough estimation
+    await window.electronAPI.subscriptionTrackUsage('askAI', estimatedTokens);
   }
 
   addChatMessage(text, type) {

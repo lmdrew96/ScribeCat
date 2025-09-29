@@ -1336,6 +1336,22 @@ body {
   transform: scale(0.8);
 }
 
+/* Disabled feature styles */
+.claude-fab.disabled-feature {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.claude-fab.disabled-feature:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.claude-fab.disabled-feature:active {
+  transform: none;
+}
+
 /* AI Chat Panel */
 .ai-chat-panel {
   position: absolute;
