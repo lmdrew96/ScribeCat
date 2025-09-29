@@ -30,16 +30,55 @@ class ScribeCatApp {
     this.currentTheme = 'default';
     this.simulationMode = true; // Default to simulation mode enabled
     this.simulatedTranscriptionInterval = null;
+    
     // Audio analysis for VU meter
     this.audioContext = null;
     this.analyserNode = null;
     this.vuMeterInterval = null;
+    
+    // Mode management
+    this.currentMode = 'capture'; // 'capture' or 'study'
+    this.recordingsData = [];
+    this.currentRecording = null;
+    
+    // Audio playback for study mode
+    this.reviewAudio = null;
+    this.isReviewPlaying = false;
+    
     this.init();
   }
 
   initializeElements() {
+    // Mode toggle elements
+    this.captureModeBtn = document.getElementById('capture-mode-btn');
+    this.studyModeBtn = document.getElementById('study-mode-btn');
+    this.captureMode = document.getElementById('capture-mode');
+    this.studyMode = document.getElementById('study-mode');
+    
+    // Study mode elements
+    this.recordingsListView = document.getElementById('recordings-list-view');
+    this.recordingReviewView = document.getElementById('recording-review-view');
+    this.recordingsList = document.getElementById('recordings-list');
+    this.recordingsLoading = document.getElementById('recordings-loading');
+    this.recordingsEmpty = document.getElementById('recordings-empty');
+    this.recordingsCount = document.getElementById('recordings-count');
+    this.backToListBtn = document.getElementById('back-to-list');
+    
+    // Review elements
+    this.reviewCourseTitle = document.getElementById('review-course-title');
+    this.reviewSessionInfo = document.getElementById('review-session-info');
+    this.reviewPlayPause = document.getElementById('review-play-pause');
+    this.reviewSkipBack = document.getElementById('review-skip-back');
+    this.reviewSkipForward = document.getElementById('review-skip-forward');
+    this.reviewCurrentTime = document.getElementById('review-current-time');
+    this.reviewTotalTime = document.getElementById('review-total-time');
+    this.reviewSeekBar = document.getElementById('review-seek-bar');
+    this.reviewNotes = document.getElementById('review-notes');
+    this.reviewTranscription = document.getElementById('review-transcription');
+    
     // Core UI elements
     this.recordBtn = document.getElementById('record-btn');
+    this.saveBtn = document.getElementById('save-btn');
     this.saveBtn = document.getElementById('save-btn');
     this.recordingTime = document.getElementById('recording-time');
     this.notesEditor = document.getElementById('notes-editor');
@@ -146,11 +185,26 @@ class ScribeCatApp {
     this.updateVersionInfo();
     this.initializeStatusChips();
     this.updateStatusIndicators(); // Update status indicators based on simulation mode
-    // Load Vosk model path and Whisper toggle
-    this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
-    this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
-    // Securely retrieve Claude key, with developer fallback
-    this.claudeApiKey = await keytar.getPassword(SERVICE_NAME, CLAUDE_KEY);
+    
+    // Load Vosk model path and Whisper toggle (only in Electron environment)
+    try {
+      if (window.electronAPI && window.electronAPI.storeGet) {
+        this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
+        this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
+      }
+    } catch (error) {
+      console.log('Storage not available, using defaults');
+    }
+    
+    // Securely retrieve Claude key, with developer fallback (only in Electron environment)
+    try {
+      if (typeof keytar !== 'undefined' && keytar.getPassword) {
+        this.claudeApiKey = await keytar.getPassword(SERVICE_NAME, CLAUDE_KEY);
+      }
+    } catch (error) {
+      console.log('Keytar not available in browser environment');
+    }
+    
     if (!this.claudeApiKey) {
       // Use developer's API key by default for all users
       this.claudeApiKey = DEVELOPER_CLAUDE_KEY;
@@ -160,11 +214,15 @@ class ScribeCatApp {
       this.isUsingDeveloperKey = false;
       console.log('Using user-provided Claude API key');
     }
+    
     // Hide summary button initially
     if (this.generateSummaryBtn) {
       this.generateSummaryBtn.style.display = 'none';
     }
     console.log('ScribeCat initialized successfully');
+    
+    // Initialize mode system
+    await this.initializeModeSystem();
   }
 
   // Local backend API helper function
@@ -276,6 +334,32 @@ class ScribeCatApp {
         this.closeSidebar();
       });
     }
+    
+    // Mode toggle event listeners
+    if (this.captureModeBtn) {
+      this.captureModeBtn.addEventListener('click', () => this.switchToMode('capture'));
+    }
+    if (this.studyModeBtn) {
+      this.studyModeBtn.addEventListener('click', () => this.switchToMode('study'));
+    }
+    
+    // Study mode event listeners
+    if (this.backToListBtn) {
+      this.backToListBtn.addEventListener('click', () => this.showRecordingsList());
+    }
+    if (this.reviewPlayPause) {
+      this.reviewPlayPause.addEventListener('click', () => this.toggleReviewPlayback());
+    }
+    if (this.reviewSkipBack) {
+      this.reviewSkipBack.addEventListener('click', () => this.skipReviewAudio(-10));
+    }
+    if (this.reviewSkipForward) {
+      this.reviewSkipForward.addEventListener('click', () => this.skipReviewAudio(30));
+    }
+    if (this.reviewSeekBar) {
+      this.reviewSeekBar.addEventListener('input', (e) => this.seekReviewAudio(e.target.value));
+    }
+    
     if (this.recordBtn) {
       this.recordBtn.addEventListener('click', () => this.toggleRecording());
     }
@@ -917,32 +1001,40 @@ class ScribeCatApp {
   }
 
   async loadSettings() {
+    // Only load settings if electronAPI is available
+    if (!window.electronAPI || !window.electronAPI.storeGet) {
+      console.log('Running in browser environment, skipping settings load');
+      // Set default theme for browser testing
+      this.changeTheme('ocean');
+      return;
+    }
+    
     // Load theme
     const savedTheme = await window.electronAPI.storeGet('theme') || 'ocean';
     this.changeTheme(savedTheme);
     this.updateThemeSelection(savedTheme);
-    
-    // Load simulation mode (defaults to true if not set)
-    const savedSimulationMode = await window.electronAPI.storeGet('simulation-mode');
-    this.simulationMode = savedSimulationMode !== null ? savedSimulationMode : true;
-    if (this.simulationToggle) {
-      this.simulationToggle.checked = this.simulationMode;
-    }
-    
-    // Load Canvas settings
-    const canvasSettings = await window.electronAPI.storeGet('canvas-settings') || {};
-    if (canvasSettings.url) this.canvasUrl.value = canvasSettings.url;
-    if (canvasSettings.courseNumber) this.courseNumber.value = canvasSettings.courseNumber;
-    if (canvasSettings.courseTitle) this.courseTitle.value = canvasSettings.courseTitle;
-    
-    // Load predefined courses
-    await this.loadPredefinedCourses();
-    
-    // Try to find matching course in predefined list
-    const courses = await window.electronAPI.storeGet('predefined-courses') || [];
-    const matchingCourse = courses.find(course => 
-      course.courseNumber === canvasSettings.courseNumber && 
-      course.courseTitle === canvasSettings.courseTitle
+      
+      // Load simulation mode (defaults to true if not set)
+      const savedSimulationMode = await window.electronAPI.storeGet('simulation-mode');
+      this.simulationMode = savedSimulationMode !== null ? savedSimulationMode : true;
+      if (this.simulationToggle) {
+        this.simulationToggle.checked = this.simulationMode;
+      }
+      
+      // Load Canvas settings
+      const canvasSettings = await window.electronAPI.storeGet('canvas-settings') || {};
+      if (canvasSettings.url && this.canvasUrl) this.canvasUrl.value = canvasSettings.url;
+      if (canvasSettings.courseNumber && this.courseNumber) this.courseNumber.value = canvasSettings.courseNumber;
+      if (canvasSettings.courseTitle && this.courseTitle) this.courseTitle.value = canvasSettings.courseTitle;
+      
+      // Load predefined courses
+      await this.loadPredefinedCourses();
+      
+      // Try to find matching course in predefined list
+      const courses = await window.electronAPI.storeGet('predefined-courses') || [];
+      const matchingCourse = courses.find(course => 
+        course.courseNumber === canvasSettings.courseNumber && 
+        course.courseTitle === canvasSettings.courseTitle
     );
     
     if (matchingCourse) {
@@ -1341,7 +1433,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   changeTheme(theme) {
     this.currentTheme = theme;
     document.documentElement.setAttribute('data-theme', theme);
-    window.electronAPI.storeSet('theme', theme);
+    if (window.electronAPI && window.electronAPI.storeSet) {
+      window.electronAPI.storeSet('theme', theme);
+    }
   }
 
   async toggleSimulationMode(enabled) {
@@ -3419,6 +3513,411 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       // You could expand this to actually open a bug report dialog or form
       alert('Bug reporting system would open here with current health status attached.');
     }
+  }
+
+  // Mode Management Methods
+  
+  async initializeModeSystem() {
+    // Restore last used mode from storage
+    let savedMode = 'capture';
+    try {
+      if (window.electronAPI && window.electronAPI.storeGet) {
+        savedMode = await window.electronAPI.storeGet('current-mode') || 'capture';
+      }
+    } catch (error) {
+      console.log('Running in browser environment, using default mode');
+    }
+    await this.switchToMode(savedMode, false);
+  }
+
+  async switchToMode(mode, save = true) {
+    if (mode === this.currentMode) return;
+    
+    this.currentMode = mode;
+    
+    // Save current mode to storage
+    if (save) {
+      try {
+        if (window.electronAPI && window.electronAPI.storeSet) {
+          await window.electronAPI.storeSet('current-mode', mode);
+        }
+      } catch (error) {
+        console.log('Storage not available in browser environment');
+      }
+    }
+    
+    // Update UI
+    this.updateModeToggleUI();
+    this.showModeContent();
+    
+    // Load study mode data if switching to study mode
+    if (mode === 'study') {
+      await this.loadRecordingsList();
+    }
+  }
+
+  updateModeToggleUI() {
+    // Update button states
+    if (this.captureModeBtn && this.studyModeBtn) {
+      this.captureModeBtn.classList.toggle('active', this.currentMode === 'capture');
+      this.studyModeBtn.classList.toggle('active', this.currentMode === 'study');
+    }
+  }
+
+  showModeContent() {
+    // Show/hide mode containers
+    if (this.captureMode && this.studyMode) {
+      if (this.currentMode === 'capture') {
+        this.captureMode.style.display = 'flex';
+        this.studyMode.style.display = 'none';
+      } else {
+        this.captureMode.style.display = 'none';
+        this.studyMode.style.display = 'flex';
+      }
+    }
+  }
+
+  // Study Mode Methods
+  
+  async loadRecordingsList() {
+    if (!this.recordingsList || !this.recordingsLoading) return;
+    
+    // Show loading state
+    this.recordingsLoading.style.display = 'flex';
+    this.recordingsEmpty.style.display = 'none';
+    
+    try {
+      // Get recordings data - this will integrate with existing Google Drive functionality
+      // For now, we'll simulate some recordings
+      await this.simulateRecordingsData();
+      
+      if (this.recordingsData.length === 0) {
+        this.recordingsLoading.style.display = 'none';
+        this.recordingsEmpty.style.display = 'flex';
+        this.recordingsCount.textContent = 'No recordings';
+      } else {
+        this.recordingsLoading.style.display = 'none';
+        this.renderRecordingsList();
+        this.recordingsCount.textContent = `${this.recordingsData.length} recording${this.recordingsData.length === 1 ? '' : 's'}`;
+      }
+    } catch (error) {
+      console.error('Failed to load recordings:', error);
+      this.recordingsLoading.style.display = 'none';
+      this.recordingsEmpty.style.display = 'flex';
+      this.recordingsCount.textContent = 'Error loading recordings';
+    }
+  }
+
+  async simulateRecordingsData() {
+    // Simulate loading delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Simulate some recordings for demo purposes
+    this.recordingsData = [
+      {
+        id: '1',
+        courseNumber: 'CS 101',
+        courseTitle: 'Introduction to Computer Science',
+        date: new Date('2024-09-25T10:00:00'),
+        duration: 3600, // 1 hour in seconds
+        notesPreview: 'Today we covered basic algorithms and data structures...',
+        notesContent: 'Today we covered basic algorithms and data structures. The professor explained sorting algorithms including bubble sort, selection sort, and insertion sort.',
+        transcription: '[10:05] Today we\'re going to talk about algorithms. [10:08] An algorithm is a step-by-step procedure for solving a problem...',
+        audioPath: null // In real implementation, this would point to audio file
+      },
+      {
+        id: '2',
+        courseNumber: 'MATH 201',
+        courseTitle: 'Calculus II',
+        date: new Date('2024-09-24T14:00:00'),
+        duration: 2700, // 45 minutes
+        notesPreview: 'Integration by parts and substitution methods...',
+        notesContent: 'Integration by parts and substitution methods. The formula for integration by parts is ∫u dv = uv - ∫v du.',
+        transcription: '[14:02] Let\'s review integration by parts. [14:05] The formula is integral of u dv equals u times v minus integral of v du...',
+        audioPath: null
+      },
+      {
+        id: '3',
+        courseNumber: 'HIST 150',
+        courseTitle: 'World History',
+        date: new Date('2024-09-23T09:00:00'),
+        duration: 3300, // 55 minutes
+        notesPreview: 'The Renaissance period and its impact on European culture...',
+        notesContent: 'The Renaissance period and its impact on European culture. Key figures include Leonardo da Vinci, Michelangelo, and Machiavelli.',
+        transcription: '[09:10] The Renaissance was a period of cultural rebirth. [09:15] It began in Italy during the 14th century...',
+        audioPath: null
+      }
+    ];
+  }
+
+  renderRecordingsList() {
+    if (!this.recordingsList) return;
+    
+    // Clear existing content except loading/empty states
+    const existingItems = this.recordingsList.querySelectorAll('.recording-item');
+    existingItems.forEach(item => item.remove());
+    
+    // Render recordings
+    this.recordingsData.forEach(recording => {
+      const recordingElement = this.createRecordingItem(recording);
+      this.recordingsList.appendChild(recordingElement);
+    });
+  }
+
+  createRecordingItem(recording) {
+    const item = document.createElement('div');
+    item.className = 'recording-item';
+    item.dataset.recordingId = recording.id;
+    
+    const formatDuration = (seconds) => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    };
+    
+    const formatDate = (date) => {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+    
+    const formatTime = (date) => {
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    };
+    
+    item.innerHTML = `
+      <div class="recording-item-main">
+        <div class="recording-title">${recording.courseNumber}: ${recording.courseTitle}</div>
+        <div class="recording-meta">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            ${formatDate(recording.date)}
+          </span>
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12,6 12,12 16,14"/>
+            </svg>
+            ${formatTime(recording.date)}
+          </span>
+        </div>
+        <div class="recording-preview">${recording.notesPreview}</div>
+      </div>
+      <div class="recording-item-actions">
+        <div class="recording-duration">${formatDuration(recording.duration)}</div>
+      </div>
+    `;
+    
+    // Add click handler to open recording
+    item.addEventListener('click', () => this.openRecording(recording));
+    
+    return item;
+  }
+
+  async openRecording(recording) {
+    this.currentRecording = recording;
+    
+    // Update review view with recording data
+    if (this.reviewCourseTitle) {
+      this.reviewCourseTitle.textContent = `${recording.courseNumber}: ${recording.courseTitle}`;
+    }
+    if (this.reviewSessionInfo) {
+      const dateStr = recording.date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const timeStr = recording.date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+      this.reviewSessionInfo.textContent = `${dateStr} at ${timeStr}`;
+    }
+    
+    // Load notes and transcription content
+    if (this.reviewNotes) {
+      this.reviewNotes.innerHTML = this.formatNotesContent(recording.notesContent);
+    }
+    if (this.reviewTranscription) {
+      this.reviewTranscription.innerHTML = this.formatTranscriptionContent(recording.transcription);
+    }
+    
+    // Setup audio (simulated for now)
+    this.setupReviewAudio(recording);
+    
+    // Show review view
+    this.showRecordingReview();
+  }
+
+  formatNotesContent(content) {
+    // Basic HTML formatting for notes content
+    return content.replace(/\n/g, '<br>');
+  }
+
+  formatTranscriptionContent(transcription) {
+    // Format transcription with clickable timestamps
+    return transcription.replace(/\[(\d{1,2}:\d{2})\]/g, (match, timestamp) => {
+      return `<span class="timestamp-link" data-timestamp="${timestamp}">${match}</span>`;
+    });
+  }
+
+  setupReviewAudio(recording) {
+    // For demo purposes, we'll simulate audio duration
+    // In real implementation, this would load the actual audio file
+    const duration = recording.duration;
+    
+    if (this.reviewTotalTime) {
+      this.reviewTotalTime.textContent = this.formatTime(duration);
+    }
+    if (this.reviewCurrentTime) {
+      this.reviewCurrentTime.textContent = '0:00';
+    }
+    if (this.reviewSeekBar) {
+      this.reviewSeekBar.value = 0;
+      this.reviewSeekBar.max = duration;
+    }
+    
+    // Reset playback state
+    this.isReviewPlaying = false;
+    this.updatePlayPauseButton();
+    
+    // Add timestamp click handlers
+    const timestampLinks = this.reviewTranscription?.querySelectorAll('.timestamp-link');
+    timestampLinks?.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const timestamp = e.target.dataset.timestamp;
+        this.jumpToTimestamp(timestamp);
+      });
+    });
+  }
+
+  showRecordingReview() {
+    if (this.recordingsListView && this.recordingReviewView) {
+      this.recordingsListView.style.display = 'none';
+      this.recordingReviewView.style.display = 'flex';
+    }
+  }
+
+  showRecordingsList() {
+    if (this.recordingsListView && this.recordingReviewView) {
+      this.recordingsListView.style.display = 'flex';
+      this.recordingReviewView.style.display = 'none';
+    }
+    
+    // Stop any playing audio
+    if (this.isReviewPlaying) {
+      this.toggleReviewPlayback();
+    }
+  }
+
+  // Audio Playback Methods (Simulated)
+  
+  toggleReviewPlayback() {
+    this.isReviewPlaying = !this.isReviewPlaying;
+    this.updatePlayPauseButton();
+    
+    if (this.isReviewPlaying) {
+      // Start simulated playback
+      this.startSimulatedPlayback();
+    } else {
+      // Pause playback
+      this.pauseSimulatedPlayback();
+    }
+  }
+
+  updatePlayPauseButton() {
+    if (!this.reviewPlayPause) return;
+    
+    const svg = this.reviewPlayPause.querySelector('svg');
+    const text = this.reviewPlayPause.querySelector('svg').nextSibling;
+    
+    if (this.isReviewPlaying) {
+      // Show pause icon
+      svg.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+      if (text) text.textContent = ' Pause';
+    } else {
+      // Show play icon
+      svg.innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+      if (text) text.textContent = ' Play';
+    }
+  }
+
+  startSimulatedPlayback() {
+    // Simulate audio playback with timer
+    this.playbackInterval = setInterval(() => {
+      if (this.reviewSeekBar && this.reviewCurrentTime) {
+        const currentValue = parseInt(this.reviewSeekBar.value);
+        const maxValue = parseInt(this.reviewSeekBar.max);
+        
+        if (currentValue < maxValue) {
+          this.reviewSeekBar.value = currentValue + 1;
+          this.reviewCurrentTime.textContent = this.formatTime(currentValue + 1);
+        } else {
+          // End of recording
+          this.isReviewPlaying = false;
+          this.updatePlayPauseButton();
+          clearInterval(this.playbackInterval);
+        }
+      }
+    }, 1000);
+  }
+
+  pauseSimulatedPlayback() {
+    if (this.playbackInterval) {
+      clearInterval(this.playbackInterval);
+      this.playbackInterval = null;
+    }
+  }
+
+  skipReviewAudio(seconds) {
+    if (!this.reviewSeekBar) return;
+    
+    const currentValue = parseInt(this.reviewSeekBar.value);
+    const maxValue = parseInt(this.reviewSeekBar.max);
+    const newValue = Math.max(0, Math.min(maxValue, currentValue + seconds));
+    
+    this.reviewSeekBar.value = newValue;
+    if (this.reviewCurrentTime) {
+      this.reviewCurrentTime.textContent = this.formatTime(newValue);
+    }
+  }
+
+  seekReviewAudio(value) {
+    if (this.reviewCurrentTime) {
+      this.reviewCurrentTime.textContent = this.formatTime(parseInt(value));
+    }
+  }
+
+  jumpToTimestamp(timestamp) {
+    // Parse timestamp (e.g., "10:05" -> 605 seconds)
+    const [minutes, seconds] = timestamp.split(':').map(Number);
+    const totalSeconds = minutes * 60 + seconds;
+    
+    if (this.reviewSeekBar) {
+      this.reviewSeekBar.value = totalSeconds;
+      this.seekReviewAudio(totalSeconds);
+    }
+  }
+
+  formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 }
 

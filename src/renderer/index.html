@@ -23,6 +23,37 @@
                 </div>
             </div>
             <div class="header-right">
+                <!-- Mode Toggle -->
+                <div class="mode-toggle" id="mode-toggle">
+                    <button class="mode-btn active" id="capture-mode-btn" 
+                            title="Capture Mode - Record lectures and take notes">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <!-- Head shape -->
+                            <circle cx="12" cy="8" r="4"/>
+                            <!-- Sound waves emanating from head -->
+                            <path d="M16 8c0 2-1 3.5-2.5 4"/>
+                            <path d="M18 8c0 3.5-2 6-4.5 7"/>
+                            <path d="M8 8c0 2 1 3.5 2.5 4"/>
+                            <path d="M6 8c0 3.5 2 6 4.5 7"/>
+                            <!-- Body/shoulders -->
+                            <path d="M6 16c0-2 2.5-4 6-4s6 2 6 4"/>
+                        </svg>
+                    </button>
+                    <button class="mode-btn" id="study-mode-btn" 
+                            title="Study Mode - Review recordings and notes">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <!-- Book -->
+                            <rect x="3" y="4" width="18" height="16" rx="2"/>
+                            <path d="M12 4v16"/>
+                            <path d="M7 8h4"/>
+                            <path d="M7 12h4"/>
+                            <!-- Pencil -->
+                            <path d="M16 8l2-2 2 2-2 2-2-2z"/>
+                            <path d="M14 10l1 1"/>
+                        </svg>
+                    </button>
+                </div>
+                
                 <div class="clock-section">
                     <div class="clock" id="clock">
                         <div class="time">12:00 PM</div>
@@ -213,6 +244,8 @@
 
         <!-- Main Content Area -->
         <main class="main-content" id="main-content">
+            <!-- Capture Mode - Existing recording interface -->
+            <div class="capture-mode" id="capture-mode">
                 <!-- Recording Controls -->
                 <div class="recording-controls">
                     <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription (Ctrl+R / ⌘R)">
@@ -476,7 +509,102 @@
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
+            <!-- End Capture Mode -->
+
+            <!-- Study Mode - Recording library and review interface -->
+            <div class="study-mode" id="study-mode" style="display: none;">
+                <!-- Recordings List View -->
+                <div class="recordings-list-view" id="recordings-list-view">
+                    <div class="recordings-header">
+                        <h2>Your Recordings</h2>
+                        <div class="recordings-meta">
+                            <span id="recordings-count">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="recordings-list" id="recordings-list">
+                        <!-- Recordings will be populated by JavaScript -->
+                        <div class="recordings-loading" id="recordings-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading recordings...</p>
+                        </div>
+                        <div class="recordings-empty" id="recordings-empty" style="display: none;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M9 9l6 6"/>
+                                <path d="M15 9l-6 6"/>
+                            </svg>
+                            <h3>No recordings yet</h3>
+                            <p>Switch to Capture mode to start recording lectures</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recording Review View -->
+                <div class="recording-review-view" id="recording-review-view" style="display: none;">
+                    <div class="review-header">
+                        <button class="btn btn-secondary" id="back-to-list">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H6M12 5l-7 7 7 7"/>
+                            </svg>
+                            Back to List
+                        </button>
+                        <div class="review-title">
+                            <h2 id="review-course-title">Course Title</h2>
+                            <p id="review-session-info">Date and time</p>
+                        </div>
+                    </div>
+
+                    <div class="review-controls">
+                        <div class="audio-controls">
+                            <button class="btn" id="review-play-pause">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="5,3 19,12 5,21"/>
+                                </svg>
+                                Play
+                            </button>
+                            <button class="btn" id="review-skip-back" title="Skip back 10 seconds">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 12H6M12 5l-7 7 7 7"/>
+                                </svg>
+                                10s
+                            </button>
+                            <button class="btn" id="review-skip-forward" title="Skip forward 30 seconds">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h13M12 5l7 7-7 7"/>
+                                </svg>
+                                30s
+                            </button>
+                            <div class="audio-time">
+                                <span id="review-current-time">0:00</span>
+                                <span>/</span>
+                                <span id="review-total-time">0:00</span>
+                            </div>
+                        </div>
+                        <div class="audio-seek-bar">
+                            <input type="range" id="review-seek-bar" min="0" max="100" value="0" class="seek-slider">
+                        </div>
+                    </div>
+
+                    <div class="review-content">
+                        <div class="review-notes-section">
+                            <h3>Notes</h3>
+                            <div class="review-notes" id="review-notes">
+                                <!-- Notes content will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="review-transcription-section">
+                            <h3>Transcription</h3>
+                            <div class="review-transcription" id="review-transcription">
+                                <!-- Transcription content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Study Mode -->
+        </main>
 
         <!-- Version Info -->
         <div class="system-info-corner">
