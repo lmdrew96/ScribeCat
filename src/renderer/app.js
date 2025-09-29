@@ -111,6 +111,24 @@ class ScribeCatApp {
     this.courseTitle = document.getElementById('course-title');
     this.saveCanvasBtn = document.getElementById('save-canvas');
     this.manageCoursesBtn = document.getElementById('manage-courses');
+    this.importFromExtensionBtn = document.getElementById('import-from-extension');
+    
+    // Course import modal elements
+    this.courseImportModal = document.getElementById('course-import-modal');
+    this.courseImportClose = document.getElementById('course-import-close');
+    this.courseImportData = document.getElementById('course-import-data');
+    this.courseImportBtn = document.getElementById('course-import-btn');
+    this.courseImportCancel = document.getElementById('course-import-cancel');
+    this.courseImportResults = document.getElementById('course-import-results');
+    this.courseImportSummary = document.getElementById('course-import-summary');
+    this.courseImportList = document.getElementById('course-import-list');
+    
+    // Course management modal elements
+    this.courseManagementModal = document.getElementById('course-management-modal');
+    this.courseManagementClose = document.getElementById('course-management-close');
+    this.addCourseBtn = document.getElementById('add-course-btn');
+    this.refreshCoursesBtn = document.getElementById('refresh-courses-btn');
+    this.coursesList = document.getElementById('courses-list');
     // Drive folder inputs - separate for notes and transcriptions
     this.notesDriveFolderInput = document.getElementById('notes-drive-folder');
     this.selectNotesDriveFolderBtn = document.getElementById('select-notes-drive-folder');
@@ -851,6 +869,31 @@ class ScribeCatApp {
     }
     if (this.manageCoursesBtn) {
       this.manageCoursesBtn.addEventListener('click', () => this.manageCourses());
+    }
+    if (this.importFromExtensionBtn) {
+      this.importFromExtensionBtn.addEventListener('click', () => this.showCourseImportModal());
+    }
+    
+    // Course import modal event listeners
+    if (this.courseImportClose) {
+      this.courseImportClose.addEventListener('click', () => this.hideCourseImportModal());
+    }
+    if (this.courseImportCancel) {
+      this.courseImportCancel.addEventListener('click', () => this.hideCourseImportModal());
+    }
+    if (this.courseImportBtn) {
+      this.courseImportBtn.addEventListener('click', () => this.importCoursesFromExtension());
+    }
+    
+    // Course management modal event listeners
+    if (this.courseManagementClose) {
+      this.courseManagementClose.addEventListener('click', () => this.hideCourseManagementModal());
+    }
+    if (this.addCourseBtn) {
+      this.addCourseBtn.addEventListener('click', () => this.addNewCourse());
+    }
+    if (this.refreshCoursesBtn) {
+      this.refreshCoursesBtn.addEventListener('click', () => this.refreshCoursesList());
     }
     if (this.courseSelect) {
       this.courseSelect.addEventListener('change', (e) => this.onCourseSelectionChange(e.target.value));
@@ -3212,51 +3255,70 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   async loadPredefinedCourses() {
-    let courses = await window.electronAPI.storeGet('predefined-courses') || [];
-    
-    // Add some default courses if none exist
-    if (courses.length === 0) {
-      courses = [
-        { id: 'cs101', courseNumber: 'CS 101', courseTitle: 'Introduction to Computer Science' },
-        { id: 'math201', courseNumber: 'MATH 201', courseTitle: 'Calculus I' },
-        { id: 'eng102', courseNumber: 'ENG 102', courseTitle: 'Composition II' },
-        { id: 'hist150', courseNumber: 'HIST 150', courseTitle: 'World History' }
-      ];
-      await window.electronAPI.storeSet('predefined-courses', courses);
+    // Only load if electronAPI is available
+    if (!window.electronAPI || !window.electronAPI.coursesGetAll) {
+      console.log('Running in browser environment, skipping predefined courses load');
+      return;
     }
-    
-    // Clear existing options except for default ones
-    while (this.courseSelect.children.length > 2) {
-      this.courseSelect.removeChild(this.courseSelect.lastChild);
-    }
-    
-    // Clear capture course selector options except for default ones
-    if (this.captureCourseSelect) {
-      while (this.captureCourseSelect.children.length > 2) {
-        this.captureCourseSelect.removeChild(this.captureCourseSelect.lastChild);
-      }
-    }
-    
-    // Add predefined courses to both selectors
-    courses.forEach(course => {
-      // Sidebar course selector
-      const option = document.createElement('option');
-      option.value = course.id;
-      option.textContent = `${course.courseNumber} - ${course.courseTitle}`;
-      option.dataset.courseNumber = course.courseNumber;
-      option.dataset.courseTitle = course.courseTitle;
-      this.courseSelect.appendChild(option);
+
+    try {
+      const result = await window.electronAPI.coursesGetAll();
+      let courses = result.success ? result.courses : [];
       
-      // Capture page course selector
-      if (this.captureCourseSelect) {
-        const captureOption = document.createElement('option');
-        captureOption.value = course.id;
-        captureOption.textContent = `${course.courseNumber} - ${course.courseTitle}`;
-        captureOption.dataset.courseNumber = course.courseNumber;
-        captureOption.dataset.courseTitle = course.courseTitle;
-        this.captureCourseSelect.appendChild(captureOption);
+      // Add some default courses if none exist
+      if (courses.length === 0) {
+        const defaultCourses = [
+          { courseNumber: 'CS 101', courseTitle: 'Introduction to Computer Science', institution: 'default' },
+          { courseNumber: 'MATH 201', courseTitle: 'Calculus I', institution: 'default' },
+          { courseNumber: 'ENG 102', courseTitle: 'Composition II', institution: 'default' },
+          { courseNumber: 'HIST 150', courseTitle: 'World History', institution: 'default' }
+        ];
+        
+        // Add default courses using the new course management system
+        for (const courseData of defaultCourses) {
+          await window.electronAPI.coursesAdd(courseData);
+        }
+        
+        // Reload courses after adding defaults
+        const reloadResult = await window.electronAPI.coursesGetAll();
+        courses = reloadResult.success ? reloadResult.courses : [];
       }
-    });
+      
+      // Clear existing options except for default ones
+      while (this.courseSelect.children.length > 2) {
+        this.courseSelect.removeChild(this.courseSelect.lastChild);
+      }
+      
+      // Clear capture course selector options except for default ones
+      if (this.captureCourseSelect) {
+        while (this.captureCourseSelect.children.length > 2) {
+          this.captureCourseSelect.removeChild(this.captureCourseSelect.lastChild);
+        }
+      }
+      
+      // Add predefined courses to both selectors
+      courses.forEach(course => {
+        // Sidebar course selector
+        const option = document.createElement('option');
+        option.value = course.id;
+        option.textContent = `${course.courseNumber} - ${course.courseTitle}`;
+        option.dataset.courseNumber = course.courseNumber;
+        option.dataset.courseTitle = course.courseTitle;
+        this.courseSelect.appendChild(option);
+        
+        // Capture page course selector
+        if (this.captureCourseSelect) {
+          const captureOption = document.createElement('option');
+          captureOption.value = course.id;
+          captureOption.textContent = `${course.courseNumber} - ${course.courseTitle}`;
+          captureOption.dataset.courseNumber = course.courseNumber;
+          captureOption.dataset.courseTitle = course.courseTitle;
+          this.captureCourseSelect.appendChild(captureOption);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to load predefined courses:', error);
+    }
   }
 
   async manageCourses() {
@@ -3342,6 +3404,219 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     const settings = this.getCanvasInfo();
     await window.electronAPI.storeSet('canvas-settings', settings);
     alert('Canvas settings saved!');
+  }
+
+  // Course Import Methods
+  showCourseImportModal() {
+    this.courseImportModal.style.display = 'block';
+    this.courseImportData.value = '';
+    this.courseImportResults.style.display = 'none';
+  }
+
+  hideCourseImportModal() {
+    this.courseImportModal.style.display = 'none';
+  }
+
+  async importCoursesFromExtension() {
+    const importData = this.courseImportData.value.trim();
+    
+    if (!importData) {
+      alert('Please paste the JSON data from the browser extension.');
+      return;
+    }
+
+    try {
+      const parsedData = JSON.parse(importData);
+      const result = await window.electronAPI.coursesImportFromExtension(parsedData);
+      
+      if (result.success) {
+        this.showImportResults(result);
+        this.courseImportData.value = '';
+        // Refresh course select options
+        await this.loadPredefinedCourses();
+      } else {
+        alert(`Import failed: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Invalid JSON data: ${error.message}`);
+    }
+  }
+
+  showImportResults(result) {
+    this.courseImportResults.style.display = 'block';
+    
+    // Show summary
+    this.courseImportSummary.innerHTML = `
+      <div class="import-summary">
+        <p><strong>Successfully imported ${result.imported} courses!</strong></p>
+        <p>Total courses in ScribeCat: ${result.total}</p>
+      </div>
+    `;
+    
+    // Show imported courses list
+    if (result.courses && result.courses.length > 0) {
+      const coursesHtml = result.courses.map(course => `
+        <div class="imported-course">
+          <div class="course-info">
+            <span class="course-number">${course.courseNumber || 'No Code'}</span>
+            <span class="course-title">${course.courseTitle || 'Untitled'}</span>
+          </div>
+          <div class="course-source">${course.institution || 'Unknown'}</div>
+        </div>
+      `).join('');
+      
+      this.courseImportList.innerHTML = `
+        <div class="imported-courses">
+          <h5>Imported Courses:</h5>
+          ${coursesHtml}
+        </div>
+      `;
+    }
+  }
+
+  // Course Management Methods
+  async manageCourses() {
+    this.courseManagementModal.style.display = 'block';
+    await this.refreshCoursesList();
+  }
+
+  hideCourseManagementModal() {
+    this.courseManagementModal.style.display = 'none';
+  }
+
+  async refreshCoursesList() {
+    try {
+      const result = await window.electronAPI.coursesGetAll();
+      
+      if (result.success) {
+        this.displayCoursesList(result.courses);
+      } else {
+        this.coursesList.innerHTML = `<div class="error">Failed to load courses: ${result.error}</div>`;
+      }
+    } catch (error) {
+      this.coursesList.innerHTML = `<div class="error">Error loading courses: ${error.message}</div>`;
+    }
+  }
+
+  displayCoursesList(courses) {
+    if (courses.length === 0) {
+      this.coursesList.innerHTML = `
+        <div class="no-courses">
+          <p>No courses found. Add courses manually or import from the browser extension.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const coursesHtml = courses.map(course => `
+      <div class="course-item" data-course-id="${course.id}">
+        <div class="course-info">
+          <div class="course-number">${course.courseNumber || 'No Code'}</div>
+          <div class="course-title">${course.courseTitle || 'Untitled'}</div>
+          <div class="course-meta">
+            <span class="course-institution">${course.institution || 'Unknown'}</span>
+            <span class="course-source">${course.source || 'manual'}</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <button class="btn btn-small btn-secondary edit-course" data-course-id="${course.id}">Edit</button>
+          <button class="btn btn-small btn-danger delete-course" data-course-id="${course.id}">Delete</button>
+        </div>
+      </div>
+    `).join('');
+
+    this.coursesList.innerHTML = coursesHtml;
+
+    // Add event listeners for course actions
+    this.coursesList.querySelectorAll('.edit-course').forEach(btn => {
+      btn.addEventListener('click', (e) => this.editCourse(e.target.dataset.courseId));
+    });
+
+    this.coursesList.querySelectorAll('.delete-course').forEach(btn => {
+      btn.addEventListener('click', (e) => this.deleteCourse(e.target.dataset.courseId));
+    });
+  }
+
+  addNewCourse() {
+    const courseNumber = prompt('Enter course number (e.g., CISC108):');
+    if (!courseNumber) return;
+
+    const courseTitle = prompt('Enter course title:');
+    if (!courseTitle) return;
+
+    const institution = prompt('Enter institution (optional):') || 'manual';
+
+    this.addCourse({
+      courseNumber: courseNumber.trim(),
+      courseTitle: courseTitle.trim(),
+      institution: institution.trim()
+    });
+  }
+
+  async addCourse(courseData) {
+    try {
+      const result = await window.electronAPI.coursesAdd(courseData);
+      
+      if (result.success) {
+        await this.refreshCoursesList();
+        alert('Course added successfully!');
+      } else {
+        alert(`Failed to add course: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Error adding course: ${error.message}`);
+    }
+  }
+
+  editCourse(courseId) {
+    // For now, just show a simple prompt-based editor
+    // In a full implementation, this would open a proper edit form
+    const courseElement = this.coursesList.querySelector(`[data-course-id="${courseId}"]`);
+    const courseNumber = courseElement.querySelector('.course-number').textContent;
+    const courseTitle = courseElement.querySelector('.course-title').textContent;
+
+    const newCourseNumber = prompt('Edit course number:', courseNumber);
+    if (newCourseNumber === null) return;
+
+    const newCourseTitle = prompt('Edit course title:', courseTitle);
+    if (newCourseTitle === null) return;
+
+    this.updateCourse(courseId, {
+      courseNumber: newCourseNumber.trim(),
+      courseTitle: newCourseTitle.trim()
+    });
+  }
+
+  async updateCourse(courseId, courseData) {
+    try {
+      const result = await window.electronAPI.coursesUpdate(courseId, courseData);
+      
+      if (result.success) {
+        await this.refreshCoursesList();
+        alert('Course updated successfully!');
+      } else {
+        alert(`Failed to update course: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Error updating course: ${error.message}`);
+    }
+  }
+
+  async deleteCourse(courseId) {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+
+    try {
+      const result = await window.electronAPI.coursesDelete(courseId);
+      
+      if (result.success) {
+        await this.refreshCoursesList();
+        alert('Course deleted successfully!');
+      } else {
+        alert(`Failed to delete course: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Error deleting course: ${error.message}`);
+    }
   }
 
   async selectNotesDriveFolder() {

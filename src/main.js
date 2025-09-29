@@ -257,6 +257,135 @@ ipcMain.handle('store:set', (event, key, value) => {
   return true;
 });
 
+// Course management IPC handlers
+ipcMain.handle('courses:import-from-extension', async (event, importData) => {
+  try {
+    // Validate import data format
+    if (!importData || importData.format !== 'scribecat_course_import_v1') {
+      return { success: false, error: 'Invalid import format. Expected scribecat_course_import_v1.' };
+    }
+    
+    if (!importData.courses || !Array.isArray(importData.courses)) {
+      return { success: false, error: 'No courses found in import data.' };
+    }
+    
+    // Get existing courses
+    const existingCourses = store.get('predefined-courses', []);
+    
+    // Process imported courses
+    const importedCourses = importData.courses.map(course => ({
+      id: course.id || `course_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      canvasId: course.canvasId,
+      courseNumber: course.courseNumber || '',
+      courseTitle: course.courseTitle || '',
+      institution: importData.institution || 'unknown',
+      canvasUrl: importData.canvasUrl || '',
+      imported: new Date().toISOString(),
+      source: 'browser_extension'
+    }));
+    
+    // Merge with existing courses (avoid duplicates)
+    const courseMap = new Map();
+    
+    // Add existing courses
+    existingCourses.forEach(course => {
+      courseMap.set(course.id, course);
+    });
+    
+    // Add imported courses (will overwrite if same ID)
+    importedCourses.forEach(course => {
+      courseMap.set(course.id, course);
+    });
+    
+    // Convert back to array
+    const allCourses = Array.from(courseMap.values());
+    
+    // Save to store
+    store.set('predefined-courses', allCourses);
+    
+    return { 
+      success: true, 
+      imported: importedCourses.length,
+      total: allCourses.length,
+      courses: importedCourses
+    };
+  } catch (error) {
+    console.error('Course import failed:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('courses:get-all', async () => {
+  try {
+    const courses = store.get('predefined-courses', []);
+    return { success: true, courses: courses };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('courses:add', async (event, courseData) => {
+  try {
+    const courses = store.get('predefined-courses', []);
+    const newCourse = {
+      id: `course_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      courseNumber: courseData.courseNumber || '',
+      courseTitle: courseData.courseTitle || '',
+      institution: courseData.institution || 'manual',
+      canvasUrl: courseData.canvasUrl || '',
+      added: new Date().toISOString(),
+      source: 'manual'
+    };
+    
+    courses.push(newCourse);
+    store.set('predefined-courses', courses);
+    
+    return { success: true, course: newCourse };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('courses:update', async (event, courseId, courseData) => {
+  try {
+    const courses = store.get('predefined-courses', []);
+    const index = courses.findIndex(course => course.id === courseId);
+    
+    if (index === -1) {
+      return { success: false, error: 'Course not found' };
+    }
+    
+    courses[index] = {
+      ...courses[index],
+      ...courseData,
+      updated: new Date().toISOString()
+    };
+    
+    store.set('predefined-courses', courses);
+    
+    return { success: true, course: courses[index] };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('courses:delete', async (event, courseId) => {
+  try {
+    const courses = store.get('predefined-courses', []);
+    const filteredCourses = courses.filter(course => course.id !== courseId);
+    
+    if (filteredCourses.length === courses.length) {
+      return { success: false, error: 'Course not found' };
+    }
+    
+    store.set('predefined-courses', filteredCourses);
+    
+    return { success: true, remaining: filteredCourses.length };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // Keytar (secure storage)
 ipcMain.handle('keytar:get', async (_e, { service, account }) => {
   try {

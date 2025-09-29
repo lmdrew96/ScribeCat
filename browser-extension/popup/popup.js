@@ -18,6 +18,24 @@ class PopupController {
     // Initialize UI
     await this.updateStatus();
     await this.loadStoredCourses();
+    
+    // Show debug section in development
+    this.checkDebugMode();
+  }
+
+  checkDebugMode() {
+    // Show debug section if URL contains debug parameter or if in development
+    const url = this.currentTab?.url || '';
+    const isDebug = url.includes('debug=true') || 
+                   url.includes('localhost') || 
+                   url.includes('127.0.0.1') ||
+                   url.includes('dev') ||
+                   process.env.NODE_ENV === 'development';
+    
+    const debugSection = document.getElementById('debug-section');
+    if (debugSection) {
+      debugSection.style.display = isDebug ? 'block' : 'none';
+    }
   }
 
   bindEvents() {
@@ -26,6 +44,8 @@ class PopupController {
     document.getElementById('refresh-btn').addEventListener('click', () => this.refresh());
     document.getElementById('export-btn').addEventListener('click', () => this.exportCourses());
     document.getElementById('copy-btn').addEventListener('click', () => this.showCopyModal());
+    document.getElementById('clear-data-btn').addEventListener('click', () => this.clearStoredData());
+    document.getElementById('test-selectors-btn').addEventListener('click', () => this.testSelectors());
     
     // Modal controls
     document.getElementById('modal-close').addEventListener('click', () => this.hideCopyModal());
@@ -88,16 +108,55 @@ class PopupController {
 
   async loadStoredCourses() {
     try {
-      const result = await chrome.storage.local.get(['scribecat_courses']);
+      const result = await chrome.storage.local.get(['scribecat_courses', 'scribecat_last_collection']);
       this.courses = result.scribecat_courses || [];
       
       this.updateCourseList();
       this.updateExportButtons();
+      this.updateLastCollectionTime(result.scribecat_last_collection);
       
       // Update count
       document.getElementById('course-count').textContent = this.courses.length;
+      
+      // Show/hide clear data button
+      const clearBtn = document.getElementById('clear-data-btn');
+      if (this.courses.length > 0) {
+        clearBtn.style.display = 'inline-flex';
+      } else {
+        clearBtn.style.display = 'none';
+      }
     } catch (error) {
       console.error('Failed to load stored courses:', error);
+    }
+  }
+
+  updateLastCollectionTime(timestamp) {
+    const lastCollectionItem = document.getElementById('last-collection-item');
+    const lastCollectionElement = document.getElementById('last-collection');
+    
+    if (timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      let timeString;
+      if (diffMins < 1) {
+        timeString = 'Just now';
+      } else if (diffMins < 60) {
+        timeString = `${diffMins}m ago`;
+      } else if (diffHours < 24) {
+        timeString = `${diffHours}h ago`;
+      } else {
+        timeString = `${diffDays}d ago`;
+      }
+      
+      lastCollectionElement.textContent = timeString;
+      lastCollectionItem.style.display = 'flex';
+    } else {
+      lastCollectionItem.style.display = 'none';
     }
   }
 
@@ -220,21 +279,49 @@ class PopupController {
     const modal = document.getElementById('copy-modal');
     const textarea = document.getElementById('copy-data');
     
-    // Prepare data for ScribeCat
+    // Extract institution from current tab URL
+    const institution = this.extractInstitution(this.currentTab?.url || '');
+    
+    // Prepare data for ScribeCat with enhanced format
     const importData = {
       source: 'ScribeCat Canvas Browser Extension',
-      format: 'scribecat_course_import',
+      format: 'scribecat_course_import_v1',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
+      canvasUrl: this.currentTab?.url?.split('/').slice(0, 3).join('/') || '',
+      institution: institution,
+      collected: new Date().toISOString(),
       courses: this.courses.map(course => ({
         id: course.id,
+        canvasId: course.canvasId,
         courseNumber: course.courseNumber || '',
-        courseTitle: course.courseTitle || ''
+        courseTitle: course.courseTitle || '',
+        collected: course.collected || new Date().toISOString()
       }))
     };
     
     textarea.value = JSON.stringify(importData, null, 2);
     modal.style.display = 'block';
+  }
+
+  extractInstitution(url) {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      
+      // Extract institution from Canvas URL patterns
+      if (hostname.includes('instructure.com')) {
+        // Pattern: canvas.university.edu or university.instructure.com
+        const parts = hostname.split('.');
+        if (parts.length >= 3) {
+          return parts[0]; // First part before .university.edu or .instructure.com
+        }
+      }
+      
+      return 'unknown';
+    } catch (error) {
+      return 'unknown';
+    }
   }
 
   hideCopyModal() {
@@ -301,6 +388,68 @@ class PopupController {
         messageEl.parentNode.removeChild(messageEl);
       }
     }, 3000);
+  }
+
+  async clearStoredData() {
+    if (confirm('Are you sure you want to clear all stored course data? This action cannot be undone.')) {
+      try {
+        await chrome.storage.local.remove(['scribecat_courses', 'scribecat_last_collection', 'scribecat_canvas_url']);
+        this.courses = [];
+        this.updateCourseList();
+        this.updateExportButtons();
+        document.getElementById('course-count').textContent = '0';
+        document.getElementById('last-collection-item').style.display = 'none';
+        document.getElementById('clear-data-btn').style.display = 'none';
+        this.showMessage('All stored data has been cleared.', 'success');
+      } catch (error) {
+        console.error('Failed to clear stored data:', error);
+        this.showMessage('Failed to clear stored data.', 'error');
+      }
+    }
+  }
+
+  async testSelectors() {
+    const testBtn = document.getElementById('test-selectors-btn');
+    const originalText = testBtn.innerHTML;
+    
+    // Show loading state
+    testBtn.innerHTML = '<span class="btn-icon">⏳</span> Testing...';
+    testBtn.disabled = true;
+    
+    try {
+      const response = await chrome.tabs.sendMessage(this.currentTab.id, {
+        action: 'testSelectors'
+      });
+      
+      if (response && response.success) {
+        const results = response.results;
+        let message = `Selector Test Results:\n\n`;
+        
+        message += `Course Cards Found: ${results.courseCards.length}\n`;
+        message += `Working Selectors:\n`;
+        results.workingSelectors.forEach(selector => {
+          message += `• ${selector.selector}: ${selector.count} elements\n`;
+        });
+        
+        if (results.workingSelectors.length === 0) {
+          message += `• No working selectors found\n`;
+        }
+        
+        message += `\nCanvas URL: ${window.location.href}\n`;
+        message += `Page Title: ${document.title}`;
+        
+        alert(message);
+      } else {
+        throw new Error(response?.error || 'Failed to test selectors');
+      }
+    } catch (error) {
+      console.error('Selector test failed:', error);
+      this.showMessage('Failed to test selectors. Make sure you\'re on a Canvas page.', 'error');
+    } finally {
+      // Restore button
+      testBtn.innerHTML = originalText;
+      testBtn.disabled = false;
+    }
   }
 
   showPrivacyInfo() {

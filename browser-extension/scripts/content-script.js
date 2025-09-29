@@ -10,24 +10,45 @@ class CanvasCourseCollector {
         '.ic-DashboardCard',
         '.course-list-item',
         '[data-testid="DashboardCard"]',
-        '.DashboardCard'
+        '.DashboardCard',
+        // UD-specific selectors
+        '.dashboard-card',
+        '.course-card',
+        '[class*="DashboardCard"]',
+        '[class*="course-card"]'
       ],
       courseTitles: [
         '.ic-DashboardCard__header-title',
         '.course-name',
         '.ic-DashboardCard__header-title a',
-        '[data-testid="DashboardCard__HeaderTitle"]'
+        '[data-testid="DashboardCard__HeaderTitle"]',
+        // UD-specific selectors
+        '.course-title',
+        '.dashboard-card-title',
+        '[class*="title"] a',
+        'h3 a',
+        'h4 a'
       ],
       courseCodes: [
         '.ic-DashboardCard__header-subtitle',
         '.course-code',
         '.ic-DashboardCard__header-subtitle',
-        '[data-testid="DashboardCard__HeaderSubtitle"]'
+        '[data-testid="DashboardCard__HeaderSubtitle"]',
+        // UD-specific selectors
+        '.course-subtitle',
+        '.course-code',
+        '.dashboard-card-subtitle',
+        '[class*="subtitle"]',
+        '.course-info'
       ],
       courseLinks: [
         '.ic-DashboardCard__link',
         '.course-link',
-        'a[href*="/courses/"]'
+        'a[href*="/courses/"]',
+        // UD-specific selectors
+        '.dashboard-card a',
+        '.course-card a',
+        'a[href*="course"]'
       ]
     };
   }
@@ -90,12 +111,54 @@ class CanvasCourseCollector {
       courseId = this.extractCourseId(linkElement.href);
     }
 
-    // If no separate code element, try to parse from title
+    // Enhanced parsing strategies for different Canvas layouts
     if (!courseCode && courseTitle) {
-      const match = courseTitle.match(/^([A-Z]{2,6}\s*\d{3,4}[A-Z]?)\s*[-–—]\s*(.+)$/i);
+      // Strategy 1: Standard format "CISC108 - Introduction to Computer Science"
+      let match = courseTitle.match(/^([A-Z]{2,6}\s*\d{3,4}[A-Z]?)\s*[-–—]\s*(.+)$/i);
       if (match) {
         courseCode = match[1].trim();
         courseTitle = match[2].trim();
+      } else {
+        // Strategy 2: UD format "CISC 108: Introduction to Computer Science"
+        match = courseTitle.match(/^([A-Z]{2,6}\s+\d{3,4}[A-Z]?)\s*:\s*(.+)$/i);
+        if (match) {
+          courseCode = match[1].trim();
+          courseTitle = match[2].trim();
+        } else {
+          // Strategy 3: Look for course code at the beginning
+          match = courseTitle.match(/^([A-Z]{2,6}\s*\d{3,4}[A-Z]?)\s+(.+)$/i);
+          if (match) {
+            courseCode = match[1].trim();
+            courseTitle = match[2].trim();
+          }
+        }
+      }
+    }
+
+    // If still no course code, try to extract from the card's parent or sibling elements
+    if (!courseCode && titleElement) {
+      const card = titleElement.closest('[class*="card"], [class*="DashboardCard"]');
+      if (card) {
+        // Look for course code in other elements within the card
+        const codeSelectors = [
+          '[class*="code"]',
+          '[class*="subtitle"]',
+          '[class*="info"]',
+          'small',
+          '.text-muted'
+        ];
+        
+        for (const selector of codeSelectors) {
+          const codeEl = card.querySelector(selector);
+          if (codeEl && codeEl.textContent.trim()) {
+            const text = this.cleanText(codeEl.textContent);
+            // Check if it looks like a course code
+            if (/^[A-Z]{2,6}\s*\d{3,4}[A-Z]?$/.test(text)) {
+              courseCode = text;
+              break;
+            }
+          }
+        }
       }
     }
 
@@ -207,6 +270,77 @@ class CanvasCourseCollector {
       path === pattern || path.endsWith(pattern)
     );
   }
+
+  // Test selectors for debugging
+  async testSelectors() {
+    console.log('ScribeCat: Testing selectors...');
+    
+    const results = {
+      courseCards: [],
+      workingSelectors: []
+    };
+    
+    // Test course card selectors
+    for (const selector of this.selectors.courseCards) {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        results.courseCards = Array.from(elements);
+        results.workingSelectors.push({
+          type: 'courseCards',
+          selector: selector,
+          count: elements.length
+        });
+        break; // Use first working selector
+      }
+    }
+    
+    // Test other selectors within found cards
+    if (results.courseCards.length > 0) {
+      const card = results.courseCards[0]; // Test with first card
+      
+      // Test title selectors
+      for (const selector of this.selectors.courseTitles) {
+        const elements = card.querySelectorAll(selector);
+        if (elements.length > 0) {
+          results.workingSelectors.push({
+            type: 'courseTitles',
+            selector: selector,
+            count: elements.length
+          });
+          break;
+        }
+      }
+      
+      // Test code selectors
+      for (const selector of this.selectors.courseCodes) {
+        const elements = card.querySelectorAll(selector);
+        if (elements.length > 0) {
+          results.workingSelectors.push({
+            type: 'courseCodes',
+            selector: selector,
+            count: elements.length
+          });
+          break;
+        }
+      }
+      
+      // Test link selectors
+      for (const selector of this.selectors.courseLinks) {
+        const elements = card.querySelectorAll(selector);
+        if (elements.length > 0) {
+          results.workingSelectors.push({
+            type: 'courseLinks',
+            selector: selector,
+            count: elements.length
+          });
+          break;
+        }
+      }
+    }
+    
+    console.log('ScribeCat: Selector test results:', results);
+    return results;
+  }
 }
 
 // Initialize collector when page loads
@@ -243,6 +377,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       isDashboard: collector.isCanvasDashboard(),
       url: window.location.href 
     });
+  }
+  
+  if (request.action === 'testSelectors') {
+    collector.testSelectors()
+      .then(results => {
+        sendResponse({ success: true, results: results });
+      })
+      .catch(error => {
+        console.error('ScribeCat: Selector test failed:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
   }
 });
 

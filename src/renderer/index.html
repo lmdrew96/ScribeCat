@@ -180,6 +180,7 @@
                     <div class="canvas-buttons">
                         <button id="save-canvas" class="btn btn-small">Save</button>
                         <button id="manage-courses" class="btn btn-small">Manage Courses</button>
+                        <button id="import-from-extension" class="btn btn-small btn-primary">Import from Extension</button>
                     </div>
                 </div>
             </div>
@@ -848,6 +849,68 @@
             <div class="modal-footer">
                 <button id="export-skip" class="btn btn-secondary">Skip</button>
                 <button id="export-done" class="btn btn-primary">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Import Modal -->
+    <div class="modal-overlay" id="course-import-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import Courses from Browser Extension</h3>
+                <button class="modal-close" id="course-import-close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="import-instructions">
+                    <p>Paste the JSON data from the ScribeCat Canvas Course Collector browser extension:</p>
+                    <ol>
+                        <li>Open the browser extension on your Canvas dashboard</li>
+                        <li>Click "Copy for ScribeCat" to copy the course data</li>
+                        <li>Paste the data in the text area below</li>
+                        <li>Click "Import Courses" to add them to ScribeCat</li>
+                    </ol>
+                </div>
+                <div class="import-form">
+                    <textarea id="course-import-data" placeholder="Paste JSON data from browser extension here..." rows="10"></textarea>
+                    <div class="import-actions">
+                        <button id="course-import-btn" class="btn btn-primary">Import Courses</button>
+                        <button id="course-import-cancel" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+                <div id="course-import-results" class="import-results" style="display: none;">
+                    <h4>Import Results</h4>
+                    <div id="course-import-summary"></div>
+                    <div id="course-import-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Management Modal -->
+    <div class="modal-overlay" id="course-management-modal" style="display: none;">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3>Manage Courses</h3>
+                <button class="modal-close" id="course-management-close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="course-management-actions">
+                    <button id="add-course-btn" class="btn btn-primary">Add New Course</button>
+                    <button id="refresh-courses-btn" class="btn btn-secondary">Refresh List</button>
+                </div>
+                <div class="courses-list" id="courses-list">
+                    <div class="courses-loading">Loading courses...</div>
+                </div>
             </div>
         </div>
     </div>

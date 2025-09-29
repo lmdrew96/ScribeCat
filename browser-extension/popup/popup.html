@@ -26,6 +26,10 @@
                     <span class="status-label">Courses Found:</span>
                     <span class="status-value" id="course-count">0</span>
                 </div>
+                <div class="status-item" id="last-collection-item" style="display: none;">
+                    <span class="status-label">Last Collected:</span>
+                    <span class="status-value" id="last-collection">Never</span>
+                </div>
             </div>
 
             <div class="actions-section">
@@ -37,6 +41,11 @@
                 <button id="refresh-btn" class="btn btn-secondary">
                     <span class="btn-icon">🔄</span>
                     Refresh
+                </button>
+                
+                <button id="clear-data-btn" class="btn btn-secondary" style="display: none;">
+                    <span class="btn-icon">🗑️</span>
+                    Clear Data
                 </button>
             </div>
 
@@ -79,11 +88,19 @@
                         <li>Import into ScribeCat desktop app</li>
                     </ol>
                 </details>
+                
+                <details class="instructions" id="debug-section" style="display: none;">
+                    <summary>Debug Tools</summary>
+                    <button id="test-selectors-btn" class="btn btn-secondary" style="width: 100%; margin-top: 8px;">
+                        <span class="btn-icon">🔧</span>
+                        Test Selectors
+                    </button>
+                </details>
             </div>
         </main>
 
         <footer class="footer">
-            <div class="version">v1.0.0</div>
+            <div class="version">v1.1.0</div>
             <div class="privacy">
                 <a href="#" id="privacy-link">Privacy Policy</a>
             </div>

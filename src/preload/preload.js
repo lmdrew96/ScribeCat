@@ -39,6 +39,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   subscriptionCanUseFeature: (feature) => ipcRenderer.invoke('subscription:can-use-feature', feature),
   subscriptionTrackUsage: (feature, amount) => ipcRenderer.invoke('subscription:track-usage', feature, amount),
 
+  // Course management
+  coursesImportFromExtension: (importData) => ipcRenderer.invoke('courses:import-from-extension', importData),
+  coursesGetAll: () => ipcRenderer.invoke('courses:get-all'),
+  coursesAdd: (courseData) => ipcRenderer.invoke('courses:add', courseData),
+  coursesUpdate: (courseId, courseData) => ipcRenderer.invoke('courses:update', courseId, courseData),
+  coursesDelete: (courseId) => ipcRenderer.invoke('courses:delete', courseId),
+
   // Vosk/Whisper transcription
   startVoskTranscription: (params) => ipcRenderer.invoke('transcription:start-vosk', params),
   onVoskResult: (callback) => ipcRenderer.on('transcription:vosk-result', callback),
