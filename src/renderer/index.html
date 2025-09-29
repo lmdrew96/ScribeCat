@@ -342,10 +342,16 @@
                             </div>
                             <div class="color-selector-group">
                                 <input type="color" id="highlight-color" class="color-selector" value="#ffd200" title="Highlight Color">
-                                <button class="format-btn" data-command="highlight" title="Highlight">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M9 11H1l2-2 2.5 2.5L12 4.5 19.5 12 12 19.5 4.5 12 7 9.5"/>
-                                        <path d="M21 15l-6-6"/>
+                                <button class="format-btn" data-command="highlight" title="Highlight text (current: Yellow)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <!-- Highlighter body -->
+                                        <rect x="3" y="4" width="3" height="16" rx="1.5" fill="currentColor" opacity="0.8"/>
+                                        <!-- Highlighter tip -->
+                                        <rect x="6" y="8" width="2" height="8" rx="1" fill="var(--highlight-color, #ffd200)" stroke="currentColor" stroke-width="0.5"/>
+                                        <!-- Highlighter cap -->
+                                        <rect x="2.5" y="3" width="4" height="2" rx="1" fill="currentColor"/>
+                                        <!-- Highlight mark effect -->
+                                        <rect x="9" y="14" width="12" height="3" rx="1.5" fill="var(--highlight-color, #ffd200)" opacity="0.6"/>
                                     </svg>
                                 </button>
                             </div>

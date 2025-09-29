@@ -657,6 +657,13 @@ class ScribeCatApp {
     const notesDraft = await window.electronAPI.storeGet('notes-draft');
     if (notesDraft) this.notesEditor.innerHTML = notesDraft;
     
+    // Load highlighter color preference
+    const savedHighlightColor = await window.electronAPI.storeGet('highlight-color');
+    if (savedHighlightColor && this.highlightColorSelector) {
+      this.highlightColorSelector.value = savedHighlightColor;
+      this.updateHighlighterButtonColor(savedHighlightColor);
+    }
+    
     // Load simulation mode setting
     this.simulationMode = await window.electronAPI.storeGet('simulation-mode');
     if (this.simulationMode === null || this.simulationMode === undefined) {
@@ -683,31 +690,6 @@ class ScribeCatApp {
       // Prevent duplicate requests
       if (this.generateSummaryBtn.disabled) return;
       
-      // Check if simulation mode is enabled
-      if (this.simulationMode) {
-        this.generateSummaryBtn.disabled = true;
-        this.aiSummary.innerHTML = '<em>Generating summary (simulation)...</em>';
-        
-        // Simulate API delay with a proper Promise
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            const simulatedSummary = `
-## Summary (Simulated)
-**Key Topics:**
-- Sample topic from transcription
-- Important points discussed
-- Action items identified
-
-**Simulation Mode Note:** This is a test response. Enable real mode in Developer Settings to use actual OpenAI API.
-            `;
-            this.aiSummary.innerHTML = window.marked ? marked.parse(simulatedSummary) : simulatedSummary;
-            this.generateSummaryBtn.disabled = false;
-            resolve();
-          }, 1500);
-        });
-      }
-      
-      // Real API mode - existing functionality
       // Gather context from notes and transcription
       const notesContent = this.notesEditor.textContent || '';
       const transcriptContent = Array.from(this.transcriptionDisplay.children)
@@ -715,19 +697,36 @@ class ScribeCatApp {
         .join('\n');
         
       this.generateSummaryBtn.disabled = true;
+      
+      // Add loading indicator to the separate container
       this.aiSummary.innerHTML = '<em>Generating summary...</em>';
       
+      let summaryMarkdown = '';
+      let summaryHtml = '';
+      
       if (this.simulationMode) {
-        // Simulation mode - generate mock summary
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-          const mockSummary = `## Summary\n\n**Key Topics Covered:**\n- Course discussion points\n- Important concepts and definitions\n- Action items identified\n\n**Notes Analysis:**\n${notesContent ? '- Found detailed notes with key information' : '- No notes content available'}\n\n**Transcription Analysis:**\n${transcriptContent ? '- Transcription contains valuable discussion points' : '- No transcription content available'}\n\n*[This is a simulated summary. In real mode, this would be generated using OpenAI's GPT-4o-mini model.]*`;
-          
-          this.aiSummary.innerHTML = window.marked ? marked.parse(mockSummary) : mockSummary;
-        } catch (err) {
-          console.error('Error in simulation mode:', err);
-          this.aiSummary.innerHTML = '<span style="color:red">Error generating simulated summary.</span>';
-        }
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Generate formatted simulated summary
+        summaryMarkdown = `## **AI Summary**
+
+**Key Topics:**
+- *Sample topic from transcription*
+- **Important concepts** and definitions
+- Action items identified
+
+**Notes Analysis:**
+${notesContent ? '- Found detailed notes with **key information**' : '- No notes content available'}
+
+**Transcription Analysis:**
+${transcriptContent ? '- Transcription contains *valuable discussion points*' : '- No transcription content available'}
+
+*[This is a simulated summary. Enable real mode in Developer Settings to use actual Claude API.]*
+
+**Simulation Mode Note:** This is a test response. Enable real mode in Developer Settings to use actual OpenAI API.`;
+        
+        summaryHtml = window.marked ? marked.parse(summaryMarkdown) : summaryMarkdown;
       } else {
         // Real API mode using backend server
         try {
@@ -737,18 +736,100 @@ class ScribeCatApp {
           });
           
           if (result.summary) {
-            this.aiSummary.innerHTML = window.marked ? marked.parse(result.summary) : result.summary;
+            summaryMarkdown = result.summary;
+            summaryHtml = window.marked ? marked.parse(result.summary) : result.summary;
           } else if (result.fallback) {
-            this.aiSummary.innerHTML = window.marked ? marked.parse(result.fallback) : result.fallback;
+            summaryMarkdown = result.fallback;
+            summaryHtml = window.marked ? marked.parse(result.fallback) : result.fallback;
           } else {
-            this.aiSummary.innerHTML = '<span style="color:red">No summary generated.</span>';
+            summaryMarkdown = '**Error:** No summary generated.';
+            summaryHtml = '<span style="color:red">No summary generated.</span>';
           }
         } catch (err) {
           console.error('Error generating summary:', err);
-          this.aiSummary.innerHTML = `<span style="color:red">Error generating summary: ${err.message}</span>`;
+          summaryMarkdown = `**Error:** ${err.message}`;
+          summaryHtml = `<span style="color:red">Error generating summary: ${err.message}</span>`;
         }
       }
+      
+      // Place in both locations: the traditional container for compatibility and in notes editor for enhancement
+      this.aiSummary.innerHTML = summaryHtml;
+      
+      // Insert horizontal line and summary into notes editor for new feature
+      this.insertAISummaryIntoEditor(summaryMarkdown);
+      
       this.generateSummaryBtn.disabled = false;
+    }
+
+    insertAISummaryIntoEditor(summaryMarkdown) {
+      // Create cursor position at end of current content
+      const selection = window.getSelection();
+      const range = document.createRange();
+      
+      // Move cursor to end of notes editor
+      this.notesEditor.focus();
+      range.selectNodeContents(this.notesEditor);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      // Insert horizontal line separator
+      const hr = document.createElement('hr');
+      hr.style.margin = '20px 0';
+      hr.style.border = 'none';
+      hr.style.borderTop = '2px solid #ccc';
+      
+      // Create AI summary container with visual distinction
+      const summaryDiv = document.createElement('div');
+      summaryDiv.className = 'ai-generated-content';
+      summaryDiv.style.padding = '15px';
+      summaryDiv.style.marginTop = '10px';
+      summaryDiv.style.backgroundColor = '#f8fafc';
+      summaryDiv.style.border = '1px solid #e2e8f0';
+      summaryDiv.style.borderRadius = '6px';
+      summaryDiv.style.position = 'relative';
+      
+      // Add AI indicator badge
+      const aiIndicator = document.createElement('div');
+      aiIndicator.textContent = 'AI Generated';
+      aiIndicator.style.position = 'absolute';
+      aiIndicator.style.top = '-8px';
+      aiIndicator.style.right = '10px';
+      aiIndicator.style.fontSize = '10px';
+      aiIndicator.style.backgroundColor = '#6366f1';
+      aiIndicator.style.color = 'white';
+      aiIndicator.style.padding = '2px 6px';
+      aiIndicator.style.borderRadius = '3px';
+      aiIndicator.style.fontWeight = '500';
+      
+      // Convert markdown to HTML and insert
+      const summaryHtml = window.marked ? marked.parse(summaryMarkdown) : summaryMarkdown.replace(/\n/g, '<br>');
+      summaryDiv.innerHTML = summaryHtml;
+      summaryDiv.appendChild(aiIndicator);
+      
+      // Insert elements at cursor position
+      const currentRange = selection.getRangeAt(0);
+      currentRange.deleteContents();
+      
+      // Add some spacing before the HR if there's existing content
+      if (this.notesEditor.textContent.trim()) {
+        const spacer = document.createElement('div');
+        spacer.innerHTML = '<br><br>';
+        currentRange.insertNode(spacer);
+        currentRange.collapse(false);
+      }
+      
+      currentRange.insertNode(hr);
+      currentRange.collapse(false);
+      currentRange.insertNode(summaryDiv);
+      
+      // Move cursor to end and save
+      range.selectNodeContents(this.notesEditor);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      this.saveNotesDraft();
     }
 
     async generateAIBlurb() {
@@ -1993,9 +2074,41 @@ class ScribeCatApp {
     this.saveNotesDraft();
   }
 
-  changeHighlightColor(color) {
-    // Just update the color value - highlighting is applied on button click
+  async changeHighlightColor(color) {
+    // Save color preference
+    await window.electronAPI.storeSet('highlight-color', color);
+    // Update button visual indicator
+    this.updateHighlighterButtonColor(color);
     this.updateFormattingState();
+  }
+
+  updateHighlighterButtonColor(color) {
+    if (this.highlightColorSelector) {
+      const highlightBtn = this.highlightColorSelector.nextElementSibling;
+      if (highlightBtn) {
+        // Update the button's visual indicator and tooltip
+        highlightBtn.style.setProperty('--highlight-color', color);
+        const colorName = this.getColorName(color);
+        highlightBtn.title = `Highlight text (current: ${colorName})`;
+      }
+    }
+  }
+
+  getColorName(hex) {
+    const colorNames = {
+      '#ffd200': 'Yellow',
+      '#ffff00': 'Bright Yellow',
+      '#ffa500': 'Orange',
+      '#ff69b4': 'Pink',
+      '#00ff00': 'Green',
+      '#00ffff': 'Cyan',
+      '#0000ff': 'Blue',
+      '#8a2be2': 'Purple',
+      '#ff0000': 'Red',
+      '#ffffff': 'White',
+      '#000000': 'Black'
+    };
+    return colorNames[hex.toLowerCase()] || hex.toUpperCase();
   }
 
   insertTextShortcut(shortcut) {
