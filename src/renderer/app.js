@@ -138,6 +138,19 @@ class ScribeCatApp {
     this.clearNotesCancel = document.getElementById('clear-notes-cancel');
     this.clearNotesModalClose = document.getElementById('clear-notes-modal-close');
     
+    // Export options dialog
+    this.exportOptionsModal = document.getElementById('export-options-modal');
+    this.exportOptionsClose = document.getElementById('export-options-close');
+    this.exportSkip = document.getElementById('export-skip');
+    this.exportDone = document.getElementById('export-done');
+    this.exportGoogleDrive = document.getElementById('export-google-drive');
+    this.exportDropbox = document.getElementById('export-dropbox');
+    this.exportPdf = document.getElementById('export-pdf');
+    this.exportMarkdown = document.getElementById('export-markdown');
+    this.openSettingsLink = document.getElementById('open-settings-link');
+    this.driveConnectionStatus = document.getElementById('drive-connection-status');
+    this.dropboxConnectionStatus = document.getElementById('dropbox-connection-status');
+    
     // Developer settings
     this.simulationToggle = document.getElementById('simulation-toggle');
     
@@ -1050,6 +1063,43 @@ class ScribeCatApp {
       this.clearNotesModalClose.addEventListener('click', () => this.hideClearNotesModal());
     }
     
+    // Export options dialog event listeners
+    if (this.exportOptionsClose) {
+      this.exportOptionsClose.addEventListener('click', () => this.hideExportOptionsModal());
+    }
+    
+    if (this.exportSkip) {
+      this.exportSkip.addEventListener('click', () => this.hideExportOptionsModal());
+    }
+    
+    if (this.exportDone) {
+      this.exportDone.addEventListener('click', () => this.hideExportOptionsModal());
+    }
+    
+    if (this.exportGoogleDrive) {
+      this.exportGoogleDrive.addEventListener('click', () => this.exportToGoogleDrive());
+    }
+    
+    if (this.exportDropbox) {
+      this.exportDropbox.addEventListener('click', () => this.exportToDropbox());
+    }
+    
+    if (this.exportPdf) {
+      this.exportPdf.addEventListener('click', () => this.exportToPdf());
+    }
+    
+    if (this.exportMarkdown) {
+      this.exportMarkdown.addEventListener('click', () => this.exportToMarkdown());
+    }
+    
+    if (this.openSettingsLink) {
+      this.openSettingsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.hideExportOptionsModal();
+        this.openSidebar();
+      });
+    }
+    
     // Health system event listeners
     if (this.healthIndicator) {
       this.healthIndicator.addEventListener('click', () => this.showHealthDialog());
@@ -1146,6 +1196,11 @@ class ScribeCatApp {
     // Close modals and dialogs
     if (this.clearNotesModal && this.clearNotesModal.style.display !== 'none') {
       this.hideClearNotesModal();
+      return;
+    }
+    
+    if (this.exportOptionsModal && this.exportOptionsModal.style.display !== 'none') {
+      this.hideExportOptionsModal();
       return;
     }
     
@@ -2561,6 +2616,98 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
     this.hideClearNotesModal();
   }
+  
+  showExportOptionsModal() {
+    if (this.exportOptionsModal) {
+      this.exportOptionsModal.style.display = 'flex';
+      this.updateExportConnectionStatus();
+    }
+  }
+  
+  hideExportOptionsModal() {
+    if (this.exportOptionsModal) {
+      this.exportOptionsModal.style.display = 'none';
+    }
+  }
+  
+  updateExportConnectionStatus() {
+    // Update Google Drive connection status
+    if (this.driveConnectionStatus) {
+      const notesDriveFolder = this.notesDriveFolderInput?.value;
+      if (notesDriveFolder) {
+        this.driveConnectionStatus.textContent = 'Connected';
+        this.driveConnectionStatus.className = 'connection-status connected';
+      } else {
+        this.driveConnectionStatus.textContent = 'Not Connected';
+        this.driveConnectionStatus.className = 'connection-status not-connected';
+      }
+    }
+    
+    // Update Dropbox connection status (placeholder for future implementation)
+    if (this.dropboxConnectionStatus) {
+      this.dropboxConnectionStatus.textContent = 'Not Connected';
+      this.dropboxConnectionStatus.className = 'connection-status not-connected';
+    }
+  }
+  
+  async exportToGoogleDrive() {
+    try {
+      const notesDriveFolder = await window.electronAPI.storeGet('notes-drive-folder');
+      if (!notesDriveFolder) {
+        alert('Please configure Google Drive folder in Settings first.');
+        return;
+      }
+      
+      this.exportGoogleDrive.disabled = true;
+      this.exportGoogleDrive.innerHTML = 'Uploading...';
+      
+      // Use the last saved session data for export
+      if (this.lastExportData) {
+        // Save to Drive using existing functionality
+        await window.electronAPI.driveEnsureTarget(notesDriveFolder);
+        
+        // Upload notes
+        await window.electronAPI.driveSaveHtml({
+          filePath: notesDriveFolder,
+          content: this.lastExportData.notesContent,
+          fileName: this.lastExportData.baseFileName
+        });
+        
+        // Upload transcription
+        await window.electronAPI.driveSaveHtml({
+          filePath: notesDriveFolder,
+          content: this.lastExportData.transcriptionContent,
+          fileName: this.lastExportData.baseFileName
+        });
+        
+        alert('Successfully uploaded to Google Drive!');
+      }
+    } catch (error) {
+      console.error('Error uploading to Google Drive:', error);
+      alert('Error uploading to Google Drive. Please try again.');
+    } finally {
+      this.exportGoogleDrive.disabled = false;
+      this.exportGoogleDrive.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 14l5-5 5 5"/>
+          <path d="M7 14l5-5 5 5"/>
+        </svg>
+        Upload to Google Drive
+      `;
+    }
+  }
+  
+  async exportToDropbox() {
+    alert('Dropbox integration coming soon! Configure in Settings when available.');
+  }
+  
+  async exportToPdf() {
+    alert('PDF export coming soon! This will create PDF versions of your notes and transcription.');
+  }
+  
+  async exportToMarkdown() {
+    alert('Markdown export coming soon! This will create .md files from your notes and transcription.');
+  }
 
   newRecording() {
     // Clear current session
@@ -2733,6 +2880,14 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         console.log('Transcription saved to Google Drive:', transcriptionDriveFolder);
       }
 
+      // Store export data for use in export dialog
+      this.lastExportData = {
+        baseFileName: baseFileName,
+        notesContent: this.generateNotesHTML(),
+        transcriptionContent: this.generateTranscriptionHTML(),
+        courseInfo: courseInfo
+      };
+
       alert('Recording saved successfully!');
 
       // Restore save button state
@@ -2740,6 +2895,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         this.saveBtn.innerHTML = 'Save';
         this.saveBtn.disabled = false;
       }
+      
+      // PART 5: Show Export Options Dialog
+      this.showExportOptionsModal();
 
     } catch (error) {
       console.error('Error saving recording:', error);

@@ -755,6 +755,82 @@
         </div>
     </div>
 
+    <!-- Export Options Dialog -->
+    <div class="modal" id="export-options-modal" style="display: none;">
+        <div class="modal-content export-options-modal">
+            <div class="modal-header">
+                <h3>Export Options</h3>
+                <button class="modal-close" id="export-options-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="export-intro">Your session has been saved to Downloads. Choose additional export options:</p>
+                
+                <div class="export-section">
+                    <h4>Cloud Storage Upload</h4>
+                    <div class="export-options-grid">
+                        <div class="export-option">
+                            <button class="btn export-btn" id="export-google-drive" data-service="google-drive">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M7 14l5-5 5 5"/>
+                                    <path d="M7 14l5-5 5 5"/>
+                                </svg>
+                                Upload to Google Drive
+                            </button>
+                            <span class="connection-status" id="drive-connection-status">Not Connected</span>
+                        </div>
+                        <div class="export-option">
+                            <button class="btn export-btn" id="export-dropbox" data-service="dropbox">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M7 14l5-5 5 5"/>
+                                    <path d="M7 14l5-5 5 5"/>
+                                </svg>
+                                Upload to Dropbox
+                            </button>
+                            <span class="connection-status" id="dropbox-connection-status">Not Connected</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="export-section">
+                    <h4>Additional Formats</h4>
+                    <div class="export-options-grid">
+                        <div class="export-option">
+                            <button class="btn export-btn" id="export-pdf" data-format="pdf">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                                Export as PDF
+                            </button>
+                        </div>
+                        <div class="export-option">
+                            <button class="btn export-btn" id="export-markdown" data-format="markdown">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                                Export as Markdown
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="export-section setup-links">
+                    <p class="setup-note">Need to set up connections? <a href="#" id="open-settings-link">Configure in Settings</a></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="export-skip" class="btn btn-secondary">Skip</button>
+                <button id="export-done" class="btn btn-primary">Done</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../shared/subscription-manager.js"></script>
     <script src="app.js"></script>
 </body>
