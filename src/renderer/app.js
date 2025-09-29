@@ -101,8 +101,20 @@ class ScribeCatApp {
     this.vuMeter = document.getElementById('vu-meter');
     this.vuBar = document.getElementById('vu-bar');
     // Sidebar
-    this.sidebar = document.getElementById('sidebar');
-    this.sidebarScrim = document.getElementById('sidebar-scrim');
+    this.hamburgerMenuBtn = document.getElementById('hamburger-menu-btn');
+    this.sidebarOverlay = document.getElementById('sidebar-overlay');
+    this.sidebarPanel = document.getElementById('sidebar-panel');
+    this.sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+    
+    // Debug: Check if button exists
+    console.log('Hamburger button element:', this.hamburgerMenuBtn);
+    if (this.hamburgerMenuBtn) {
+      console.log('Button found! Adding test click handler immediately...');
+      this.hamburgerMenuBtn.addEventListener('click', () => {
+        console.log('IMMEDIATE TEST: Button clicked!');
+        alert('Button is working!');
+      });
+    }
     
     // Settings elements
     this.saveClaudeKeyBtn = document.getElementById('save-claude-key');
@@ -1028,31 +1040,59 @@ class ScribeCatApp {
   }
 
   setupEventListeners() {
-    // Allow clicking the collapsed sidebar block itself to open it
-    if (this.sidebar) {
-      this.sidebar.addEventListener('click', (e) => {
-        if (!this.sidebar.classList.contains('open')) {
-          e.stopPropagation();
-          this.openSidebar();
-        }
+    // Hamburger menu button click handler
+    console.log('Looking for hamburger menu button...', this.hamburgerMenuBtn);
+    
+    if (this.hamburgerMenuBtn) {
+      console.log('Hamburger menu button found! Setting up click handler');
+      
+      // Add multiple event listeners to ensure we catch the click
+      this.hamburgerMenuBtn.addEventListener('click', (e) => {
+        console.log('Hamburger menu button clicked!');
+        e.preventDefault();
+        e.stopPropagation();
+        this.openSidebar();
       });
+      
+      this.hamburgerMenuBtn.addEventListener('mousedown', (e) => {
+        console.log('Hamburger menu button mousedown!');
+      });
+      
+      this.hamburgerMenuBtn.addEventListener('mouseup', (e) => {
+        console.log('Hamburger menu button mouseup!');
+      });
+      
+      // Also try touch events for mobile
+      this.hamburgerMenuBtn.addEventListener('touchstart', (e) => {
+        console.log('Hamburger menu button touchstart!');
+        e.preventDefault();
+        this.openSidebar();
+      });
+      
+    } else {
+      console.error('Hamburger menu button not found!');
+      // Try to find it manually
+      const manualBtn = document.getElementById('hamburger-menu-btn');
+      console.log('Manual search result:', manualBtn);
     }
     
-    // Close button handler
-    const sidebarCloseBtn = this.sidebar?.querySelector('.sidebar-close');
-    if (sidebarCloseBtn) {
-      sidebarCloseBtn.addEventListener('click', (e) => {
+    // Sidebar close button handler
+    if (this.sidebarCloseBtn) {
+      this.sidebarCloseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.closeSidebar();
       });
     }
     
-    // Scrim click to close
-    if (this.sidebarScrim) {
-      this.sidebarScrim.addEventListener('click', () => {
+    // Overlay click to close
+    if (this.sidebarOverlay) {
+      this.sidebarOverlay.addEventListener('click', () => {
         this.closeSidebar();
       });
     }
+    
+    // Section toggle handlers
+    this.setupSectionToggles();
     
     // Mode toggle event listeners
     if (this.captureModeBtn) {
@@ -1298,7 +1338,7 @@ class ScribeCatApp {
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
       mainContent.addEventListener('click', () => {
-        if (this.sidebar && this.sidebar.classList.contains('open')) {
+        if (this.sidebarPanel && this.sidebarPanel.classList.contains('open')) {
           this.closeSidebar();
         }
       });
@@ -1474,33 +1514,49 @@ class ScribeCatApp {
     this.setupGlobalKeyboardShortcuts();
   }
 
-  toggleSidebar() {
-    this.sidebar.classList.toggle('open');
-    this.updateSidebarScrim();
-  }
-  
   openSidebar() {
-    if (this.sidebar) {
-      this.sidebar.classList.add('open');
-      this.updateSidebarScrim();
+    console.log('Opening sidebar...');
+    if (this.sidebarPanel && this.sidebarOverlay) {
+      this.sidebarPanel.classList.add('open');
+      this.sidebarOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      console.log('Sidebar opened successfully');
+    } else {
+      console.error('Sidebar elements not found!', {
+        sidebarPanel: !!this.sidebarPanel,
+        sidebarOverlay: !!this.sidebarOverlay
+      });
     }
   }
   
   closeSidebar() {
-    if (this.sidebar) {
-      this.sidebar.classList.remove('open');
-      this.updateSidebarScrim();
+    if (this.sidebarPanel && this.sidebarOverlay) {
+      this.sidebarPanel.classList.remove('open');
+      this.sidebarOverlay.classList.remove('show');
+      document.body.style.overflow = ''; // Restore scrolling
     }
   }
   
-  updateSidebarScrim() {
-    if (this.sidebarScrim) {
-      if (this.sidebar && this.sidebar.classList.contains('open')) {
-        this.sidebarScrim.classList.add('show');
-      } else {
-        this.sidebarScrim.classList.remove('show');
-      }
-    }
+  setupSectionToggles() {
+    const sectionHeaders = document.querySelectorAll('.section-header');
+    sectionHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const sectionName = header.getAttribute('data-section');
+        const content = document.getElementById(`${sectionName}-content`);
+        
+        if (content) {
+          const isExpanded = header.classList.contains('expanded');
+          
+          if (isExpanded) {
+            header.classList.remove('expanded');
+            content.classList.remove('expanded');
+          } else {
+            header.classList.add('expanded');
+            content.classList.add('expanded');
+          }
+        }
+      });
+    });
   }
 
   setupGlobalKeyboardShortcuts() {
@@ -1553,7 +1609,7 @@ class ScribeCatApp {
     }
 
     // Close sidebar if open
-    if (this.sidebar && this.sidebar.classList.contains('open')) {
+    if (this.sidebarPanel && this.sidebarPanel.classList.contains('open')) {
       this.closeSidebar();
       return;
     }
