@@ -63,7 +63,7 @@ echo "🎉 ScribeCat setup complete!"
 echo
 echo "Next steps:"
 echo "1. Start development server: npm run dev"
-echo "2. Configure API keys for AssemblyAI and OpenAI"
+echo "2. Configure API keys for AssemblyAI and Claude"
 echo "3. Set up Google Drive folder integration"
 echo "4. Replace placeholder assets with your logo and fonts"
 echo

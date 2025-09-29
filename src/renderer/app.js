@@ -5,14 +5,14 @@ const keytar = {
   setPassword: async (service, account, password) => window.electronAPI.keytarSet(service, account, password)
 };
 const SERVICE_NAME = 'ScribeCat';
-const OPENAI_KEY = 'openai-api-key';
+const CLAUDE_KEY = 'claude-api-key';
 
-// Developer's OpenAI API key as fallback (for all users)
+// Developer's Claude API key as fallback (for all users)
 // Note: In production, this should be loaded from environment variables or secure config.
 // In the isolated renderer (nodeIntegration: false), `process` is not defined; guard access.
-const DEVELOPER_OPENAI_KEY = (typeof process !== 'undefined' && process.env && process.env.SCRIBECAT_OPENAI_KEY)
-  ? process.env.SCRIBECAT_OPENAI_KEY
-  : 'sk-proj-placeholder-developer-key-needs-to-be-set';
+const DEVELOPER_CLAUDE_KEY = (typeof process !== 'undefined' && process.env && process.env.SCRIBECAT_CLAUDE_KEY)
+  ? process.env.SCRIBECAT_CLAUDE_KEY
+  : 'sk-ant-placeholder-developer-key-needs-to-be-set';
 
 class ScribeCatApp {
   constructor() {
@@ -24,7 +24,7 @@ class ScribeCatApp {
     this.transcriptionSocket = null;
     this.voskModelPath = null;
     this.whisperEnabled = false;
-    this.openAIApiKey = null;
+    this.claudeApiKey = null;
     this.isUsingDeveloperKey = false;
     this.simulationMode = true; // Default to simulation mode enabled
     this.currentTheme = 'default';
@@ -59,8 +59,8 @@ class ScribeCatApp {
     this.sidebarScrim = document.getElementById('sidebar-scrim');
     
     // Settings elements
-    this.saveOpenAIKeyBtn = document.getElementById('save-openai-key');
-    this.openAIKeyInput = document.getElementById('openai-key');
+    this.saveClaudeKeyBtn = document.getElementById('save-claude-key');
+    this.claudeKeyInput = document.getElementById('claude-key');
     this.themeGrid = document.getElementById('theme-grid');
     this.canvasUrl = document.getElementById('canvas-url');
     this.courseSelect = document.getElementById('course-select');
@@ -131,22 +131,51 @@ class ScribeCatApp {
     // Load Vosk model path and Whisper toggle
     this.voskModelPath = await window.electronAPI.storeGet('vosk-model-path');
     this.whisperEnabled = await window.electronAPI.storeGet('whisper-enabled') || false;
-    // Securely retrieve OpenAI key, with developer fallback
-    this.openAIApiKey = await keytar.getPassword(SERVICE_NAME, OPENAI_KEY);
-    if (!this.openAIApiKey) {
+    // Securely retrieve Claude key, with developer fallback
+    this.claudeApiKey = await keytar.getPassword(SERVICE_NAME, CLAUDE_KEY);
+    if (!this.claudeApiKey) {
       // Use developer's API key by default for all users
-      this.openAIApiKey = DEVELOPER_OPENAI_KEY;
+      this.claudeApiKey = DEVELOPER_CLAUDE_KEY;
       this.isUsingDeveloperKey = true;
-      console.log('Using developer OpenAI API key for GPT-4o mini access');
+      console.log('Using developer Claude API key for claude-sonnet-4-20250514 access');
     } else {
       this.isUsingDeveloperKey = false;
-      console.log('Using user-provided OpenAI API key');
+      console.log('Using user-provided Claude API key');
     }
     // Hide summary button initially
     if (this.generateSummaryBtn) {
       this.generateSummaryBtn.style.display = 'none';
     }
     console.log('ScribeCat initialized successfully');
+  }
+
+  // Claude API helper function for consistent API calls
+  async callClaudeAPI(messages, maxTokens = 1200, temperature = 0.7) {
+    if (!this.claudeApiKey) {
+      throw new Error('Claude API key not available');
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.claudeApiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: maxTokens,
+        temperature: temperature,
+        messages: messages
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.content?.[0]?.text || 'No response content';
   }
 
   cleanupDomArtifacts() {
@@ -216,8 +245,8 @@ class ScribeCatApp {
     if (this.generateSummaryBtn) {
       this.generateSummaryBtn.addEventListener('click', () => this.generateAISummary());
     }
-    if (this.saveOpenAIKeyBtn) {
-      this.saveOpenAIKeyBtn.addEventListener('click', () => this.saveOpenAIKey());
+    if (this.saveClaudeKeyBtn) {
+      this.saveClaudeKeyBtn.addEventListener('click', () => this.saveClaudeKey());
     }
     if (this.clearTranscriptionBtn) {
       this.clearTranscriptionBtn.addEventListener('click', () => this.clearTranscription());
@@ -676,32 +705,19 @@ class ScribeCatApp {
         }
       } else {
         // Real API mode
-        if (!this.openAIApiKey) {
-          this.aiSummary.innerHTML = '<span style="color:red">OpenAI API key required.</span>';
+        if (!this.claudeApiKey) {
+          this.aiSummary.innerHTML = '<span style="color:red">Claude API key required.</span>';
           this.generateSummaryBtn.disabled = false;
           return;
         }
         
         try {
           const prompt = `Summarize the following notes and transcript. Highlight key topics, phrases, and any due dates. Format the output in rich markdown.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${this.openAIApiKey}`
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: 'You are a helpful assistant that summarizes notes and transcripts in rich markdown.' },
-                { role: 'user', content: prompt }
-              ],
-              max_tokens: 256,
-              temperature: 0.3
-            })
-          });
-          const data = await response.json();
-          const summary = data.choices?.[0]?.message?.content?.trim();
+          
+          const summary = await this.callClaudeAPI([
+            { role: 'user', content: `You are a helpful assistant that summarizes notes and transcripts in rich markdown.\n\n${prompt}` }
+          ], 512, 0.3);
+          
           if (summary) {
             this.aiSummary.innerHTML = window.marked ? marked.parse(summary) : summary;
           } else {
@@ -710,7 +726,7 @@ class ScribeCatApp {
         } catch (err) {
           console.error('Error generating summary:', err);
           if (this.isUsingDeveloperKey) {
-            this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own OpenAI API key in settings or enable simulation mode.</span>';
+            this.aiSummary.innerHTML = '<span style="color:red">Error with developer API key. Please provide your own Claude API key in settings or enable simulation mode.</span>';
           } else {
             this.aiSummary.innerHTML = '<span style="color:red">Error generating summary. Please check your API key or enable simulation mode.</span>';
           }
@@ -733,33 +749,17 @@ class ScribeCatApp {
         .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
         .join('\n');
       
-      if (!this.openAIApiKey) {
-        console.warn('OpenAI API key not available for blurb generation, using fallback');
+      if (!this.claudeApiKey) {
+        console.warn('Claude API key not available for blurb generation, using fallback');
         return 'Session_Notes';
       }
 
       try {
         const prompt = `Generate a brief 1-6 word description suitable for a filename based on the following notes and transcript content. The response should be concise, descriptive, and use underscores instead of spaces. Focus on the main topic or subject matter.\nNotes:\n${notesContent}\nTranscript:\n${transcriptContent}`;
         
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.openAIApiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'You are a helpful assistant that generates brief, descriptive filenames. Respond with only the filename-friendly phrase using underscores instead of spaces, no quotes or extra text.' },
-              { role: 'user', content: prompt }
-            ],
-            max_tokens: 32,
-            temperature: 0.3
-          })
-        });
-        
-        const data = await response.json();
-        const blurb = data.choices?.[0]?.message?.content?.trim();
+        const blurb = await this.callClaudeAPI([
+          { role: 'user', content: `You are a helpful assistant that generates brief, descriptive filenames. Respond with only the filename-friendly phrase using underscores instead of spaces, no quotes or extra text.\n\n${prompt}` }
+        ], 64, 0.3);
         
         if (blurb) {
           // Clean up the blurb for filename use
@@ -780,22 +780,22 @@ class ScribeCatApp {
       }
     }
 
-  async saveOpenAIKey() {
-    const key = this.openAIKeyInput.value.trim();
+  async saveClaudeKey() {
+    const key = this.claudeKeyInput.value.trim();
     if (!key) {
-      alert('Please enter a valid OpenAI API key.');
+      alert('Please enter a valid Claude API key.');
       return;
     }
     
     try {
-      await keytar.setPassword(SERVICE_NAME, OPENAI_KEY, key);
-      this.openAIApiKey = key;
+      await keytar.setPassword(SERVICE_NAME, CLAUDE_KEY, key);
+      this.claudeApiKey = key;
       this.isUsingDeveloperKey = false;
-      this.openAIKeyInput.value = '';
-      alert('OpenAI API key saved successfully! You are now using your own key.');
-      console.log('User provided their own OpenAI API key');
+      this.claudeKeyInput.value = '';
+      alert('Claude API key saved successfully! You are now using your own key.');
+      console.log('User provided their own Claude API key');
     } catch (error) {
-      console.error('Error saving OpenAI key:', error);
+      console.error('Error saving Claude key:', error);
       alert('Error saving API key. Please try again.');
     }
   }
@@ -1504,28 +1504,14 @@ class ScribeCatApp {
     const context = Array.from(this.transcriptionDisplay.children)
       .map(e => e.querySelector('.transcript-text')?.textContent || '')
       .join(' ');
-    // Call GPT-4o mini (OpenAI API) for polish
-    if (!this.openAIApiKey) return;
+    // Call Claude for polish
+    if (!this.claudeApiKey) return;
     try {
       const prompt = `Polish this transcript for clarity and grammar, keeping context in mind.\nContext: ${context}\nTranscript: ${originalText}`;
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.openAIApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'You are a helpful assistant that polishes transcripts for clarity.' },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 128,
-          temperature: 0.3
-        })
-      });
-      const data = await response.json();
-      const polished = data.choices?.[0]?.message?.content?.trim();
+      
+      const polished = await this.callClaudeAPI([
+        { role: 'user', content: `You are a helpful assistant that polishes transcripts for clarity.\n\n${prompt}` }
+      ], 256, 0.3);
       if (polished && polished !== originalText) {
         const textDiv = entry.querySelector('.transcript-text');
         if (textDiv) textDiv.textContent = polished;
@@ -2153,44 +2139,23 @@ class ScribeCatApp {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using OpenAI's API to provide contextual answers.]`;
+      return `${randomResponse} [This is a simulated response. In the real implementation, this would analyze your notes and transcription using Claude API to provide contextual answers.]`;
     } else {
-      // Real OpenAI API implementation
+      // Real Claude API implementation
       try {
         const context = `Notes: ${notesContent}\n\nTranscription: ${transcriptionContent}`;
         
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.openAIApiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.'
-              },
-              {
-                role: 'user',
-                content: `Context: ${context}\n\nQuestion: ${question}`
-              }
-            ],
-            max_tokens: 500,
-            temperature: 0.7
-          })
-        });
+        const response = await this.callClaudeAPI([
+          {
+            role: 'user',
+            content: `You are a helpful assistant that analyzes notes and transcriptions to answer questions. Provide concise, relevant answers based on the provided content.\n\nContext: ${context}\n\nQuestion: ${question}`
+          }
+        ], 500, 0.7);
 
-        if (!response.ok) {
-          throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+        return response || 'Sorry, I could not generate a response.';
       } catch (error) {
-        console.error('Error calling OpenAI API:', error);
-        return `Error: Could not connect to OpenAI API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
+        console.error('Error calling Claude API:', error);
+        return `Error: Could not connect to Claude API. ${error.message}. Try enabling simulation mode in Developer Settings.`;
       }
     }
   }

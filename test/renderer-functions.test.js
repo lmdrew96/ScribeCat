@@ -279,12 +279,12 @@ async function main() {
     return app.transcriptionDisplay.scrollTop === app.transcriptionDisplay.scrollHeight;
   });
 
-  await harness.testAsync('save openai key button saves via keytar IPC', async () => {
-    const input = document.getElementById('openai-key');
-    input.value = 'sk-click';
-    document.getElementById('save-openai-key').click();
+  await harness.testAsync('save claude key button saves via keytar IPC', async () => {
+    const input = document.getElementById('claude-key');
+    input.value = 'sk-ant-click';
+    document.getElementById('save-claude-key').click();
     await new Promise(r => setTimeout(r, 5));
-    if (app.openAIApiKey !== 'sk-click') throw new Error('Key not saved');
+    if (app.claudeApiKey !== 'sk-ant-click') throw new Error('Key not saved');
   });
 
   await harness.testAsync('generate summary button generates output', async () => {
@@ -384,7 +384,7 @@ async function main() {
     // Make sure button is not disabled from previous tests
     app.generateSummaryBtn.disabled = false;
     
-    app.openAIApiKey = 'k';
+    app.claudeApiKey = 'sk-ant-test';
     app.generateSummaryBtn.style.display = 'block';
     app.notesEditor.textContent = 'Note A';
     app.transcriptionDisplay.innerHTML = '';
@@ -417,11 +417,11 @@ async function main() {
     if (blurb !== 'Simulated_Session_Notes') throw new Error('Simulation blurb not generated');
   });
 
-  await harness.testAsync('saveOpenAIKey saves and clears input', async () => {
-    app.openAIKeyInput.value = 'sk-test';
-    await app.saveOpenAIKey();
-    if (app.openAIApiKey !== 'sk-test') throw new Error('Key not set');
-    if (app.openAIKeyInput.value !== '') throw new Error('Input not cleared');
+  await harness.testAsync('saveClaudeKey saves and clears input', async () => {
+    app.claudeKeyInput.value = 'sk-ant-test';
+    await app.saveClaudeKey();
+    if (app.claudeApiKey !== 'sk-ant-test') throw new Error('Key not set');
+    if (app.claudeKeyInput.value !== '') throw new Error('Input not cleared');
   });
 
   await harness.testAsync('selectNotesDriveFolder sets folder and chip active', async () => {

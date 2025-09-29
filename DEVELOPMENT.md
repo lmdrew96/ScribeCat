@@ -33,12 +33,12 @@ ScribeCat now uses **Vosk** (offline) as the primary transcription engine, with 
    - Select "Whisper (Optional)" in Settings → Transcription Backend
    - Requires internet connection for API calls
 
-### OpenAI Setup  
-**Note**: ScribeCat includes a **developer API key by default** for GPT-4o-mini access, so OpenAI features work out of the box for all users.
+### Claude Setup  
+**Note**: ScribeCat includes a **developer API key by default** for claude-sonnet-4-20250514 access, so AI features work out of the box for all users.
 
 **Optional - Use Your Own Key**:
-1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. In the app, go to Settings → OpenAI API
+1. Get API key from [Anthropic Console](https://console.anthropic.com/)
+2. In the app, go to Settings → Claude API
 3. Enter your key to use your own quota instead of the shared developer key
 
 ## Google Drive Integration
@@ -115,7 +115,7 @@ Uses `electron-store` for persistent configuration:
 - **Real-time streaming**: Audio is processed as it's recorded
 - **Auto-accumulation**: Transcript entries are automatically appended
 - **Auto-scroll**: Display scrolls to show latest transcription
-- **Context-aware polish**: GPT-4o-mini intelligently improves transcript clarity
+- **Context-aware polish**: Claude Sonnet 4 intelligently improves transcript clarity
 - **Jittered timing**: Polish requests are staggered to avoid API rate limits
 
 ### AI Polish System
@@ -145,7 +145,7 @@ Uses `electron-store` for persistent configuration:
 
 ### Extending AI Chat
 1. Update `getAIResponse()` method in `app.js`
-2. Add OpenAI API integration with proper error handling
+2. Add Claude API integration with proper error handling
 3. Enhance context building from notes and transcription
 
 ## Testing Strategy

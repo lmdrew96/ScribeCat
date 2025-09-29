@@ -14,7 +14,7 @@
   - 10 Non-Traditional Sans Serif fonts (Inter, Roboto, Open Sans, Lato, Montserrat, Source Sans Pro, Nunito, Poppins, Raleway, Work Sans)
 - **Audio Recording**: Record from device microphone or connected devices with vocal isolation
 - **Canvas Integration**: Connect to Canvas Instructure for course numbers and titles (no OAuth required)
-- **AI-Powered Chat**: Collapsible "Ask AI" window using OpenAI with context from notes and transcription
+- **AI-Powered Chat**: Collapsible "Ask AI" window using Claude with context from notes and transcription
 - **Google Drive Integration**: Save recordings and notes directly to Google Drive folders
 
 ### Additional Features 🎨
@@ -126,7 +126,7 @@ npm run pack
 ### API Keys Setup
 Add your API keys through the application settings:
 
-- **OpenAI API Key**: For AI chat functionality (optional - developer key included by default)
+- **Claude API Key**: For AI chat functionality (optional - developer key included by default)
 
 ### Transcription Backend Configuration
 ScribeCat supports two transcription engines:
@@ -154,7 +154,7 @@ ScribeCat uses Drive-for-desktop folder sync:
 - **HTML/CSS/JavaScript**: Frontend interface
 - **Vosk**: Offline speech transcription (primary)
 - **Whisper**: Optional cloud-based transcription
-- **OpenAI**: AI chat functionality
+- **Claude**: AI chat functionality
 
 ### Project Structure
 ```
