@@ -18,7 +18,7 @@
             </div>
             <div class="header-center">
                 <div class="logo-container">
-                    <img src="../../assets/images/nugget.png" alt="ScribeCat" class="logo" onerror="this.style.display='none'">
+                    <img src="../../assets/images/nugget-logo.PNG" alt="ScribeCat" class="logo" onerror="this.style.display='none'">
                     <h1 class="app-title">ScribeCat</h1>
                 </div>
             </div>
@@ -27,12 +27,20 @@
                 <div class="mode-toggle" id="mode-toggle">
                     <button class="mode-btn active" id="capture-mode-btn" 
                             title="Capture Mode - Record lectures and take notes">
-                        <span class="mode-emoji">🗣️</span>
+                        <span class="mode-emoji">🎙️</span>
                     </button>
                     <button class="mode-btn" id="study-mode-btn" 
                             title="Study Mode - Review recordings and notes">
                         <span class="mode-emoji">📖</span>
                     </button>
+                </div>
+                
+                <!-- Course Selector in Header -->
+                <div class="header-course-selector">
+                    <select id="header-course-select" class="input-field course-selector-header">
+                        <option value="">Choose a course...</option>
+                        <option value="other">Other</option>
+                    </select>
                 </div>
                 
                 <div class="clock-section">
@@ -101,12 +109,6 @@
         <aside class="sidebar-panel" id="sidebar-panel">
             <div class="sidebar-header">
                 <h2>Settings</h2>
-                <button class="sidebar-close-btn" id="sidebar-close-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
             </div>
             
             <div class="sidebar-content">
@@ -152,6 +154,32 @@
                                 <button id="save-canvas" class="btn btn-small">Save</button>
                                 <button id="manage-courses" class="btn btn-small">Manage Courses</button>
                                 <button id="import-from-extension" class="btn btn-small btn-primary">Import from Extension</button>
+                            </div>
+                            
+                            <!-- Browser Extension Installation -->
+                            <div class="extension-installation">
+                                <h4>Install Browser Extension</h4>
+                                <p>Install the ScribeCat browser extension to automatically collect course information from Canvas:</p>
+                                <div class="extension-buttons">
+                                    <button id="install-chrome" class="btn btn-small extension-btn" data-browser="chrome">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        Chrome
+                                    </button>
+                                    <button id="install-firefox" class="btn btn-small extension-btn" data-browser="firefox">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        Firefox
+                                    </button>
+                                    <button id="install-safari" class="btn btn-small extension-btn" data-browser="safari">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                        Safari
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -305,24 +333,6 @@
                     <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription (Ctrl+S / ⌘S)">Save</button>
                 </div>
 
-                <!-- Course Selection -->
-                <div class="course-selection-container">
-                    <div class="course-selection-label">
-                        <label for="capture-course-select">Select Course: <span class="required">*</span></label>
-                    </div>
-                    <div class="course-selection-controls">
-                        <select id="capture-course-select" class="input-field course-selector">
-                            <option value="">Choose a course...</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <div id="capture-custom-category" class="custom-category-input" style="display: none;">
-                            <input type="text" id="capture-custom-text" placeholder="Enter custom category (optional)" class="input-field">
-                        </div>
-                    </div>
-                    <div class="course-selection-error" id="course-selection-error" style="display: none;">
-                        Please select a course before saving your session
-                    </div>
-                </div>
 
                 <!-- Content Container -->
                 <div class="content-container">
@@ -420,18 +430,27 @@
                                     </svg>
                                 </label>
                             </div>
+                            <!-- Highlight Toggle Button -->
+                            <button class="format-btn" data-command="highlight" title="Toggle highlighting on selected text">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <!-- Highlighter body -->
+                                    <rect x="3" y="4" width="3" height="16" rx="1.5" fill="currentColor" opacity="0.8"/>
+                                    <!-- Highlighter tip -->
+                                    <rect x="6" y="8" width="2" height="8" rx="1" fill="var(--highlight-color, #ffd200)" stroke="currentColor" stroke-width="0.5"/>
+                                    <!-- Highlighter cap -->
+                                    <rect x="2.5" y="3" width="4" height="2" rx="1" fill="currentColor"/>
+                                    <!-- Highlight mark effect -->
+                                    <rect x="9" y="14" width="12" height="3" rx="1.5" fill="var(--highlight-color, #ffd200)" opacity="0.6"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- Highlight Color Picker -->
                             <div class="color-selector-group">
                                 <input type="color" id="highlight-color" class="color-selector" value="#ffd200" title="Highlight Color">
-                                <button class="format-btn" data-command="highlight" title="Highlight text (current: Yellow)">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                        <!-- Highlighter body -->
-                                        <rect x="3" y="4" width="3" height="16" rx="1.5" fill="currentColor" opacity="0.8"/>
-                                        <!-- Highlighter tip -->
-                                        <rect x="6" y="8" width="2" height="8" rx="1" fill="var(--highlight-color, #ffd200)" stroke="currentColor" stroke-width="0.5"/>
-                                        <!-- Highlighter cap -->
-                                        <rect x="2.5" y="3" width="4" height="2" rx="1" fill="currentColor"/>
-                                        <!-- Highlight mark effect -->
-                                        <rect x="9" y="14" width="12" height="3" rx="1.5" fill="var(--highlight-color, #ffd200)" opacity="0.6"/>
+                                <button class="format-btn highlight-color-btn" title="Change highlight color">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
                                     </svg>
                                 </button>
                             </div>

@@ -16,13 +16,21 @@
   --text-muted: #94a3b8;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --spacing-xs: 2px;
-  --spacing-sm: 4px;
-  --spacing-md: 8px;
-  --spacing-lg: 12px;
-  --spacing-xl: 16px;
-  --spacing-2xl: 20px;
-  --spacing-3xl: 24px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 40px;
+  --spacing-3xl: 48px;
+  
+  /* Responsive breakpoints */
+  --mobile: 320px;
+  --mobile-lg: 375px;
+  --tablet: 768px;
+  --laptop: 1024px;
+  --desktop: 1366px;
+  --desktop-lg: 1920px;
 }
 
 /* Custom fonts */
@@ -355,6 +363,31 @@ body {
 
 .header-right {
   justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+/* Header Course Selector */
+.header-course-selector {
+  display: flex;
+  align-items: center;
+}
+
+.course-selector-header {
+  min-width: 200px;
+  max-width: 250px;
+  font-size: 14px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease;
+}
+
+.course-selector-header:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 /* Error Notification Banner */
@@ -651,7 +684,7 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  width: 280px;
+  width: 320px;
   height: 100vh;
   background: var(--background);
   border-right: 1px solid var(--border);
@@ -1167,6 +1200,58 @@ body {
   gap: 8px;
 }
 
+/* Extension Installation Styles */
+.extension-installation {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.extension-installation h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.extension-installation p {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.extension-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.extension-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.extension-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.extension-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 .input-field, .font-selector {
   width: 100%;
   padding: 8px 12px;
@@ -1239,25 +1324,26 @@ body {
 
 /* Recording controls */
 .recording-controls {
-  padding: 12.8px; /* Reduced by 20% from 16px */
+  padding: var(--spacing-md);
   background: var(--surface);
   border: 2px solid var(--border);
-  border-top: 3px solid var(--accent); /* Accent top border */
-  border-bottom: 3px solid var(--primary-color); /* Primary bottom border for tri-color effect */
+  border-top: 3px solid var(--accent);
+  border-bottom: 3px solid var(--primary-color);
   border-radius: 12px;
-  margin: var(--spacing-sm); /* 4px margin on all sides */
-  box-shadow: var(--shadow-sm);
+  margin: var(--spacing-sm);
+  box-shadow: var(--shadow);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm); /* 4px gap between controls */
+  gap: var(--spacing-sm);
   flex-shrink: 0;
   transition: border-color 0.3s ease;
-  height: 56px; /* Reduced by 20% from default ~70px */
-  width: calc(100% - 8px); /* Use percentage width instead of viewport width */
-  max-width: 100%; /* Ensure it doesn't overflow */
+  min-height: 60px;
+  width: calc(100% - var(--spacing-md));
+  max-width: 100%;
   position: relative;
   left: 0;
-  box-sizing: border-box; /* Include padding and borders in width calculation */
+  box-sizing: border-box;
+  flex-wrap: wrap;
 }
 
 .record-btn {
@@ -1447,19 +1533,19 @@ body {
 
 /* Editor section */
 .editor-section {
-  flex: 1 1 50%; /* Equal width split, can grow/shrink */
+  flex: 1 1 50%;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  width: calc(50vw - 20px); /* Dynamic width based on viewport */
-  height: calc(100vh - 300px); /* Increased to prevent Claude button overlap */
+  width: calc(50vw - 20px);
+  height: calc(100vh - 300px);
   background: var(--surface);
   border: 2px solid var(--border);
-  border-left: 3px solid var(--accent); /* Accent border for visual pop */
-  border-radius: var(--spacing-sm); /* 4px border radius */
-  padding: var(--spacing-sm); /* 4px padding inside section */
-  margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
-  box-shadow: var(--shadow-sm);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px; /* Consistent with recording-controls */
+  padding: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  box-shadow: var(--shadow);
   overflow: hidden;
   transition: border-color 0.3s ease;
 }
@@ -1819,18 +1905,18 @@ body {
 
 /* Transcription section */
 .transcription-section {
-  flex: 1 1 50%; /* Equal width split, can grow/shrink */
+  flex: 1 1 50%;
   display: flex;
   flex-direction: column;
-  width: calc(50vw - 20px); /* Dynamic width based on viewport */
-  height: calc(100vh - 300px); /* Increased to prevent Claude button overlap, same as notes card */
+  width: calc(50vw - 20px);
+  height: calc(100vh - 300px);
   background: var(--surface);
   border: 2px solid var(--border);
-  border-right: 3px solid var(--primary-color); /* Primary border for balance with editor */
-  border-radius: var(--spacing-sm); /* 4px border radius */
-  padding: var(--spacing-sm); /* 4px padding inside section */
-  margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
-  box-shadow: var(--shadow-sm);
+  border-right: 3px solid var(--primary-color);
+  border-radius: 12px; /* Consistent with recording-controls */
+  padding: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  box-shadow: var(--shadow);
   overflow: hidden;
   transition: border-color 0.3s ease;
 }
@@ -2432,238 +2518,319 @@ body {
   background: var(--text-muted);
 }
 
-/* Responsive design */
+/* Responsive Design - Mobile First Approach */
 
-@media (max-width: 1200px) {
-  /* Keep horizontal layout, maintain consistent 4px spacing */
+/* Large Desktop (1920px+) */
+@media (min-width: 1920px) {
   .content-container {
-    gap: var(--spacing-sm); /* Maintain 4px gap */
-    padding: var(--spacing-sm); /* Maintain 4px padding */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
-    max-height: calc(100vh - 180px); /* Adjust for smaller screens */
+    max-width: 1800px;
+    margin: 0 auto;
   }
   
   .editor-section,
   .transcription-section {
-    padding: var(--spacing-sm); /* Maintain 4px internal padding */
-    margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
-    width: calc(50vw - 12px); /* Adjusted for smaller screens */
-    height: calc(100vh - 280px); /* Adjusted height to prevent Claude FAB overlap */
-  }
-  
-  .header-right .clock-section {
-    align-items: center;
-  }
-  
-  .status-chips {
-    flex-wrap: wrap;
-    gap: var(--spacing-sm); /* Maintain 4px gap */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
+    width: calc(50% - 20px);
   }
 }
 
-@media (max-width: 900px) {
-  .sidebar.open {
-    width: 280px;
+/* Desktop (1366px - 1919px) */
+@media (max-width: 1919px) and (min-width: 1366px) {
+  .content-container {
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin: var(--spacing-md);
+  }
+  
+  .editor-section,
+  .transcription-section {
+    width: calc(50% - 20px);
+    height: calc(100vh - 320px);
+  }
+}
+
+/* Laptop (1024px - 1365px) */
+@media (max-width: 1365px) and (min-width: 1024px) {
+  .content-container {
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm);
+    max-height: calc(100vh - 200px);
+  }
+  
+  .editor-section,
+  .transcription-section {
+    width: calc(50% - 16px);
+    height: calc(100vh - 280px);
+    padding: var(--spacing-sm);
+  }
+  
+  .header-course-selector {
+    display: none; /* Hide course selector on smaller screens */
   }
   
   .recording-controls {
     flex-wrap: wrap;
-    gap: var(--spacing-sm); /* Maintain 4px gap */
-    margin: var(--spacing-sm); /* Maintain 4px margin on all sides */
+    min-height: 50px;
   }
   
-  .status-chips {
-    gap: 4px;
-  }
-  
-  .status-chip {
-    padding: 3px 6px;
-    font-size: 9px;
-  }
-  
-  .status-indicator {
-    width: 5px;
-    height: 5px;
+  .recording-controls .btn {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 }
 
-/* Responsive Breakpoints with Dynamic Margins */
-
-/* Tablet and larger screens - Keep horizontal layout with dynamic sizing */
-@media (max-width: 1024px) {
-  .content-container {
-    gap: clamp(4px, 1.5vw, 8px); /* Dynamic gap: scales with screen size */
-    padding: clamp(4px, 1.5vw, 8px); /* Dynamic padding */
-  }
-  
-  .editor-section,
-  .transcription-section {
-    padding: var(--spacing-sm); /* Maintain 4px internal padding */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
-  }
-  
-
-}
-
-/* Small tablets - Maintain horizontal layout with minimal spacing */
-@media (max-width: 768px) {
-  .content-container {
-    gap: var(--spacing-sm); /* Maintain 4px gap */
-    padding: var(--spacing-sm); /* Maintain 4px padding */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
-  }
-  
-  .editor-section,
-  .transcription-section {
-    padding: var(--spacing-sm); /* Maintain 4px internal padding */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
-  }
-  
-  .formatting-toolbar {
-    flex-wrap: wrap;
-  }
-  
+/* Tablet (768px - 1023px) */
+@media (max-width: 1023px) and (min-width: 768px) {
   .app-header {
-    padding: 0 12px;
-    height: 75px; /* Slightly smaller on tablets */
+    height: 70px;
+    padding: 0 var(--spacing-md);
   }
   
   .logo {
-    width: 48px; /* Smaller logo on tablets */
+    width: 48px;
     height: 48px;
   }
   
   .app-title {
-    font-size: 24px; /* Smaller title on tablets */
+    font-size: 22px;
   }
   
-  .header-left .app-title {
+  .header-course-selector {
     display: none;
   }
-}
-
-@media (max-width: 600px) {
+  
   .content-container {
-    padding: var(--spacing-sm); /* Maintain 4px padding */
-    gap: var(--spacing-sm); /* Maintain 4px gap */
-    margin: var(--spacing-sm); /* Maintain 4px margin */
-    max-height: calc(100vh - 160px); /* Adjusted for mobile */
-    overflow-y: auto; /* Enable scrolling when content overflows */
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm);
+    max-height: calc(100vh - 180px);
   }
   
   .editor-section,
   .transcription-section {
-    flex: 1 1 50%; /* Maintain equal split even on small screens */
-    min-width: 200px; /* Minimum usable width on phones */
-    width: calc(50vw - 8px); /* Mobile-optimized width */
-    height: calc(100vh - 240px); /* Mobile-optimized height to prevent Claude FAB overlap */
-    margin: var(--spacing-sm) 0; /* Top/bottom margin maintained, left/right set to 0 */
-    overflow-y: auto; /* Enable scrolling within sections */
+    width: calc(50% - 12px);
+    height: calc(100vh - 250px);
+    padding: var(--spacing-sm);
   }
   
   .recording-controls {
-    padding: 8px; /* Reduced padding for mobile */
-    margin: var(--spacing-sm); /* Maintain 4px margin for mobile */
-    flex-wrap: wrap; /* Allow wrapping on very small screens */
-    gap: 6px; /* Smaller gap between controls */
-    height: auto; /* Allow height to adjust */
-    min-height: 48px; /* Minimum height */
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    min-height: 48px;
   }
   
   .recording-controls .btn {
-    padding: 6px 8px; /* Smaller button padding */
-    font-size: 11px; /* Smaller font size */
-    min-width: 32px; /* Minimum touch target */
-    flex-shrink: 1; /* Allow buttons to shrink */
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 40px;
   }
   
   .recording-time {
-    font-size: 12px; /* Smaller time display */
-    min-width: 40px; /* Smaller minimum width */
+    font-size: 14px;
+    min-width: 50px;
   }
   
+  .sidebar-panel {
+    width: 300px;
+  }
+  
+  .status-chips {
+    gap: var(--spacing-xs);
+  }
+  
+  .status-chip {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}
+
+/* Mobile Large (375px - 767px) */
+@media (max-width: 767px) and (min-width: 375px) {
   .app-header {
-    height: 60px; /* Compact height on mobile */
+    height: 60px;
+    padding: 0 var(--spacing-sm);
   }
   
   .logo {
-    width: 36px; /* Even smaller logo on mobile */
+    width: 36px;
     height: 36px;
   }
   
   .app-title {
-    font-size: 20px; /* Compact title on mobile */
+    font-size: 18px;
+  }
+  
+  .header-course-selector {
+    display: none;
+  }
+  
+  .mode-toggle {
+    margin-right: var(--spacing-sm);
+  }
+  
+  .mode-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .mode-emoji {
+    font-size: 16px;
+  }
+  
+  .clock {
+    font-size: 11px;
+  }
+  
+  .content-container {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm);
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+  
+  .editor-section,
+  .transcription-section {
+    flex: none;
+    width: 100%;
+    height: 50vh;
+    min-height: 200px;
+    max-height: 50vh;
+    padding: var(--spacing-sm);
+    margin: 0;
+  }
+  
+  .resize-handle {
+    display: none;
+  }
+  
+  .recording-controls {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    min-height: 44px;
+    padding: var(--spacing-sm);
+  }
+  
+  .recording-controls .btn {
+    padding: 6px 8px;
+    font-size: 11px;
+    min-width: 36px;
+    flex: 1;
+  }
+  
+  .recording-controls .btn:first-child {
+    flex: 1.5;
+  }
+  
+  .recording-time {
+    font-size: 12px;
+    min-width: 40px;
+    flex-shrink: 0;
+  }
+  
+  .sidebar-panel {
+    width: 280px;
+  }
+  
+  .status-chips {
+    display: none; /* Hide status chips on mobile */
+  }
+  
+  .formatting-toolbar {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .format-btn {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+  
+  .format-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Mobile Small (320px - 374px) */
+@media (max-width: 374px) {
+  .app-header {
+    height: 55px;
+    padding: 0 var(--spacing-xs);
+  }
+  
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .app-title {
+    font-size: 16px;
+  }
+  
+  .mode-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .mode-emoji {
+    font-size: 14px;
   }
   
   .clock {
     font-size: 10px;
   }
   
-  .status-chips {
-    margin-top: 4px;
-  }
-}
-
-/* Very small screens - Switch to vertical layout only when absolutely necessary */
-@media (max-width: 480px) {
   .content-container {
-    flex-direction: column; /* Finally switch to vertical stacking */
-    gap: clamp(4px, 2vw, 8px); /* Adequate spacing between stacked cards */
-    padding: clamp(4px, 2vw, 8px);
-    overflow-y: auto; /* Enable vertical scrolling for stacked layout */
-    max-height: calc(100vh - 120px); /* Allow more height for scrolling */
+    padding: var(--spacing-xs);
+    margin: var(--spacing-xs);
+    gap: var(--spacing-xs);
   }
   
   .editor-section,
   .transcription-section {
-    flex: none; /* Remove flex sizing for stacked layout */
-    width: 100%; /* Full width when stacked */
-    min-height: 200px; /* Minimum height for usability */
-    max-height: 50vh; /* Allow more height when scrolling is available */
-    overflow-y: auto; /* Enable scrolling within each section */
+    height: 45vh;
+    min-height: 180px;
+    padding: var(--spacing-xs);
   }
   
-  .resize-handle {
-    display: none; /* Hide resize handle in vertical layout */
-  }
-  
-  /* Ultra-compact recording controls for very small screens */
   .recording-controls {
-    padding: 6px; /* Minimal padding */
-    gap: 4px; /* Minimal gap */
-    height: auto; /* Flexible height */
-    min-height: 44px; /* Minimum touch target height */
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+    min-height: 40px;
   }
   
   .recording-controls .btn {
-    padding: 4px 6px; /* Minimal button padding */
-    font-size: 10px; /* Very small font */
-    min-width: 28px; /* Smaller minimum width */
-    flex: 1; /* Allow buttons to grow equally */
-  }
-  
-  .recording-controls .btn:first-child {
-    flex: 1.5; /* Record button gets more space */
+    padding: 4px 6px;
+    font-size: 10px;
+    min-width: 32px;
   }
   
   .recording-time {
-    font-size: 10px; /* Very small time display */
-    min-width: 35px; /* Smaller minimum width */
-    flex-shrink: 0; /* Don't shrink time display */
+    font-size: 10px;
+    min-width: 35px;
   }
   
-  /* Hide less critical buttons on very small screens */
-  .recording-controls .btn:nth-child(n+4) {
-    display: none; /* Hide pause, resume, stop, save buttons */
+  .sidebar-panel {
+    width: 260px;
   }
   
-  /* Show only essential buttons: Record, Time, and Save */
-  .recording-controls .btn:nth-child(1),
-  .recording-controls .btn:nth-child(6) {
-    display: flex; /* Show record and save buttons */
+  .format-btn {
+    min-width: 24px;
+    min-height: 24px;
+    padding: 1px 3px;
+    font-size: 10px;
+  }
+  
+  .format-btn svg {
+    width: 10px;
+    height: 10px;
   }
 }
+
 
 /* Developer Settings Styles */
 .developer-settings {

@@ -149,10 +149,8 @@ class ScribeCatApp {
     this.audioDestLocalRadio = document.getElementById('audio-dest-local');
     this.audioDestDriveRadio = document.getElementById('audio-dest-drive');
     
-    // Capture page course selection
-    this.captureCourseSelect = document.getElementById('capture-course-select');
-    this.captureCustomCategory = document.getElementById('capture-custom-category');
-    this.captureCustomText = document.getElementById('capture-custom-text');
+    // Header course selection
+    this.headerCourseSelect = document.getElementById('header-course-select');
     this.courseSelectionError = document.getElementById('course-selection-error');
     
     // Transcription controls
@@ -1188,8 +1186,8 @@ class ScribeCatApp {
     if (this.courseSelect) {
       this.courseSelect.addEventListener('change', (e) => this.onCourseSelectionChange(e.target.value));
     }
-    if (this.captureCourseSelect) {
-      this.captureCourseSelect.addEventListener('change', (e) => this.onCaptureCourseSelectionChange(e.target.value));
+    if (this.headerCourseSelect) {
+      this.headerCourseSelect.addEventListener('change', (e) => this.onHeaderCourseSelectionChange(e.target.value));
     }
     if (this.selectNotesDriveFolderBtn) {
       this.selectNotesDriveFolderBtn.addEventListener('click', () => this.selectNotesDriveFolder());
@@ -1245,6 +1243,14 @@ class ScribeCatApp {
     }
     if (this.highlightColorSelector) {
       this.highlightColorSelector.addEventListener('change', (e) => this.changeHighlightColor(e.target.value));
+      
+      // Add click handler to the highlight color picker button
+      const highlightColorBtn = document.querySelector('.highlight-color-btn');
+      if (highlightColorBtn) {
+        highlightColorBtn.addEventListener('click', () => {
+          this.highlightColorSelector.click();
+        });
+      }
     }
     
     // Add keyboard event listener for notes editor
@@ -3233,8 +3239,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       }
 
       // Validate course selection is required
-      if (!this.captureCourseSelect || !this.captureCourseSelect.value) {
-        this.courseSelectionError.style.display = 'block';
+      if (!this.headerCourseSelect || !this.headerCourseSelect.value) {
         alert('Please select a course before saving your session');
         return;
       }
@@ -3489,14 +3494,12 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   getCapturePageCourseInfo() {
-    if (this.captureCourseSelect.value === 'other') {
-      // Use custom category text or default to "Other"
-      const customText = this.captureCustomText.value.trim();
+    if (this.headerCourseSelect.value === 'other') {
       return {
-        courseNumber: customText || 'Other',
-        courseTitle: customText || 'Other'
+        courseNumber: 'Other',
+        courseTitle: 'Other'
       };
-    } else if (this.captureCourseSelect.value === '') {
+    } else if (this.headerCourseSelect.value === '') {
       // This shouldn't happen due to validation, but handle gracefully
       return {
         courseNumber: 'UNKNOWN',
@@ -3504,7 +3507,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       };
     } else {
       // Parse selected course option
-      const option = this.captureCourseSelect.options[this.captureCourseSelect.selectedIndex];
+      const option = this.headerCourseSelect.options[this.headerCourseSelect.selectedIndex];
       return {
         courseNumber: option.dataset.courseNumber || '',
         courseTitle: option.dataset.courseTitle || option.text
@@ -3519,10 +3522,8 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   resetCourseSelection() {
-    if (this.captureCourseSelect) {
-      this.captureCourseSelect.value = '';
-      this.captureCustomCategory.style.display = 'none';
-      this.captureCustomText.value = '';
+    if (this.headerCourseSelect) {
+      this.headerCourseSelect.value = '';
       this.courseSelectionError.style.display = 'none';
     }
   }
@@ -3536,6 +3537,13 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       const selectedCourse = this.getSelectedCourse();
       this.courseNumber.value = selectedCourse.courseNumber;
       this.courseTitle.value = selectedCourse.courseTitle;
+    }
+  }
+
+  onHeaderCourseSelectionChange(value) {
+    // Hide any error message when course is selected
+    if (this.courseSelectionError) {
+      this.courseSelectionError.style.display = 'none';
     }
   }
 
@@ -3588,10 +3596,10 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         this.courseSelect.removeChild(this.courseSelect.lastChild);
       }
       
-      // Clear capture course selector options except for default ones
-      if (this.captureCourseSelect) {
-        while (this.captureCourseSelect.children.length > 2) {
-          this.captureCourseSelect.removeChild(this.captureCourseSelect.lastChild);
+      // Clear header course selector options except for default ones
+      if (this.headerCourseSelect) {
+        while (this.headerCourseSelect.children.length > 2) {
+          this.headerCourseSelect.removeChild(this.headerCourseSelect.lastChild);
         }
       }
       
@@ -3605,14 +3613,14 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         option.dataset.courseTitle = course.courseTitle;
         this.courseSelect.appendChild(option);
         
-        // Capture page course selector
-        if (this.captureCourseSelect) {
-          const captureOption = document.createElement('option');
-          captureOption.value = course.id;
-          captureOption.textContent = `${course.courseNumber} - ${course.courseTitle}`;
-          captureOption.dataset.courseNumber = course.courseNumber;
-          captureOption.dataset.courseTitle = course.courseTitle;
-          this.captureCourseSelect.appendChild(captureOption);
+        // Header course selector
+        if (this.headerCourseSelect) {
+          const headerOption = document.createElement('option');
+          headerOption.value = course.id;
+          headerOption.textContent = `${course.courseNumber} - ${course.courseTitle}`;
+          headerOption.dataset.courseNumber = course.courseNumber;
+          headerOption.dataset.courseTitle = course.courseTitle;
+          this.headerCourseSelect.appendChild(headerOption);
         }
       });
     } catch (error) {
@@ -4015,6 +4023,38 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     const range = selection.getRangeAt(0);
     if (range.collapsed) return; // No text selected
     
+    // Check if the selected text is already highlighted
+    const isAlreadyHighlighted = this.isTextHighlighted(range);
+    
+    if (isAlreadyHighlighted) {
+      // Remove highlighting
+      this.removeHighlight(range);
+    } else {
+      // Add highlighting
+      this.addHighlight(range);
+    }
+    
+    // Clear selection
+    selection.removeAllRanges();
+  }
+
+  isTextHighlighted(range) {
+    // Check if the range is within a highlighted element
+    let node = range.startContainer;
+    while (node && node !== this.notesEditor) {
+      if (node.nodeType === Node.ELEMENT_NODE && 
+          node.style && 
+          node.style.backgroundColor && 
+          node.style.backgroundColor !== 'transparent' &&
+          node.style.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  }
+
+  addHighlight(range) {
     const highlightColor = this.highlightColorSelector ? this.highlightColorSelector.value : '#ffd200';
     
     // Create a span with background color
@@ -4032,9 +4072,28 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       span.appendChild(contents);
       range.insertNode(span);
     }
-    
-    // Clear selection
-    selection.removeAllRanges();
+  }
+
+  removeHighlight(range) {
+    // Find the highlighted parent element and unwrap it
+    let node = range.startContainer;
+    while (node && node !== this.notesEditor) {
+      if (node.nodeType === Node.ELEMENT_NODE && 
+          node.style && 
+          node.style.backgroundColor && 
+          node.style.backgroundColor !== 'transparent' &&
+          node.style.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+        
+        // Unwrap the highlighted element
+        const parent = node.parentNode;
+        while (node.firstChild) {
+          parent.insertBefore(node.firstChild, node);
+        }
+        parent.removeChild(node);
+        break;
+      }
+      node = node.parentNode;
+    }
   }
 
   changeFontColor(color) {
@@ -4059,14 +4118,12 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   updateHighlighterButtonColor(color) {
-    if (this.highlightColorSelector) {
-      const highlightBtn = this.highlightColorSelector.nextElementSibling;
-      if (highlightBtn) {
-        // Update the button's visual indicator and tooltip
-        highlightBtn.style.setProperty('--highlight-color', color);
-        const colorName = this.getColorName(color);
-        highlightBtn.title = `Highlight text (current: ${colorName})`;
-      }
+    // Update the highlight toggle button to show current color
+    const highlightToggleBtn = document.querySelector('[data-command="highlight"]');
+    if (highlightToggleBtn) {
+      highlightToggleBtn.style.setProperty('--highlight-color', color);
+      const colorName = this.getColorName(color);
+      highlightToggleBtn.title = `Toggle highlighting (current: ${colorName})`;
     }
   }
 
@@ -4199,9 +4256,10 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
     
     if (this.highlightColorSelector) {
-      const highlightBtn = this.highlightColorSelector.nextElementSibling;
-      if (highlightBtn) {
-        highlightBtn.style.setProperty('--highlight-color', this.highlightColorSelector.value);
+      // Update the highlight toggle button to show current color
+      const highlightToggleBtn = document.querySelector('[data-command="highlight"]');
+      if (highlightToggleBtn) {
+        highlightToggleBtn.style.setProperty('--highlight-color', this.highlightColorSelector.value);
       }
     }
   }
