@@ -1476,7 +1476,7 @@ body {
   flex: 1;
   display: flex;
   gap: var(--spacing-sm); /* 4px gap between editor and transcription */
-  padding: var(--spacing-sm); /* 4px padding around content */
+  padding: 0; /* Remove padding to make containers wider */
   margin-left: 8px;
   margin-right: 8px;
   overflow: hidden;
@@ -1502,7 +1502,7 @@ body {
   border-left: 3px solid var(--accent);
   border-radius: 12px; /* Consistent with recording-controls */
   padding: var(--spacing-md);
-  margin: var(--spacing-sm) 0;
+  margin: 0;
   box-shadow: var(--shadow);
   overflow: hidden;
   transition: border-color 0.3s ease;
@@ -1873,7 +1873,7 @@ body {
   border-right: 3px solid var(--primary-color);
   border-radius: 12px; /* Consistent with recording-controls */
   padding: var(--spacing-md);
-  margin: var(--spacing-sm) 0;
+  margin: 0;
   box-shadow: var(--shadow);
   overflow: hidden;
   transition: border-color 0.3s ease;
@@ -2486,7 +2486,7 @@ body {
 @media (max-width: 1919px) and (min-width: 1366px) {
   .content-container {
     gap: var(--spacing-md);
-    padding: var(--spacing-md);
+    padding: 0;
     margin-left: 8px;
     margin-right: 8px;
     width: calc(100% - 16px);
@@ -2509,7 +2509,7 @@ body {
 @media (max-width: 1365px) and (min-width: 1024px) {
   .content-container {
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
+    padding: 0;
     margin-left: 8px;
     margin-right: 8px;
     width: calc(100% - 16px);
@@ -2562,7 +2562,7 @@ body {
   
   .content-container {
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
+    padding: 0;
     margin-left: 8px;
     margin-right: 8px;
     width: calc(100% - 16px);
@@ -2641,7 +2641,7 @@ body {
   .content-container {
     flex-direction: column;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
+    padding: 0;
     margin-left: 8px;
     margin-right: 8px;
     width: calc(100% - 16px);
@@ -2743,7 +2743,7 @@ body {
   }
   
   .content-container {
-    padding: var(--spacing-xs);
+    padding: 0;
     margin-left: 8px;
     margin-right: 8px;
     width: calc(100% - 16px);
