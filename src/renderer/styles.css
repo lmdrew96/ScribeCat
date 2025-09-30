@@ -495,6 +495,21 @@ body {
   object-fit: cover;
 }
 
+.logo-text {
+  font-size: clamp(20px, 4vw, 28px); /* Dynamic title size: 20px-28px */
+  font-weight: 700;
+  color: var(--primary-color);
+  font-family: 'GalaxyCaterpillar', 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+}
+
 .app-title {
   font-size: clamp(20px, 4vw, 28px); /* Dynamic title size: 20px-28px */
   font-weight: 700;
@@ -727,12 +742,17 @@ body {
 }
 
 .section-toggle {
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease;
   color: var(--text-secondary);
 }
 
-.section-header.expanded .section-toggle {
+.section-toggle.rotated {
   transform: rotate(180deg);
+}
+
+.section-header {
+  cursor: pointer;
+  user-select: none;
 }
 
 .section-content {
@@ -742,8 +762,8 @@ body {
   background: var(--surface);
 }
 
-.section-content.expanded {
-  max-height: 1000px; /* Large enough to accommodate content */
+.section-content.open {
+  max-height: 500px; /* Adjust based on content */
 }
 
 .section-content > div {
@@ -1233,9 +1253,33 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
   gap: var(--spacing-md); /* 6px -> 8px for consistency */
+}
+
+/* Ensure all buttons use flexbox centering */
+button, .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Prevent text from shifting */
+button svg, .btn svg {
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+/* Ensure consistent spacing */
+button:empty svg, .btn:empty svg {
+  margin-right: 0;
 }
 
 .btn-primary {
@@ -1534,14 +1578,79 @@ body {
 /* Formatting toolbar */
 .formatting-toolbar {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm); /* 4px gap between toolbar buttons */
-  padding: var(--spacing-sm); /* 4px padding inside toolbar */
-  margin: var(--spacing-sm); /* 4px margin around toolbar */
-  background: var(--surface);
-  border: none; /* Remove border */
-  border-radius: var(--spacing-sm) var(--spacing-sm) 0 0; /* 4px rounded corners on top */
   flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px;
+  background: var(--toolbar-bg, #f5f5f5);
+  border: none;
+  border-radius: 8px 8px 0 0;
+  align-items: center;
+}
+
+.toolbar-section {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color, #ddd);
+  margin: 0 4px;
+}
+
+.toolbar-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: var(--hover-bg, #e0e0e0);
+  border-color: var(--border-color, #ccc);
+}
+
+.toolbar-btn:active {
+  background: var(--active-bg, #d0d0d0);
+}
+
+.toolbar-btn.active {
+  background: var(--primary-color, #1976d2);
+  color: white;
+}
+
+.toolbar-select {
+  height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.color-input {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-indicator {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid var(--border-color, #999);
 }
 
 .format-btn {
@@ -2696,6 +2805,34 @@ body {
   .formatting-toolbar {
     flex-wrap: wrap;
     gap: var(--spacing-xs);
+    padding: 8px;
+  }
+  
+  .toolbar-section {
+    gap: 2px;
+  }
+  
+  .toolbar-btn {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px;
+    font-size: 12px;
+  }
+  
+  .toolbar-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .toolbar-select {
+    height: 28px;
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+  
+  .color-input {
+    width: 28px;
+    height: 28px;
   }
   
   .format-btn {
@@ -2782,6 +2919,38 @@ body {
   
   .sidebar-panel {
     width: 260px;
+  }
+  
+  .formatting-toolbar {
+    padding: 6px;
+    gap: 2px;
+  }
+  
+  .toolbar-section {
+    gap: 1px;
+  }
+  
+  .toolbar-btn {
+    min-width: 24px;
+    min-height: 24px;
+    padding: 2px;
+    font-size: 10px;
+  }
+  
+  .toolbar-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .toolbar-select {
+    height: 24px;
+    padding: 1px 2px;
+    font-size: 10px;
+  }
+  
+  .color-input {
+    width: 24px;
+    height: 24px;
   }
   
   .format-btn {

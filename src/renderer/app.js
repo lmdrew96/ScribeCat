@@ -198,7 +198,7 @@ class ScribeCatApp {
     this.vocalIsolationCheckbox = document.getElementById('vocal-isolation');
     this.microphoneSelect = document.getElementById('microphone-select');
     this.fontSelector = document.getElementById('font-family');
-    this.formatBtns = Array.from(document.querySelectorAll('.format-btn'));
+    this.formatBtns = Array.from(document.querySelectorAll('.format-btn, .toolbar-btn'));
     // Color selector elements
     this.fontColorSelector = document.getElementById('font-color');
     this.highlightColorSelector = document.getElementById('highlight-color');
@@ -1223,6 +1223,12 @@ class ScribeCatApp {
     if (this.fontSelector) {
       this.fontSelector.addEventListener('change', (e) => this.changeFontFamily(e.target.value));
     }
+    
+    // Font size handling
+    const fontSizeSelect = document.getElementById('font-size');
+    if (fontSizeSelect) {
+      fontSizeSelect.addEventListener('change', (e) => this.changeFontSize(e.target.value));
+    }
     if (this.formatBtns && this.formatBtns.length) {
       this.formatBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -1236,6 +1242,9 @@ class ScribeCatApp {
         });
       });
     }
+
+    // Enhanced toolbar functionality
+    this.setupEnhancedToolbar();
     
     // Color selector event listeners
     if (this.fontColorSelector) {
@@ -1490,17 +1499,20 @@ class ScribeCatApp {
     sectionHeaders.forEach(header => {
       header.addEventListener('click', () => {
         const sectionName = header.getAttribute('data-section');
-        const content = document.getElementById(`${sectionName}-content`);
+        const content = document.getElementById(`${sectionName}-content');
+        const toggle = header.querySelector('.section-toggle');
         
         if (content) {
-          const isExpanded = header.classList.contains('expanded');
+          const isOpen = content.classList.contains('open');
           
-          if (isExpanded) {
-            header.classList.remove('expanded');
-            content.classList.remove('expanded');
+          if (isOpen) {
+            content.classList.remove('open');
+            content.style.maxHeight = '0';
+            toggle?.classList.remove('rotated');
           } else {
-            header.classList.add('expanded');
-            content.classList.add('expanded');
+            content.classList.add('open');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            toggle?.classList.add('rotated');
           }
         }
       });
@@ -2657,7 +2669,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       } else {
         console.warn('No transcription backend configured. Recording will continue without live transcription.');
       }
-      console.log('Recording started');
     } catch (error) {
       console.error('Error starting recording:', error);
       
@@ -2739,7 +2750,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       }
       // Stop transcription
       this.stopLiveTranscription();
-      console.log('Recording stopped');
     }
   }
 
@@ -3175,7 +3185,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     this.clearTranscription();
     this.notesEditor.innerHTML = '';
     this.recordingTime.textContent = '00:00';
-    console.log('New recording session started');
   }
 
   async saveRecording() {
@@ -3957,6 +3966,81 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     document.execCommand('fontName', false, fontFamily);
     this.notesEditor.style.fontFamily = fontFamily;
     this.saveNotesDraft();
+  }
+
+  changeFontSize(fontSize) {
+    document.execCommand('fontSize', false, '7'); // Use 7 as intermediary
+    const fontElements = document.getElementsByTagName('font');
+    for (let i = 0; i < fontElements.length; i++) {
+      if (fontElements[i].size === '7') {
+        fontElements[i].removeAttribute('size');
+        fontElements[i].style.fontSize = fontSize + 'px';
+      }
+    }
+    this.notesEditor.focus();
+    this.saveNotesDraft();
+  }
+
+  setupEnhancedToolbar() {
+    // Highlight functionality
+    const highlightBtn = document.getElementById('highlight-btn');
+    if (highlightBtn) {
+      highlightBtn.addEventListener('click', () => {
+        const color = document.getElementById('highlight-color').value;
+        document.execCommand('hiliteColor', false, color);
+        this.notesEditor.focus();
+        this.updateToolbarState();
+      });
+    }
+
+    // Text color
+    const textColorBtn = document.getElementById('text-color-btn');
+    if (textColorBtn) {
+      textColorBtn.addEventListener('click', () => {
+        const color = document.getElementById('text-color').value;
+        document.execCommand('foreColor', false, color);
+        this.notesEditor.focus();
+        this.updateToolbarState();
+      });
+    }
+
+    // Insert link
+    const insertLinkBtn = document.getElementById('insert-link');
+    if (insertLinkBtn) {
+      insertLinkBtn.addEventListener('click', () => {
+        const url = prompt('Enter URL:');
+        if (url) {
+          document.execCommand('createLink', false, url);
+        }
+        this.notesEditor.focus();
+        this.updateToolbarState();
+      });
+    }
+
+    // Clear all button
+    const clearAllBtn = document.getElementById('clear-all');
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all notes? This action cannot be undone.')) {
+          this.notesEditor.innerHTML = '';
+          this.notesEditor.focus();
+        }
+      });
+    }
+
+    // Update toolbar state on selection change
+    this.notesEditor.addEventListener('mouseup', () => this.updateToolbarState());
+    this.notesEditor.addEventListener('keyup', () => this.updateToolbarState());
+  }
+
+  updateToolbarState() {
+    document.querySelectorAll('.toolbar-btn[data-command]').forEach(btn => {
+      const command = btn.getAttribute('data-command');
+      if (command) {
+        const isActive = document.queryCommandState(command);
+        btn.classList.toggle('active', isActive);
+      }
+    });
   }
 
   executeFormat(command) {

@@ -18,7 +18,8 @@
             </div>
             <div class="header-center">
                 <div class="logo-container">
-                    <img src="../../assets/images/nugget-logo.PNG" alt="ScribeCat" class="logo" onerror="this.style.display='none'">
+                    <img src="../../assets/images/nugget-logo.PNG" alt="ScribeCat" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="logo-text" style="display: none;">ScribeCat 📝🐱</div>
                     <h1 class="app-title">ScribeCat</h1>
                 </div>
             </div>
@@ -357,198 +358,244 @@
                             <h2>Notes</h2>
                         </div>
                         <div class="formatting-toolbar">
-                            <select id="font-family" class="font-selector" title="Change font family for notes editor">
-                                <optgroup label="Traditional Serif">
-                                    <option value="Times New Roman">Times New Roman</option>
-                                    <option value="Georgia">Georgia</option>
-                                    <option value="Garamond">Garamond</option>
-                                    <option value="Book Antiqua">Book Antiqua</option>
-                                    <option value="Palatino">Palatino</option>
-                                </optgroup>
-                                <optgroup label="Non-Traditional Serif">
-                                    <option value="Playfair Display">Playfair Display</option>
-                                    <option value="Crimson Text">Crimson Text</option>
-                                    <option value="Libre Baskerville">Libre Baskerville</option>
-                                    <option value="Merriweather">Merriweather</option>
-                                    <option value="Vollkorn">Vollkorn</option>
-                                </optgroup>
-                                <optgroup label="Traditional Sans Serif">
-                                    <option value="Arial">Arial</option>
-                                    <option value="Helvetica">Helvetica</option>
-                                    <option value="Calibri">Calibri</option>
-                                    <option value="Tahoma">Tahoma</option>
-                                    <option value="Verdana">Verdana</option>
-                                    <option value="Geneva">Geneva</option>
-                                    <option value="Lucida Sans">Lucida Sans</option>
-                                    <option value="Trebuchet MS">Trebuchet MS</option>
-                                    <option value="Century Gothic">Century Gothic</option>
-                                    <option value="Franklin Gothic">Franklin Gothic</option>
-                                </optgroup>
-                                <optgroup label="Non-Traditional Sans Serif">
-                                    <option value="Inter" selected>Inter</option>
-                                    <option value="Roboto">Roboto</option>
-                                    <option value="Open Sans">Open Sans</option>
-                                    <option value="Lato">Lato</option>
-                                    <option value="Montserrat">Montserrat</option>
-                                    <option value="Source Sans Pro">Source Sans Pro</option>
-                                    <option value="Nunito">Nunito</option>
-                                    <option value="Poppins">Poppins</option>
-                                    <option value="Raleway">Raleway</option>
-                                    <option value="Work Sans">Work Sans</option>
-                                </optgroup>
-                            </select>
-                            <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="undo" title="Undo (Ctrl+Z / ⌘Z)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3l-3 2.7"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="redo" title="Redo (Ctrl+Shift+Z / ⌘Shift+Z)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 7v6h-6M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/>
-                                </svg>
-                            </button>
-                            <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="bold" title="Bold (Ctrl+B / ⌘B)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="italic" title="Italic (Ctrl+I / ⌘I)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="19" y1="4" x2="10" y2="4"/>
-                                    <line x1="14" y1="20" x2="5" y2="20"/>
-                                    <line x1="15" y1="4" x2="9" y2="20"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="underline" title="Underline (Ctrl+U / ⌘U)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/>
-                                    <line x1="4" y1="21" x2="20" y2="21"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="strikethrough" title="Strikethrough">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M16 4H9a3 3 0 00-2.83 4"/>
-                                    <path d="M14 12a4 4 0 01-0 8H6"/>
-                                    <line x1="4" y1="12" x2="20" y2="12"/>
-                                </svg>
-                            </button>
-                            <div class="toolbar-separator"></div>
-                            <div class="color-selector-group">
-                                <input type="color" id="font-color" class="color-selector" value="#000000" title="Font Color">
-                                <label for="font-color" class="format-btn color-btn" title="Font Color">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M4 7V4h16v3"/>
-                                        <path d="M9 20h6"/>
-                                        <path d="M12 4l-3 16"/>
-                                    </svg>
-                                </label>
+                            <!-- Text Style Section -->
+                            <div class="toolbar-section">
+                                <select id="font-family" class="toolbar-select" title="Font">
+                                    <optgroup label="Traditional Serif">
+                                        <option value="Times New Roman">Times New Roman</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Garamond">Garamond</option>
+                                        <option value="Book Antiqua">Book Antiqua</option>
+                                        <option value="Palatino">Palatino</option>
+                                    </optgroup>
+                                    <optgroup label="Non-Traditional Serif">
+                                        <option value="Playfair Display">Playfair Display</option>
+                                        <option value="Crimson Text">Crimson Text</option>
+                                        <option value="Libre Baskerville">Libre Baskerville</option>
+                                        <option value="Merriweather">Merriweather</option>
+                                        <option value="Vollkorn">Vollkorn</option>
+                                    </optgroup>
+                                    <optgroup label="Traditional Sans Serif">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Helvetica">Helvetica</option>
+                                        <option value="Calibri">Calibri</option>
+                                        <option value="Tahoma">Tahoma</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Geneva">Geneva</option>
+                                        <option value="Lucida Sans">Lucida Sans</option>
+                                        <option value="Trebuchet MS">Trebuchet MS</option>
+                                        <option value="Century Gothic">Century Gothic</option>
+                                        <option value="Franklin Gothic">Franklin Gothic</option>
+                                    </optgroup>
+                                    <optgroup label="Non-Traditional Sans Serif">
+                                        <option value="Inter" selected>Inter</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Open Sans">Open Sans</option>
+                                        <option value="Lato">Lato</option>
+                                        <option value="Montserrat">Montserrat</option>
+                                        <option value="Source Sans Pro">Source Sans Pro</option>
+                                        <option value="Nunito">Nunito</option>
+                                        <option value="Poppins">Poppins</option>
+                                        <option value="Raleway">Raleway</option>
+                                        <option value="Work Sans">Work Sans</option>
+                                    </optgroup>
+                                </select>
+                                
+                                <select id="font-size" class="toolbar-select" title="Font Size">
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12" selected>12</option>
+                                    <option value="14">14</option>
+                                    <option value="16">16</option>
+                                    <option value="18">18</option>
+                                    <option value="20">20</option>
+                                    <option value="22">22</option>
+                                    <option value="24">24</option>
+                                    <option value="26">26</option>
+                                    <option value="28">28</option>
+                                    <option value="36">36</option>
+                                    <option value="48">48</option>
+                                    <option value="72">72</option>
+                                </select>
+                                
+                                <button class="toolbar-btn" data-command="bold" title="Bold (Ctrl+B)">
+                                    <strong>B</strong>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="italic" title="Italic (Ctrl+I)">
+                                    <em>I</em>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="underline" title="Underline (Ctrl+U)">
+                                    <u>U</u>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="strikethrough" title="Strikethrough">
+                                    <s>S</s>
+                                </button>
+                                
+                                <button class="toolbar-btn" id="highlight-btn" title="Highlight">
+                                    <span style="background: var(--highlight-color, #ffeb3b); padding: 2px 4px; font-weight: bold;">H</span>
+                                </button>
+                                
+                                <input type="color" id="highlight-color" value="#ffeb3b" title="Highlight Color" class="color-input">
+                                
+                                <button class="toolbar-btn" id="text-color-btn" title="Text Color">
+                                    <span class="color-indicator" style="background: var(--text-color, #000000);"></span>
+                                </button>
+                                
+                                <input type="color" id="text-color" value="#000000" title="Text Color" class="color-input">
                             </div>
-                            <!-- Highlight Toggle Button -->
-                            <button class="format-btn" data-command="highlight" title="Toggle highlighting on selected text">
-                                <span style="background: var(--highlight-color, #ffd200); 
-                                              padding: 2px 4px; 
-                                              font-weight: bold; 
-                                              border-radius: 2px;">H</span>
-                            </button>
                             
-                            <!-- Highlight Color Picker -->
-                            <div class="color-selector-group">
-                                <input type="color" id="highlight-color" class="color-selector" value="#ffd200" title="Highlight Color">
-                                <button class="format-btn highlight-color-btn" title="Change highlight color">
-                                    <span class="color-swatch" 
-                                          style="display: inline-block; 
-                                                 width: 16px; 
-                                                 height: 16px; 
-                                                 border-radius: 2px; 
-                                                 border: 1px solid var(--border-color, #ccc);
-                                                 background: var(--highlight-color, #ffd200);"></span>
+                            <div class="toolbar-divider"></div>
+                            
+                            <!-- Paragraph Formatting Section -->
+                            <div class="toolbar-section">
+                                <button class="toolbar-btn" data-command="justifyLeft" title="Align Left">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="3" y1="6" x2="21" y2="6"/>
+                                        <line x1="3" y1="12" x2="15" y2="12"/>
+                                        <line x1="3" y1="18" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="justifyCenter" title="Center">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="3" y1="6" x2="21" y2="6"/>
+                                        <line x1="6" y1="12" x2="18" y2="12"/>
+                                        <line x1="3" y1="18" x2="21" y2="18"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="justifyRight" title="Align Right">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="3" y1="6" x2="21" y2="6"/>
+                                        <line x1="9" y1="12" x2="21" y2="12"/>
+                                        <line x1="6" y1="18" x2="21" y2="18"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="justifyFull" title="Justify">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="3" y1="6" x2="21" y2="6"/>
+                                        <line x1="3" y1="12" x2="21" y2="12"/>
+                                        <line x1="3" y1="18" x2="21" y2="18"/>
+                                    </svg>
                                 </button>
                             </div>
-                            <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="justifyLeft" title="Align Left">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="3" y1="6" x2="21" y2="6"/>
-                                    <line x1="3" y1="12" x2="15" y2="12"/>
-                                    <line x1="3" y1="18" x2="18" y2="18"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="justifyCenter" title="Align Center">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="3" y1="6" x2="21" y2="6"/>
-                                    <line x1="6" y1="12" x2="18" y2="12"/>
-                                    <line x1="3" y1="18" x2="21" y2="18"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="justifyRight" title="Align Right">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="3" y1="6" x2="21" y2="6"/>
-                                    <line x1="9" y1="12" x2="21" y2="12"/>
-                                    <line x1="6" y1="18" x2="21" y2="18"/>
-                                </svg>
-                            </button>
-                            <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-command="insertUnorderedList" title="Bullet List">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="8" y1="6" x2="21" y2="6"/>
-                                    <line x1="8" y1="12" x2="21" y2="12"/>
-                                    <line x1="8" y1="18" x2="21" y2="18"/>
-                                    <line x1="3" y1="6" x2="3.01" y2="6"/>
-                                    <line x1="3" y1="12" x2="3.01" y2="12"/>
-                                    <line x1="3" y1="18" x2="3.01" y2="18"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="insertOrderedList" title="Numbered List">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="10" y1="6" x2="21" y2="6"/>
-                                    <line x1="10" y1="12" x2="21" y2="12"/>
-                                    <line x1="10" y1="18" x2="21" y2="18"/>
-                                    <path d="M4 6h1v4"/>
-                                    <path d="M4 10h2"/>
-                                    <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-1-1"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="indent" title="Indent">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3,8 7,12 3,16"/>
-                                    <line x1="21" y1="4" x2="11" y2="4"/>
-                                    <line x1="21" y1="12" x2="11" y2="12"/>
-                                    <line x1="21" y1="20" x2="11" y2="20"/>
-                                </svg>
-                            </button>
-                            <button class="format-btn" data-command="outdent" title="Outdent">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="7,8 3,12 7,16"/>
-                                    <line x1="21" y1="4" x2="11" y2="4"/>
-                                    <line x1="21" y1="12" x2="11" y2="12"/>
-                                    <line x1="21" y1="20" x2="11" y2="20"/>
-                                </svg>
-                            </button>
-                            <div class="toolbar-separator"></div>
-                            <button class="format-btn" data-shortcut="dash" title="Insert Dash">—</button>
-                            <button class="format-btn" data-shortcut="arrow" title="Insert Arrow">→</button>
-                            <div class="toolbar-separator"></div>
-                            <button id="clear-notes" class="format-btn clear-notes-btn" title="Clear all notes (Ctrl+Shift+Delete / ⌘Shift+Delete)">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3,6 5,6 21,6"></polyline>
-                                    <path d="M19,6v14a2,2 0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-                                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                                </svg>
-                                Clear All
-                            </button>
-                            <div class="toolbar-separator"></div>
-                            <button id="generate-summary" class="format-btn" title="Generate AI summary of notes and transcription (Ctrl+Shift+S / ⌘Shift+S)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 12l2 2 4-4"/>
-                                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
-                                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
-                                    <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
-                                    <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"/>
-                                </svg>
-                                AI Summary
-                            </button>
+                            
+                            <div class="toolbar-divider"></div>
+                            
+                            <!-- Lists and Indentation Section -->
+                            <div class="toolbar-section">
+                                <button class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="8" y1="6" x2="21" y2="6"/>
+                                        <line x1="8" y1="12" x2="21" y2="12"/>
+                                        <line x1="8" y1="18" x2="21" y2="18"/>
+                                        <circle cx="4" cy="6" r="1" fill="currentColor"/>
+                                        <circle cx="4" cy="12" r="1" fill="currentColor"/>
+                                        <circle cx="4" cy="18" r="1" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="10" y1="6" x2="21" y2="6"/>
+                                        <line x1="10" y1="12" x2="21" y2="12"/>
+                                        <line x1="10" y1="18" x2="21" y2="18"/>
+                                        <text x="3" y="8" font-size="8" fill="currentColor">1.</text>
+                                        <text x="3" y="14" font-size="8" fill="currentColor">2.</text>
+                                        <text x="3" y="20" font-size="8" fill="currentColor">3.</text>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="indent" title="Increase Indent">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3,8 7,12 3,16"/>
+                                        <line x1="11" y1="4" x2="21" y2="4"/>
+                                        <line x1="11" y1="12" x2="21" y2="12"/>
+                                        <line x1="11" y1="20" x2="21" y2="20"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="outdent" title="Decrease Indent">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="7,8 3,12 7,16"/>
+                                        <line x1="11" y1="4" x2="21" y2="4"/>
+                                        <line x1="11" y1="12" x2="21" y2="12"/>
+                                        <line x1="11" y1="20" x2="21" y2="20"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="toolbar-divider"></div>
+                            
+                            <!-- Insert Section -->
+                            <div class="toolbar-section">
+                                <button class="toolbar-btn" id="insert-link" title="Insert Link (Ctrl+K)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="insertHorizontalRule" title="Insert Horizontal Line">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="3" y1="12" x2="21" y2="12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="toolbar-divider"></div>
+                            
+                            <!-- Actions Section -->
+                            <div class="toolbar-section">
+                                <button class="toolbar-btn" data-command="undo" title="Undo (Ctrl+Z)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3l-3 2.7"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="redo" title="Redo (Ctrl+Y)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 7v6h-6M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" data-command="removeFormat" title="Clear Formatting">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 7V4h16v3"/>
+                                        <path d="M5 20h6"/>
+                                        <path d="M13 4L9 20"/>
+                                        <line x1="18" y1="6" x2="6" y2="18" stroke-width="3"/>
+                                    </svg>
+                                </button>
+                                
+                                <button class="toolbar-btn" id="clear-all" title="Clear All">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3,6 5,6 21,6"/>
+                                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6"/>
+                                        <line x1="10" y1="11" x2="10" y2="17"/>
+                                        <line x1="14" y1="11" x2="14" y2="17"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="toolbar-divider"></div>
+                            
+                            <!-- AI Section -->
+                            <div class="toolbar-section">
+                                <button class="toolbar-btn" id="generate-summary" title="Generate AI Summary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                        <path d="M2 17l10 5 10-5"/>
+                                        <path d="M2 12l10 5 10-5"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <div id="notes-editor" class="notes-editor" data-testid="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>
@@ -581,14 +628,14 @@
                 <div class="ai-chat-container" id="ai-chat-container">
                     <!-- Floating Claude Button -->
                     <button class="claude-fab" id="claude-fab" title="Ask Claude AI">
-                        <img class="claude-icon" src="../../assets/images/AskAI-cat.PNG" alt="Ask AI" onerror="this.style.display='none'">
+                        <img class="claude-icon" src="../../assets/images/AskAI-cat.PNG" alt="Ask AI" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size: 24px;\'>🤖</span>';">
                     </button>
                     
                     <!-- Expanded Chat Panel -->
                     <div class="ai-chat-panel" id="ai-chat-panel">
                         <div class="chat-header">
                             <div class="chat-title">
-                                <img class="claude-icon-small" src="../../assets/images/AskAI-cat.PNG" alt="Ask AI">
+                                <img class="claude-icon-small" src="../../assets/images/AskAI-cat.PNG" alt="Ask AI" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size: 18px;\'>🤖</span><h3>Ask Claude</h3>';">
                                 <h3>Ask Claude</h3>
                             </div>
                             <button class="chat-close" id="chat-close" title="Close chat">
