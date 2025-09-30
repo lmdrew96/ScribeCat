@@ -3732,3 +3732,135 @@ body {
     align-items: stretch;
   }
 }
+
+/* Error Notification System */
+.error-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  pointer-events: none;
+  max-width: 400px;
+}
+
+.error-notification {
+  position: relative;
+  background: var(--background);
+  border: 2px solid var(--danger-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: slideIn 0.3s ease-out;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.error-notification.warning {
+  border-color: var(--warning-color);
+  background: #fef3c7;
+}
+
+.error-notification.info {
+  border-color: var(--primary-color);
+  background: #eff6ff;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.error-message {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.error-action {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.error-action:hover {
+  background: var(--primary-hover);
+}
+
+.error-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.error-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* Mobile responsiveness for error notifications */
+@media (max-width: 768px) {
+  .error-notification-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .error-notification {
+    margin-bottom: 8px;
+    padding: 12px;
+  }
+  
+  .error-content {
+    gap: 8px;
+  }
+  
+  .error-message {
+    font-size: 13px;
+  }
+  
+  .error-action {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
