@@ -2476,13 +2476,11 @@ body {
   }
   
   .editor-section {
-    width: 65%;
     flex: 0 0 65%;
     height: calc(100vh - 320px);
   }
   
   .transcription-section {
-    width: 30%;
     flex: 0 0 30%;
     height: calc(100vh - 320px);
   }
@@ -2500,14 +2498,12 @@ body {
   }
   
   .editor-section {
-    width: 65%;
     flex: 0 0 65%;
     height: calc(100vh - 280px);
     padding: var(--spacing-sm);
   }
   
   .transcription-section {
-    width: 30%;
     flex: 0 0 30%;
     height: calc(100vh - 280px);
     padding: var(--spacing-sm);
@@ -2560,14 +2556,12 @@ body {
   }
   
   .editor-section {
-    width: 65%;
     flex: 0 0 65%;
     height: calc(100vh - 250px);
     padding: var(--spacing-sm);
   }
   
   .transcription-section {
-    width: 30%;
     flex: 0 0 30%;
     height: calc(100vh - 250px);
     padding: var(--spacing-sm);
