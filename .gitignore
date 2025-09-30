@@ -9,6 +9,11 @@ dist/
 build/
 *.tgz
 
+# TypeScript build artifacts
+*.js.map
+*.d.ts
+*.tsbuildinfo
+
 # Runtime data
 pids/
 *.pid
