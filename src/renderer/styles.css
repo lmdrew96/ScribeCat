@@ -489,10 +489,10 @@ body {
 
 .logo {
   width: 64px;
-  height: auto;
+  height: 64px;
   border-radius: 6px;
-  aspect-ratio: auto;
-  object-fit: contain;
+  aspect-ratio: 1;
+  object-fit: cover;
 }
 
 .app-title {
@@ -2015,6 +2015,8 @@ body {
   border-radius: 50%;
   object-fit: cover;
   transition: all 0.3s ease;
+  background: white;
+  padding: 2px;
 }
 
 .claude-fab.expanding .claude-icon {
@@ -2085,6 +2087,8 @@ body {
   height: 18px;
   border-radius: 50%;
   object-fit: cover;
+  background: white;
+  padding: 1px;
 }
 
 .chat-header h3 {
@@ -2225,6 +2229,8 @@ body {
   .claude-icon {
     width: 20px;
     height: 20px;
+    background: white;
+    padding: 2px;
   }
 }
 
@@ -2589,6 +2595,8 @@ body {
   .logo {
     width: 48px;
     height: 48px;
+    aspect-ratio: 1;
+    object-fit: cover;
   }
   
   .app-title {
@@ -2654,6 +2662,8 @@ body {
   .logo {
     width: 36px;
     height: 36px;
+    aspect-ratio: 1;
+    object-fit: cover;
   }
   
   .app-title {
@@ -2765,6 +2775,8 @@ body {
   .logo {
     width: 32px;
     height: 32px;
+    aspect-ratio: 1;
+    object-fit: cover;
   }
   
   .app-title {
