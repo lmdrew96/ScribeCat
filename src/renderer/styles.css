@@ -3115,6 +3115,7 @@ body {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  gap: var(--spacing-sm); /* 4px gap between recording-controls and content-container */
 }
 
 .study-mode {
