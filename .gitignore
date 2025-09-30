@@ -6,7 +6,9 @@ yarn-error.log*
 
 # Build outputs
 dist/
+dist-electron/
 build/
+out/
 *.tgz
 
 # TypeScript build artifacts
@@ -22,6 +24,7 @@ pids/
 
 # Coverage directory used by tools like istanbul
 coverage/
+.nyc_output/
 
 # Electron specific
 *.log
@@ -47,6 +50,11 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+*.tmp
+*.temp
+*.bak
+*.old
+*-backup.*
 
 # Environment variables
 .env
@@ -57,3 +65,21 @@ temp/
 
 # Application data
 storage.json
+recordings/
+*.wav
+*.mp3
+
+# Testing
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+.vite/

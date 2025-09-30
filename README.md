@@ -1,29 +1,25 @@
 # ScribeCat 📝🐱
 
-**ScribeCat scribes and is cat** - A powerful desktop application for real-time audio transcription and intelligent note-taking.
+**ScribeCat scribes and is cat** - A powerful desktop application for real-time audio transcription and intelligent note-taking, built with modern web technologies and clean architecture.
 
 ## Features
 
-### Main Features ✨
-- **Real-time Audio Transcription**: Accumulate live transcription with timestamps via Vosk (offline) or Whisper
+### Core Features ✨
+- **Real-time Audio Transcription**: Live transcription with timestamps using Vosk (offline) or Whisper
 - **Rich Text Editor**: Full-featured note-taking with comprehensive formatting toolbar
-- **30 Font Options**: Extensive typography selection including:
-  - 5 Traditional Serif fonts (Times New Roman, Georgia, Garamond, Book Antiqua, Palatino)
-  - 5 Non-Traditional Serif fonts (Playfair Display, Crimson Text, Libre Baskerville, Merriweather, Vollkorn)
-  - 10 Traditional Sans Serif fonts (Arial, Helvetica, Calibri, Tahoma, Verdana, Geneva, Lucida Sans, Trebuchet MS, Century Gothic, Franklin Gothic)
-  - 10 Non-Traditional Sans Serif fonts (Inter, Roboto, Open Sans, Lato, Montserrat, Source Sans Pro, Nunito, Poppins, Raleway, Work Sans)
-- **Audio Recording**: Record from device microphone or connected devices with vocal isolation
-- **Canvas Integration**: Connect to Canvas Instructure for course numbers and titles (no OAuth required)
-- **AI-Powered Chat**: Collapsible "Ask AI" window using Claude with context from notes and transcription
+- **30 Font Options**: Extensive typography selection including serif, sans-serif, and display fonts
+- **Audio Recording**: High-quality recording from microphone or connected devices
+- **Canvas Integration**: Connect to Canvas LMS for course numbers and titles
+- **AI-Powered Chat**: Intelligent "Ask AI" feature using Claude API with context from your notes
 - **Google Drive Integration**: Save recordings and notes directly to Google Drive folders
 
-### Additional Features 🎨
-- **Immersive UI/UX**: Modern, vibrant interface with smooth animations
+### Advanced Features 🎨
+- **Clean Architecture**: Modern, maintainable codebase with TypeScript
+- **Vite Bundler**: Fast development and optimized production builds
 - **Multiple Themes**: 15 preset themes with customizable color schemes
-- **Real-time Clock**: Date and time display synced to user's timezone
-- **Status Monitoring**: Color-coded health status chips for app functions
-- **Version Tracking**: Version number display in bottom-left corner
-- **Collapsible Sidebar**: Organized settings and tools management
+- **Auto-Polish**: AI-powered transcription improvement in real-time
+- **Smart Summaries**: Generate concise summaries of your sessions
+- **Title Generation**: Automatic descriptive filenames for recordings
 
 ## Download ScribeCat 🚀
 
@@ -65,13 +61,14 @@ Get ScribeCat for your platform:
 > **Note for Developers:** The instructions below are for setting up a development environment. If you just want to use ScribeCat, use the download buttons above.
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn package manager
+- Node.js (v18 or higher)
+- npm package manager
+- Git
 
 ### Development Setup
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/lmdrew96/ScribeCat.git
 cd ScribeCat
 
 # Install dependencies
@@ -100,6 +97,12 @@ npm run build:mac
 npm run pack
 ```
 
+### Development Features
+- **Hot Reload**: Instant updates during development
+- **TypeScript**: Full type safety and IntelliSense
+- **Vite**: Fast build tool and development server
+- **Clean Architecture**: Well-organized, maintainable codebase
+
 ## Usage
 
 ### Getting Started
@@ -123,125 +126,153 @@ npm run pack
 
 ## Configuration
 
-### API Keys Setup
-Add your API keys through the application settings:
+### AI Integration
+ScribeCat uses Claude API for AI features:
+- **Developer Key**: Included by default - works out of the box
+- **Your Own Key**: Optional - get from [Anthropic Console](https://console.anthropic.com/)
+- **Features**: AI chat, auto-polish, smart summaries, title generation
 
-- **Claude API Key**: For AI chat functionality (optional - developer key included by default)
-
-### Transcription Backend Configuration
-ScribeCat supports two transcription engines:
+### Transcription Backend
+Choose your preferred transcription engine:
 
 1. **Vosk (Offline - Default)**:
-   - Download a Vosk model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models)
-   - In Settings → Transcription Backend → select "Vosk (Offline)"
-   - Provide the path to your Vosk model directory
+   - Download a model from [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models)
+   - Works completely offline
+   - Privacy-focused (audio stays local)
 
 2. **Whisper (Optional)**:
-   - Select "Whisper" in Settings → Transcription Backend
-   - Requires internet connection for API calls
+   - Cloud-based transcription
+   - Higher accuracy
+   - Requires internet connection
 
-### Google Drive Integration
-ScribeCat uses Drive-for-desktop folder sync:
-1. Install Google Drive for Desktop
-2. Select your Drive folder in ScribeCat settings
-3. Files are saved directly to the selected folder
+### Cloud Integration
+- **Google Drive**: Save files directly to synced folders
+- **Canvas LMS**: Connect for course information and organization
 
 ## Architecture
 
 ### Technology Stack
 - **Electron**: Cross-platform desktop framework
+- **TypeScript**: Type-safe JavaScript with modern features
+- **Vite**: Fast build tool and development server
 - **Node.js**: Backend runtime
-- **HTML/CSS/JavaScript**: Frontend interface
 - **Vosk**: Offline speech transcription (primary)
 - **Whisper**: Optional cloud-based transcription
-- **Claude**: AI chat functionality
+- **Claude API**: AI chat and analysis functionality
+
+### Clean Architecture
+ScribeCat follows clean architecture principles:
+- **Domain Layer**: Pure business logic
+- **Application Layer**: Use cases and services
+- **Infrastructure Layer**: External integrations
+- **UI Layer**: User interface and presentation
 
 ### Project Structure
 ```
 ScribeCat/
 ├── src/
-│   ├── main.js              # Electron main process
+│   ├── main.ts              # Electron main process
 │   ├── preload/
-│   │   └── preload.js       # Preload script for IPC
-│   └── renderer/
-│       ├── index.html       # Main UI
-│       ├── styles.css       # Application styles
-│       └── app.js           # Frontend logic
-├── assets/
-│   ├── images/              # Application icons and images
-│   └── fonts/               # Custom fonts
-├── test/
-│   └── smoke-test.js        # Basic functionality tests
-└── package.json             # Project configuration
+│   │   └── preload.ts       # Preload script for IPC
+│   ├── renderer/
+│   │   ├── index.html       # Main UI
+│   │   ├── styles.css       # Application styles
+│   │   └── app.ts           # Frontend logic
+│   ├── domain/              # Business logic
+│   ├── application/         # Use cases and services
+│   ├── infrastructure/      # External integrations
+│   └── ui/                  # User interface
+├── docs/                    # Comprehensive documentation
+├── assets/                  # Images, fonts, and static assets
+└── test/                    # Test files
 ```
 
 ## Testing
 
-### Smoke Tests
-Run the comprehensive smoke test suite:
+### Test Suite
+Run the comprehensive test suite:
 ```bash
-npm test
+npm test                # Run all tests
+npm run test:watch      # Run tests in watch mode
+npm run test:coverage   # Run with coverage report
+npm run test:e2e        # Run end-to-end tests
 ```
 
-The smoke test validates:
-- File structure integrity
-- Configuration validity
-- Required dependencies
-- HTML/CSS/JS syntax
-- Build system functionality
+### Test Coverage
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: Component interaction testing
+- **E2E Tests**: Complete user workflow testing
+- **Type Checking**: TypeScript type safety validation
 
 ### Manual Testing Checklist
 - [ ] Application launches successfully
 - [ ] Recording functionality works
 - [ ] Transcription displays properly
-- [ ] Text editor formatting tools function
-- [ ] Sidebar settings save correctly
-- [ ] Google Drive integration saves files
-- [ ] AI chat responds to queries
-- [ ] Themes change appearance
+- [ ] AI features respond correctly
+- [ ] Settings persist between sessions
 - [ ] Cross-platform compatibility
+
+## Documentation
+
+Complete documentation is available in the [docs/](docs/) folder:
+
+- **[Installation Guide](docs/setup/installation.md)** - Download and setup
+- **[Development Setup](docs/setup/development-setup.md)** - Developer environment
+- **[Architecture Overview](docs/architecture/overview.md)** - System design
+- **[AI Integration](docs/features/ai-integration.md)** - Claude API features
+- **[Troubleshooting](docs/development/troubleshooting.md)** - Common issues
 
 ## Development
 
-### IPC Communication
-The app uses Electron's IPC for secure communication between main and renderer processes:
+### Quick Start
+```bash
+git clone https://github.com/lmdrew96/ScribeCat.git
+cd ScribeCat
+npm install
+npm run dev
+```
 
-- `drive:ensure-target` - Ensure target directory exists
-- `drive:save-html` - Save HTML content to drive
-- `store:get/set` - Persistent settings storage
-- `save-audio-file` - Save recorded audio
+### Development Features
+- **Hot Reload**: Instant updates during development
+- **TypeScript**: Full type safety and IntelliSense
+- **Vite**: Fast build tool and development server
+- **Clean Architecture**: Well-organized, maintainable codebase
 
 ### Adding New Features
-1. Update the renderer UI (HTML/CSS)
-2. Add frontend logic (app.js)
-3. Implement IPC handlers (main.js)
-4. Update preload script if needed
-5. Add to smoke tests
+1. Follow clean architecture patterns
+2. Add domain logic in `src/domain/`
+3. Implement use cases in `src/application/`
+4. Add infrastructure in `src/infrastructure/`
+5. Update UI in `src/ui/`
+6. Add tests for new functionality
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Sandbox Error on Linux**
-```bash
-# Use the no-sandbox flag for development
-npm run dev
-```
+**App Won't Start**
+- Check Node.js version (requires v18+)
+- Clear cache: `rm -rf node_modules dist && npm install`
+- Check system permissions
 
-**Audio Permissions**
-- Ensure microphone permissions are granted
-- Check browser/system audio settings
+**Audio Not Working**
+- Grant microphone permissions in system settings
+- Check audio device selection in ScribeCat
+- Test with different applications
 
-**Build Issues**
-- Clear node_modules and reinstall dependencies
-- Ensure all required dependencies are installed
+**AI Features Not Working**
+- Check internet connection
+- Verify API key configuration
+- Check rate limits and quotas
 
-### Logs and Debugging
-- Development: DevTools are automatically opened
-- Production: Check console logs in the application
-- Build errors: Check the builder-debug.yml file
+### Getting Help
+- Check the [Troubleshooting Guide](docs/development/troubleshooting.md)
+- Search [GitHub Issues](https://github.com/lmdrew96/ScribeCat/issues)
+- Create a new issue with system details and error messages
 
 ## Contributing
+
+We welcome contributions! Please see our [Development Guide](docs/setup/development-setup.md) for details.
 
 1. Fork the repository
 2. Create a feature branch
@@ -251,12 +282,16 @@ npm run dev
 
 ## License
 
-ISC License - See package.json for details
+ISC License - See [package.json](package.json) for details
 
 ## Support
 
-For issues and feature requests, please create an issue in the repository.
+- **Documentation**: [docs/](docs/) folder
+- **Issues**: [GitHub Issues](https://github.com/lmdrew96/ScribeCat/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/lmdrew96/ScribeCat/discussions)
 
 ---
 
 **Made with ❤️ for better note-taking and transcription**
+
+*ScribeCat v1.6.2 - Built with Electron, TypeScript, and Claude AI*
