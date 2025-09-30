@@ -2577,14 +2577,33 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
           autoGainControl: true
         }
       };
+      
+      console.log('Requesting microphone access with constraints:', constraints);
       let stream;
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          console.log('Microphone access granted, stream:', stream);
+          console.log('Audio tracks:', stream.getAudioTracks());
+        } catch (error) {
+          console.error('Error accessing microphone:', error);
+          if (error.name === 'NotAllowedError') {
+            throw new Error('Microphone permission denied. Please allow microphone access and try again.');
+          } else if (error.name === 'NotFoundError') {
+            throw new Error('No microphone found. Please connect a microphone and try again.');
+          } else if (error.name === 'NotReadableError') {
+            throw new Error('Microphone is being used by another application. Please close other apps and try again.');
+          } else {
+            throw new Error(`Microphone access failed: ${error.message}`);
+          }
+        }
+      } else {
+        throw new Error('getUserMedia is not supported in this browser');
       }
       if (typeof MediaRecorder !== 'undefined' && stream) {
         this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
         // Set up VU meter with Web Audio API
-        this.setupVUMeter(stream);
+        await this.setupVUMeter(stream);
       } else if (window.appInfo?.isDev) {
         // Dev fallback: simulate MediaRecorder so UI/flows work without mic
         console.warn('MediaRecorder not available; using dev fallback recorder');
@@ -2641,10 +2660,20 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       console.log('Recording started');
     } catch (error) {
       console.error('Error starting recording:', error);
+      
+      // Reset UI state
+      this.recordBtn.textContent = 'Start Recording';
+      this.recordBtn.classList.remove('recording');
+      this.saveBtn.disabled = true;
+      this.pauseBtn.disabled = true;
+      this.stopBtn.disabled = true;
+      this.resumeBtn.disabled = true;
+      
       if (window.appInfo?.isDev) {
         // As a last resort in dev, simulate recording session
-        console.warn('Falling back to dev mock recording due to mic error');
+        console.warn('Falling back to dev mock recording due to mic error:', error.message);
         this.mediaRecorder = this.createMockMediaRecorder();
+        this.setupMockVUMeter();
         this.isRecording = true;
         this.recordBtn.textContent = 'Recording...';
         this.recordBtn.classList.add('recording');
@@ -2654,8 +2683,15 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         this.resumeBtn.disabled = true;
         this.recordingStartTime = Date.now();
         this.recordingInterval = setInterval(() => this.updateRecordingTime(), 1000);
+        
+        // Show VU meter for mock recording
+        if (this.vuMeter) {
+          this.vuMeter.style.display = 'flex';
+        }
       } else {
-        alert('Error accessing microphone. Please check permissions.');
+        // Show user-friendly error message
+        const errorMessage = error.message || 'Error accessing microphone. Please check permissions.';
+        alert(`Recording failed: ${errorMessage}`);
       }
     }
   }
@@ -2764,16 +2800,57 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
   }
 
-  setupVUMeter(stream) {
+  async setupVUMeter(stream) {
     try {
+      console.log('Setting up VU meter with stream:', stream);
+      console.log('Audio tracks:', stream.getAudioTracks());
+      
+      // Validate stream has active audio tracks
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        throw new Error('No audio tracks found in stream');
+      }
+      
+      const audioTrack = audioTracks[0];
+      console.log('Audio track state:', audioTrack.readyState, 'enabled:', audioTrack.enabled);
+      
+      if (audioTrack.readyState !== 'live') {
+        throw new Error('Audio track is not live');
+      }
+      
+      // Create AudioContext
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      console.log('AudioContext created, state:', this.audioContext.state);
+      
+      // Resume AudioContext if suspended (required by modern browsers)
+      if (this.audioContext.state === 'suspended') {
+        console.log('Resuming suspended AudioContext...');
+        await this.audioContext.resume();
+        console.log('AudioContext resumed, new state:', this.audioContext.state);
+      }
+      
+      // Create audio source and analyzer
       const source = this.audioContext.createMediaStreamSource(stream);
       this.analyserNode = this.audioContext.createAnalyser();
+      
+      // Configure analyzer for better responsiveness
       this.analyserNode.fftSize = 256;
+      this.analyserNode.smoothingTimeConstant = 0.8;
+      
+      // Connect the audio pipeline
       source.connect(this.analyserNode);
+      console.log('Audio pipeline connected successfully');
+      
+      // Test if analyzer is receiving data
+      const testArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+      this.analyserNode.getByteFrequencyData(testArray);
+      const testSum = testArray.reduce((a, b) => a + b, 0);
+      console.log('Initial analyzer data sum:', testSum);
       
       // Start VU meter updates
       this.startVUMeterUpdates();
+      console.log('VU meter setup completed successfully');
+      
     } catch (error) {
       console.error('Error setting up VU meter:', error);
       // Fall back to mock VU meter
@@ -2791,24 +2868,46 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       clearInterval(this.vuMeterInterval);
     }
     
+    let updateCount = 0;
     this.vuMeterInterval = setInterval(() => {
       let level;
       if (mock) {
         // Generate mock audio level
         level = Math.random() * 0.8 + 0.1; // Random between 0.1 and 0.9
-      } else if (this.analyserNode) {
+        if (updateCount % 50 === 0) { // Log every 5 seconds
+          console.log('Mock VU meter level:', level);
+        }
+      } else if (this.analyserNode && this.audioContext && this.audioContext.state === 'running') {
         const dataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
         this.analyserNode.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-        level = average / 255; // Normalize to 0-1
+        
+        // Calculate RMS (Root Mean Square) for better audio level representation
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i];
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        level = rms / 255; // Normalize to 0-1
+        
+        // Log debug info occasionally
+        if (updateCount % 50 === 0) { // Log every 5 seconds
+          const dataSum = dataArray.reduce((a, b) => a + b, 0);
+          console.log('VU meter - Data sum:', dataSum, 'RMS:', rms, 'Level:', level);
+        }
       } else {
         level = 0;
+        if (updateCount % 50 === 0) { // Log every 5 seconds
+          console.log('VU meter - No analyzer or AudioContext not running. State:', 
+                     this.audioContext?.state, 'Has analyzer:', !!this.analyserNode);
+        }
       }
       
-      // Update VU bar width
+      // Update VU bar width with smooth animation
       if (this.vuBar) {
-        this.vuBar.style.width = `${level * 100}%`;
+        this.vuBar.style.width = `${Math.min(level * 100, 100)}%`;
       }
+      
+      updateCount++;
     }, 100); // Update every 100ms
   }
 
