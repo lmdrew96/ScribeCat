@@ -1,6 +1,6 @@
 {
   "name": "scribecat",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "ScribeCat scribes and is cat - Desktop app for audio transcription and note-taking",
   "main": "dist/main.js",
   "homepage": ".",
@@ -17,8 +17,16 @@
     "pack": "tsc && cp -r src/shared dist/ && cp -r src/renderer/*.html src/renderer/*.css dist/renderer/ 2>/dev/null || true && electron-builder --dir",
     "watch": "tsc --watch",
     "type-check": "tsc --noEmit",
-    "test": "node test/smoke-test.js && node test/renderer-functions.test.js && node test/error-monitoring.test.js && node test/e2e-boot.test.js",
-    "test:e2e": "node test/e2e-boot.test.js"
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run --reporter=verbose",
+    "test:integration": "vitest run --reporter=verbose src/**/*.integration.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test:coverage && npm run test:e2e",
+    "test:legacy": "node test/smoke-test.js && node test/renderer-functions.test.js && node test/error-monitoring.test.js && node test/e2e-boot.test.js"
   },
   "keywords": [
     "electron",
@@ -30,14 +38,20 @@
   "author": "ScribeCat Team",
   "license": "ISC",
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/electron": "^1.4.38",
     "@types/node": "^24.6.0",
+    "@vitest/ui": "^3.2.4",
     "concurrently": "^9.2.1",
     "electron": "^38.1.2",
     "electron-builder": "^26.0.12",
     "jsdom": "^24.1.0",
+    "msw": "^2.11.3",
+    "playwright": "^1.55.1",
     "ts-loader": "^9.5.4",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.64.0",

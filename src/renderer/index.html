@@ -26,10 +26,12 @@
                 <!-- Mode Toggle -->
                 <div class="mode-toggle" id="mode-toggle">
                     <button class="mode-btn active" id="capture-mode-btn" 
+                            data-testid="capture-mode-btn"
                             title="Capture Mode - Record lectures and take notes">
                         <span class="mode-emoji">🎙️</span>
                     </button>
                     <button class="mode-btn" id="study-mode-btn" 
+                            data-testid="study-mode-btn"
                             title="Study Mode - Review recordings and notes">
                         <span class="mode-emoji">📖</span>
                     </button>
@@ -37,7 +39,7 @@
                 
                 <!-- Course Selector in Header -->
                 <div class="header-course-selector">
-                    <select id="header-course-select" class="input-field course-selector-header">
+                    <select id="header-course-select" class="input-field course-selector-header" data-testid="course-selector">
                         <option value="">Choose a course...</option>
                         <option value="other">Other</option>
                     </select>
@@ -80,7 +82,7 @@
         </div>
 
         <!-- Hamburger Menu Button -->
-        <button class="hamburger-menu-btn" id="hamburger-menu-btn">
+        <button class="hamburger-menu-btn" id="hamburger-menu-btn" data-testid="hamburger-menu-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -294,10 +296,10 @@
         <!-- Main Content Area -->
         <main class="main-content" id="main-content">
             <!-- Capture Mode - Existing recording interface -->
-            <div class="capture-mode" id="capture-mode">
+            <div class="capture-mode" id="capture-mode" data-testid="capture-mode">
                 <!-- Recording Controls -->
                 <div class="recording-controls">
-                    <button id="record-btn" class="btn btn-primary record-btn" title="Start recording audio and transcription (Ctrl+R / ⌘R)">
+                    <button id="record-btn" class="btn btn-primary record-btn" data-testid="record-btn" title="Start recording audio and transcription (Ctrl+R / ⌘R)">
                         <svg class="record-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10"/>
                         </svg>
@@ -316,7 +318,7 @@
                     <button id="pause-btn" class="btn" disabled title="Pause current recording (Ctrl+P / ⌘P)">Pause</button>
                     <button id="resume-btn" class="btn" disabled title="Resume paused recording (Ctrl+P / ⌘P)">Resume</button>
                     <button id="stop-btn" class="btn btn-danger" disabled title="Stop recording and enable save">Stop</button>
-                    <button id="save-btn" class="btn btn-success" disabled title="Save recording, notes, and transcription (Ctrl+S / ⌘S)">Save</button>
+                    <button id="save-btn" class="btn btn-success" data-testid="save-btn" disabled title="Save recording, notes, and transcription (Ctrl+S / ⌘S)">Save</button>
                 </div>
 
 
@@ -524,7 +526,7 @@
                                 AI Summary
                             </button>
                         </div>
-                        <div id="notes-editor" class="notes-editor" contenteditable="true" 
+                        <div id="notes-editor" class="notes-editor" data-testid="notes-editor" contenteditable="true" 
                              placeholder="Start typing your notes here..."></div>
                     </div>
 
@@ -542,7 +544,7 @@
                                 <button id="jump-latest" class="btn btn-small" title="Scroll to latest">Jump to Latest</button>
                             </div>
                         </div>
-                        <div id="transcription-display" class="transcription-display"></div>
+                        <div id="transcription-display" class="transcription-display" data-testid="transcription-display"></div>
                     </div>
                 </div>
 
@@ -579,9 +581,9 @@
             <!-- End Capture Mode -->
 
             <!-- Study Mode - Recording library and review interface -->
-            <div class="study-mode" id="study-mode" style="display: none;">
+            <div class="study-mode" id="study-mode" data-testid="study-mode" style="display: none;">
                 <!-- Recordings List View -->
-                <div class="recordings-list-view" id="recordings-list-view">
+                <div class="recordings-list-view" id="recordings-list-view" data-testid="recordings-list-view">
                     <div class="recordings-header">
                         <h2>Your Recordings</h2>
                         <div class="recordings-meta">
@@ -610,7 +612,7 @@
                         </div>
                     </div>
                     
-                    <div class="recordings-list" id="recordings-list">
+                    <div class="recordings-list" id="recordings-list" data-testid="recordings-list">
                         <!-- Recordings will be populated by JavaScript -->
                         <div class="recordings-loading" id="recordings-loading">
                             <div class="loading-spinner"></div>
