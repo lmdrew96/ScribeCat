@@ -1285,7 +1285,8 @@ body {
   border-top: 3px solid var(--accent);
   border-bottom: 3px solid var(--primary-color);
   border-radius: 12px;
-  margin: var(--spacing-sm);
+  margin-left: 8px;
+  margin-right: 8px;
   box-shadow: var(--shadow);
   display: flex;
   align-items: center;
@@ -1293,8 +1294,7 @@ body {
   flex-shrink: 0;
   transition: border-color 0.3s ease;
   min-height: 60px;
-  width: calc(100% - var(--spacing-md));
-  max-width: 100%;
+  width: calc(100% - 16px);
   position: relative;
   left: 0;
   box-sizing: border-box;
@@ -1477,13 +1477,16 @@ body {
   display: flex;
   gap: var(--spacing-sm); /* 4px gap between editor and transcription */
   padding: var(--spacing-sm); /* 4px padding around content */
-  margin: var(--spacing-sm); /* 4px margin around container */
+  margin-left: 8px;
+  margin-right: 8px;
   overflow: hidden;
   min-height: 0; /* Allow flex shrinking */
   max-height: calc(100vh - 240px); /* Increased margin to prevent Claude FAB overlap */
   padding-bottom: 100px; /* Extra bottom padding to ensure no overlap with Claude FAB */
   flex-direction: row; /* Horizontal layout by default */
   position: relative; /* Enable scrolling context */
+  width: calc(100% - 16px);
+  box-sizing: border-box;
 }
 
 /* Editor section */
@@ -2484,7 +2487,15 @@ body {
   .content-container {
     gap: var(--spacing-md);
     padding: var(--spacing-md);
-    margin: var(--spacing-md);
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
+  }
+  
+  .recording-controls {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
   }
   
   .editor-section,
@@ -2499,7 +2510,9 @@ body {
   .content-container {
     gap: var(--spacing-sm);
     padding: var(--spacing-sm);
-    margin: var(--spacing-sm);
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
     max-height: calc(100vh - 200px);
   }
   
@@ -2550,7 +2563,9 @@ body {
   .content-container {
     gap: var(--spacing-sm);
     padding: var(--spacing-sm);
-    margin: var(--spacing-sm);
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
     max-height: calc(100vh - 180px);
   }
   
@@ -2627,7 +2642,9 @@ body {
     flex-direction: column;
     gap: var(--spacing-sm);
     padding: var(--spacing-sm);
-    margin: var(--spacing-sm);
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
     max-height: calc(100vh - 140px);
     overflow-y: auto;
   }
@@ -2727,8 +2744,16 @@ body {
   
   .content-container {
     padding: var(--spacing-xs);
-    margin: var(--spacing-xs);
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
     gap: var(--spacing-xs);
+  }
+  
+  .recording-controls {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
   }
   
   .editor-section,
