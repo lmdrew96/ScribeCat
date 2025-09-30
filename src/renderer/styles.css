@@ -502,53 +502,8 @@ body {
   font-family: 'GalaxyCaterpillar', 'Inter', sans-serif;
 }
 
-/* Status chips */
-.status-chips {
-  display: flex;
-  gap: var(--spacing-sm); /* 4px gap between status chips */
-  margin: var(--spacing-sm); /* 4px margin around chips container */
-  justify-content: flex-end;
-}
 
-.status-chip {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm); /* 4px gap inside chip */
-  padding: var(--spacing-sm) var(--spacing-md); /* 4px vertical, 8px horizontal padding */
-  margin: var(--spacing-sm); /* 4px margin around each chip */
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
 
-.status-chip:hover {
-  background: var(--surface-hover);
-  transform: translateY(-1px);
-}
-
-.status-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  transition: background-color 0.3s;
-}
-
-.status-chip.active .status-indicator {
-  background: var(--success-color);
-}
-
-.status-chip.warning .status-indicator {
-  background: var(--warning-color);
-}
-
-.status-chip.error .status-indicator {
-  background: var(--danger-color);
-}
 
 /* Clock section */
 .clock-section {
@@ -2008,8 +1963,8 @@ body {
 }
 
 .claude-icon {
-  width: 24px;
-  height: 24px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   transition: all 0.3s ease;
 }
@@ -2246,23 +2201,20 @@ body {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 50%;
+  background: transparent;
+  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
 }
 
 .health-indicator:hover {
-  background: var(--surface-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
+  transform: scale(1.1);
 }
 
 .ekg-icon {
-  width: 20px;
-  height: 20px;
+  width: 40px;
+  height: 40px;
   color: var(--success-color);
   transition: color 0.3s ease;
 }
@@ -2478,19 +2430,19 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: #6b7280; /* Fixed gray color - no theme dependency */
 }
 
 .status-dot.success {
-  background: var(--success-color);
+  background: #10b981; /* Fixed green color - no theme dependency */
 }
 
 .status-dot.warning {
-  background: var(--warning-color);
+  background: #f59e0b; /* Fixed yellow color - no theme dependency */
 }
 
 .status-dot.error {
-  background: var(--danger-color);
+  background: #ef4444; /* Fixed red color - no theme dependency */
 }
 
 /* Scrollbar styling */
@@ -2630,14 +2582,6 @@ body {
     width: 300px;
   }
   
-  .status-chips {
-    gap: var(--spacing-xs);
-  }
-  
-  .status-chip {
-    padding: 4px 8px;
-    font-size: 10px;
-  }
 }
 
 /* Mobile Large (375px - 767px) */
@@ -2731,9 +2675,6 @@ body {
     width: 280px;
   }
   
-  .status-chips {
-    display: none; /* Hide status chips on mobile */
-  }
   
   .formatting-toolbar {
     flex-wrap: wrap;
@@ -2975,14 +2916,6 @@ body {
   }
 }
 
-/* Status chip simulation mode indicators */
-.status-chip.simulation-mode .status-indicator {
-  background-color: var(--warning-color);
-}
-
-.status-chip.real-mode .status-indicator {
-  background-color: var(--success-color);
-}
 
 /* Print styles */
 @media print {

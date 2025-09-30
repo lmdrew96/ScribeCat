@@ -184,7 +184,6 @@ class ScribeCatApp {
     // Status elements
     this.clock = document.querySelector('.clock');
     this.versionInfo = document.getElementById('version-info');
-    this.statusChips = document.getElementById('status-chips');
     
     // Health system elements
     this.healthIndicator = document.getElementById('health-indicator');
@@ -248,7 +247,7 @@ class ScribeCatApp {
     this.initializeClock();
     await this.initializeAudioDevices();
     this.updateVersionInfo();
-    this.initializeStatusChips();
+    this.initializeHealthSystem();
     this.updateStatusIndicators(); // Update status indicators based on simulation mode
     
     // Load Vosk model path and Whisper toggle (only in Electron environment)
@@ -1105,8 +1104,9 @@ class ScribeCatApp {
     if (this.saveBtn) {
       this.saveBtn.addEventListener('click', () => this.saveRecording());
     }
-    if (this.generateSummaryBtn) {
-      this.generateSummaryBtn.addEventListener('click', () => this.generateAISummary());
+    const generateSummaryBtn = document.getElementById('generate-summary');
+    if (generateSummaryBtn) {
+      generateSummaryBtn.addEventListener('click', () => this.generateAISummary());
     }
     if (this.saveClaudeKeyBtn) {
       this.saveClaudeKeyBtn.addEventListener('click', () => this.saveClaudeKey());
@@ -1382,21 +1382,6 @@ class ScribeCatApp {
       });
     }
     
-    // Status chip click handlers
-    const audioStatus = document.getElementById('audio-status');
-    if (audioStatus) {
-      audioStatus.addEventListener('click', () => this.showStatusDetails('audio'));
-    }
-    
-    const transcriptionStatus = document.getElementById('transcription-status');
-    if (transcriptionStatus) {
-      transcriptionStatus.addEventListener('click', () => this.showStatusDetails('transcription'));
-    }
-    
-    const driveStatus = document.getElementById('drive-status');
-    if (driveStatus) {
-      driveStatus.addEventListener('click', () => this.showStatusDetails('drive'));
-    }
     
     // Clear notes functionality
     if (this.clearNotesBtn) {
@@ -1947,11 +1932,7 @@ class ScribeCatApp {
       this.simulationModeToggle.checked = this.simulationMode;
     }
     
-    // Update status indicators to reflect simulation mode
-    this.updateSimulationModeIndicators();
     
-    // Update drive status chip after all settings are loaded
-    this.updateDriveStatusChip();
   }
 
   async changeTranscriptionBackend(backend) {
@@ -1960,8 +1941,12 @@ class ScribeCatApp {
     await window.electronAPI.storeSet('whisper-enabled', this.whisperEnabled);
   }
     async generateAISummary() {
+      // Get the generate summary button
+      const generateSummaryBtn = document.getElementById('generate-summary');
+      if (!generateSummaryBtn) return;
+      
       // Prevent duplicate requests
-      if (this.generateSummaryBtn.disabled) return;
+      if (generateSummaryBtn.disabled) return;
       
       // Check subscription limits for AI summary
       const canUseResponse = await window.electronAPI.subscriptionCanUseFeature('aiSummary');
@@ -1982,10 +1967,11 @@ class ScribeCatApp {
         .map(entry => entry.querySelector('.transcript-text')?.textContent || '')
         .join('\n');
         
-      this.generateSummaryBtn.disabled = true;
+      generateSummaryBtn.disabled = true;
       
-      // Add loading indicator to the separate container
-      this.aiSummary.innerHTML = '<em>Generating summary...</em>';
+      // Add loading indicator to the button
+      const originalText = generateSummaryBtn.innerHTML;
+      generateSummaryBtn.innerHTML = '<em>Generating...</em>';
       
       let summaryMarkdown = '';
       let summaryHtml = '';
@@ -2038,10 +2024,7 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         }
       }
       
-      // Place in both locations: the traditional container for compatibility and in notes editor for enhancement
-      this.aiSummary.innerHTML = summaryHtml;
-      
-      // Insert horizontal line and summary into notes editor for new feature
+      // Insert horizontal line and summary into notes editor
       this.insertAISummaryIntoEditor(summaryMarkdown);
       
       // Track AI summary usage
@@ -2051,7 +2034,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       // Update the UI to reflect new usage
       this.updateUsageStats();
       
-      this.generateSummaryBtn.disabled = false;
+      // Restore button state
+      generateSummaryBtn.disabled = false;
+      generateSummaryBtn.innerHTML = originalText;
     }
 
     insertAISummaryIntoEditor(summaryMarkdown) {
@@ -2180,8 +2165,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     this.simulationMode = enabled;
     await window.electronAPI.storeSet('simulation-mode', this.simulationMode);
     
-    // Update status indicators
-    this.updateSimulationModeIndicators();
     
     // Show notification to user
     this.showModeChangeNotification(enabled);
@@ -2189,27 +2172,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     console.log(`Simulation mode ${enabled ? 'enabled' : 'disabled'}`);
   }
 
-  updateSimulationModeIndicators() {
-    // Update status chips to reflect current mode
-    const statusChips = document.querySelectorAll('.status-chip');
-    const mode = this.simulationMode ? 'simulation' : 'real';
-    
-    statusChips.forEach(chip => {
-      // Remove existing mode classes
-      chip.classList.remove('simulation-mode', 'real-mode');
-      // Add current mode class
-      chip.classList.add(`${mode}-mode`);
-    });
-
-    // Update AI status chip with simulation indicator
-    const transcriptionStatus = document.getElementById('transcription-status');
-    if (transcriptionStatus) {
-      const span = transcriptionStatus.querySelector('span');
-      if (span) {
-        span.textContent = this.simulationMode ? 'AI (Sim)' : 'AI';
-      }
-    }
-  }
 
   showModeChangeNotification(simulationEnabled) {
     // Create a temporary notification
@@ -2572,10 +2534,8 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         this.microphoneSelect.appendChild(option);
       });
       
-      this.updateStatusChip('audio', 'active');
     } catch (error) {
       console.error('Error accessing audio devices:', error);
-      this.updateStatusChip('audio', 'error');
     }
   }
 
@@ -2585,89 +2545,9 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
     }
   }
 
-  initializeStatusChips() {
-    // Show status chips only in development mode
-    if (this.statusChips && window.appInfo?.isDev) {
-      this.statusChips.style.display = 'flex';
-      this.updateStatusChip('audio', 'inactive');
-      this.updateStatusChip('transcription', 'inactive');
-      this.updateStatusChip('drive', 'inactive');
-      
-      // Check Drive folder status
-      this.checkDriveStatus();
-    } else if (this.statusChips) {
-      this.statusChips.style.display = 'none';
-    }
-    
-    // Initialize health system
-    this.initializeHealthSystem();
-  }
 
-  updateStatusChip(type, status) {
-    const chip = document.getElementById(`${type}-status`);
-    if (chip) {
-      chip.className = `status-chip ${status}`;
-    }
-  }
 
-  async checkDriveStatus() {
-    const notesDriveFolder = await window.electronAPI.storeGet('notes-drive-folder');
-    const transcriptionDriveFolder = await window.electronAPI.storeGet('transcription-drive-folder');
-    const hasAnyFolder = notesDriveFolder || transcriptionDriveFolder;
-    
-    // Backward compatibility check
-    if (!hasAnyFolder) {
-      const legacyDriveFolder = await window.electronAPI.storeGet('drive-folder');
-      if (legacyDriveFolder) {
-        this.updateStatusChip('drive', 'active');
-        return;
-      }
-    }
-    
-    if (hasAnyFolder) {
-      this.updateStatusChip('drive', 'active');
-    } else {
-      this.updateStatusChip('drive', 'inactive');
-    }
-  }
 
-  showStatusDetails(type) {
-    let message = '';
-    const chip = document.getElementById(`${type}-status`);
-    const status = chip?.className.split(' ')[1] || 'unknown';
-    
-    switch (type) {
-      case 'audio':
-        if (status === 'active') {
-          message = 'Audio device is connected and ready for recording';
-        } else if (status === 'error') {
-          message = 'Audio device error - check microphone permissions and connections';
-        } else {
-          message = 'Audio device not initialized or not available';
-        }
-        break;
-      case 'transcription':
-        if (status === 'active') {
-          message = 'Transcription service is running and processing audio';
-        } else if (status === 'error') {
-          message = 'Transcription service error - check backend settings';
-        } else {
-          message = 'Transcription service is not active';
-        }
-        break;
-      case 'drive':
-        if (status === 'active') {
-          message = 'Google Drive folder is configured and ready for saving';
-        } else if (status === 'error') {
-          message = 'Google Drive connection error - check folder permissions';
-        } else {
-          message = 'Google Drive folder not configured - click the settings button to set up';
-        }
-        break;
-    }
-    
-    alert(`${type.charAt(0).toUpperCase() + type.slice(1)} Status:\n\n${message}`);
-  }
 
   async toggleRecording() {
     if (!this.isRecording) {
@@ -2757,13 +2637,10 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         await this.startVoskTranscription(stream);
       } else {
         console.warn('No transcription backend configured. Recording will continue without live transcription.');
-        this.updateStatusChip('transcription', 'inactive');
       }
-      this.updateStatusChip('audio', 'active');
       console.log('Recording started');
     } catch (error) {
       console.error('Error starting recording:', error);
-      this.updateStatusChip('audio', 'error');
       if (window.appInfo?.isDev) {
         // As a last resort in dev, simulate recording session
         console.warn('Falling back to dev mock recording due to mic error');
@@ -2777,7 +2654,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
         this.resumeBtn.disabled = true;
         this.recordingStartTime = Date.now();
         this.recordingInterval = setInterval(() => this.updateRecordingTime(), 1000);
-        this.updateStatusChip('audio', 'active');
       } else {
         alert('Error accessing microphone. Please check permissions.');
       }
@@ -2827,7 +2703,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       }
       // Stop transcription
       this.stopLiveTranscription();
-      this.updateStatusChip('audio', 'inactive');
       console.log('Recording stopped');
     }
   }
@@ -2953,7 +2828,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   async startVoskTranscription(stream) {
-    this.updateStatusChip('transcription', 'active');
     
     if (this.simulationMode) {
       // Simulate transcription in development mode
@@ -2972,7 +2846,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
   }
 
   async startWhisperTranscription(stream) {
-    this.updateStatusChip('transcription', 'active');
     
     if (this.simulationMode) {
       // Simulate transcription in development mode
@@ -3022,7 +2895,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       window.electronAPI.stopTranscription(this.transcriptionSession);
       this.transcriptionSession = null;
     }
-    this.updateStatusChip('transcription', 'inactive');
   }
 
   addTranscriptionEntry(text) {
@@ -3932,7 +3804,6 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       const folderPath = result.filePaths[0];
       this.notesDriveFolderInput.value = folderPath;
       await window.electronAPI.storeSet('notes-drive-folder', folderPath);
-      this.updateDriveStatusChip();
       console.log('Notes Drive folder selected:', folderPath);
     }
   }
@@ -3943,18 +3814,10 @@ ${transcriptContent ? '- Transcription contains *valuable discussion points*' : 
       const folderPath = result.filePaths[0];
       this.transcriptionDriveFolderInput.value = folderPath;
       await window.electronAPI.storeSet('transcription-drive-folder', folderPath);
-      this.updateDriveStatusChip();
       console.log('Transcription Drive folder selected:', folderPath);
     }
   }
 
-  updateDriveStatusChip() {
-    // Update drive status chip based on whether either folder is configured
-    const notesFolder = this.notesDriveFolderInput?.value;
-    const transcriptionFolder = this.transcriptionDriveFolderInput?.value;
-    const hasAnyFolder = notesFolder || transcriptionFolder;
-    this.updateStatusChip('drive', hasAnyFolder ? 'active' : 'inactive');
-  }
 
   async selectLocalAudioFolder() {
     const result = await window.electronAPI.showFolderDialog();
