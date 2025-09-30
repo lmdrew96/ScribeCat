@@ -1475,7 +1475,7 @@ body {
 .content-container {
   flex: 1;
   display: flex;
-  gap: 5%; /* This creates the 5% gap between sections */
+  gap: 16px; /* Fixed 16px gap between sections */
   padding: 0;
   margin-left: 8px;
   margin-right: 8px;
@@ -1491,7 +1491,7 @@ body {
 
 /* Editor section */
 .editor-section {
-  flex: 0 0 65%; /* Fixed at 65% width, won't grow or shrink */
+  flex: 2; /* Gets 2 parts of available space */
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -1836,7 +1836,7 @@ body {
 
 /* Transcription section */
 .transcription-section {
-  flex: 0 0 30%; /* Fixed at 30% width, won't grow or shrink */
+  flex: 1; /* Gets 1 part of available space */
   display: flex;
   flex-direction: column;
   height: calc(100vh - 300px);
@@ -2476,12 +2476,12 @@ body {
   }
   
   .editor-section {
-    flex: 0 0 65%;
+    flex: 2;
     height: calc(100vh - 320px);
   }
   
   .transcription-section {
-    flex: 0 0 30%;
+    flex: 1;
     height: calc(100vh - 320px);
   }
 }
@@ -2498,13 +2498,13 @@ body {
   }
   
   .editor-section {
-    flex: 0 0 65%;
+    flex: 2;
     height: calc(100vh - 280px);
     padding: var(--spacing-sm);
   }
   
   .transcription-section {
-    flex: 0 0 30%;
+    flex: 1;
     height: calc(100vh - 280px);
     padding: var(--spacing-sm);
   }
@@ -2556,13 +2556,13 @@ body {
   }
   
   .editor-section {
-    flex: 0 0 65%;
+    flex: 2;
     height: calc(100vh - 250px);
     padding: var(--spacing-sm);
   }
   
   .transcription-section {
-    flex: 0 0 30%;
+    flex: 1;
     height: calc(100vh - 250px);
     padding: var(--spacing-sm);
   }
