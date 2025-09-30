@@ -97,6 +97,12 @@
         <aside class="sidebar-panel" id="sidebar-panel">
             <div class="sidebar-header">
                 <h2>Settings</h2>
+                <button class="sidebar-close-btn" id="sidebar-close-btn" title="Close sidebar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
             
             <div class="sidebar-content">
@@ -922,6 +928,6 @@
     <!-- Error Notification Container -->
     <div id="error-notification-container" class="error-notification-container"></div>
 
-    <script type="module" src="../../dist/renderer/renderer/app.js"></script>
+    <script type="module" src="./app.ts"></script>
 </body>
 </html>
