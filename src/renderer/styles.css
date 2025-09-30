@@ -1301,6 +1301,15 @@ body {
   flex-wrap: wrap;
 }
 
+/* Pause/Resume buttons - hidden by default */
+#pause-btn, #resume-btn {
+  display: none;
+}
+
+#pause-btn.active, #resume-btn.active {
+  display: inline-block;
+}
+
 .record-btn {
   background: var(--danger-color);
   color: white;
@@ -1479,6 +1488,7 @@ body {
   padding: 0;
   margin-left: 8px;
   margin-right: 8px;
+  margin-top: 20px; /* Add gap below recording controls */
   overflow: hidden;
   min-height: 0;
   max-height: calc(100vh - 240px);
@@ -1529,9 +1539,8 @@ body {
   padding: var(--spacing-sm); /* 4px padding inside toolbar */
   margin: var(--spacing-sm); /* 4px margin around toolbar */
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: none; /* Remove border */
   border-radius: var(--spacing-sm) var(--spacing-sm) 0 0; /* 4px rounded corners on top */
-  border-bottom: none;
   flex-wrap: wrap;
 }
 
