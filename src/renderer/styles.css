@@ -1986,23 +1986,21 @@ body {
 .claude-fab {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
   border: none;
-  background: var(--primary-color);
+  background: transparent;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .claude-fab:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .claude-fab:active {
@@ -2012,11 +2010,8 @@ body {
 .claude-icon {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain;
   transition: all 0.3s ease;
-  background: white;
-  padding: 2px;
 }
 
 .claude-fab.expanding .claude-icon {
@@ -2026,14 +2021,12 @@ body {
 
 /* Disabled feature styles */
 .claude-fab.disabled-feature {
-  background: var(--text-muted);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .claude-fab.disabled-feature:hover {
   transform: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .claude-fab.disabled-feature:active {
@@ -2085,10 +2078,7 @@ body {
 .claude-icon-small {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: white;
-  padding: 1px;
+  object-fit: contain;
 }
 
 .chat-header h3 {
@@ -2229,8 +2219,6 @@ body {
   .claude-icon {
     width: 20px;
     height: 20px;
-    background: white;
-    padding: 2px;
   }
 }
 
