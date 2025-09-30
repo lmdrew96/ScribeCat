@@ -1575,35 +1575,46 @@ button:empty svg, .btn:empty svg {
   color: var(--text-primary);
 }
 
-/* Formatting toolbar */
+/* Google Docs-style Formatting Toolbar */
 .formatting-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 12px;
-  background: var(--toolbar-bg, #f5f5f5);
-  border: none;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px 8px 0 0;
-  align-items: center;
+  overflow: hidden;
 }
 
-.toolbar-section {
+.toolbar-primary {
   display: flex;
-  gap: 4px;
   align-items: center;
+  padding: 8px 12px;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  min-height: 48px;
 }
 
-.toolbar-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border-color, #ddd);
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   margin: 0 4px;
 }
 
-.toolbar-btn {
-  min-width: 32px;
+.toolbar-separator {
+  width: 1px;
   height: 32px;
-  padding: 6px;
+  background: var(--border);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 8px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
@@ -1611,46 +1622,220 @@ button:empty svg, .btn:empty svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  position: relative;
 }
 
 .toolbar-btn:hover {
-  background: var(--hover-bg, #e0e0e0);
-  border-color: var(--border-color, #ccc);
+  background: var(--surface-hover);
+  border-color: var(--border);
 }
 
 .toolbar-btn:active {
-  background: var(--active-bg, #d0d0d0);
+  background: var(--primary-color);
+  color: white;
+  transform: scale(0.95);
 }
 
 .toolbar-btn.active {
-  background: var(--primary-color, #1976d2);
+  background: var(--primary-color);
   color: white;
+  border-color: var(--primary-color);
+}
+
+.toolbar-btn.active:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .toolbar-select {
-  height: 32px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-color, #ccc);
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  background: white;
+  background: var(--background);
+  color: var(--text-primary);
   cursor: pointer;
+  font-size: 14px;
+  min-width: 120px;
+  transition: border-color 0.2s ease;
+}
+
+.toolbar-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.toolbar-select:hover {
+  border-color: var(--primary-color);
+}
+
+/* Color picker groups */
+.color-picker-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.color-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 6px;
+}
+
+.color-indicator,
+.highlight-indicator {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 2px solid var(--border);
+  transition: border-color 0.2s ease;
+}
+
+.color-indicator:hover,
+.highlight-indicator:hover {
+  border-color: var(--primary-color);
 }
 
 .color-input {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border-color, #ccc);
-  border-radius: 4px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
+  z-index: 1;
 }
 
-.color-indicator {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
-  border: 1px solid var(--border-color, #999);
+/* Style selector specific styling */
+#headingStyleSelect {
+  min-width: 140px;
+  font-weight: 500;
+}
+
+/* Font family selector */
+#font-family {
+  min-width: 150px;
+}
+
+/* Font size selector */
+#font-size {
+  min-width: 80px;
+}
+
+/* Button icons */
+.toolbar-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Text formatting buttons */
+.toolbar-btn strong,
+.toolbar-btn em,
+.toolbar-btn u,
+.toolbar-btn s {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Responsive toolbar */
+@media (max-width: 1200px) {
+  .toolbar-primary {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .toolbar-group {
+    margin: 0 2px;
+  }
+  
+  .toolbar-separator {
+    margin: 0 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar-primary {
+    padding: 6px 8px;
+    min-height: 44px;
+  }
+  
+  .toolbar-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 6px;
+  }
+  
+  .toolbar-select {
+    height: 36px;
+    padding: 6px 8px;
+    font-size: 13px;
+    min-width: 100px;
+  }
+  
+  #font-family {
+    min-width: 120px;
+  }
+  
+  #headingStyleSelect {
+    min-width: 120px;
+  }
+  
+  .toolbar-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .color-indicator,
+  .highlight-indicator {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-primary {
+    padding: 4px 6px;
+    min-height: 40px;
+  }
+  
+  .toolbar-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+  
+  .toolbar-select {
+    height: 32px;
+    padding: 4px 6px;
+    font-size: 12px;
+    min-width: 80px;
+  }
+  
+  #font-family {
+    min-width: 100px;
+  }
+  
+  #headingStyleSelect {
+    min-width: 100px;
+  }
+  
+  .toolbar-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .color-indicator,
+  .highlight-indicator {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .format-btn {
