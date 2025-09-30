@@ -1475,32 +1475,31 @@ body {
 .content-container {
   flex: 1;
   display: flex;
-  gap: var(--spacing-sm); /* 4px gap between editor and transcription */
-  padding: 0; /* Remove padding to make containers wider */
+  gap: 5%; /* This creates the 5% gap between sections */
+  padding: 0;
   margin-left: 8px;
   margin-right: 8px;
   overflow: hidden;
-  min-height: 0; /* Allow flex shrinking */
-  max-height: calc(100vh - 240px); /* Increased margin to prevent Claude FAB overlap */
-  padding-bottom: 100px; /* Extra bottom padding to ensure no overlap with Claude FAB */
-  flex-direction: row; /* Horizontal layout by default */
-  position: relative; /* Enable scrolling context */
+  min-height: 0;
+  max-height: calc(100vh - 240px);
+  padding-bottom: 100px;
+  flex-direction: row;
+  position: relative;
   width: calc(100% - 16px);
   box-sizing: border-box;
 }
 
 /* Editor section */
 .editor-section {
-  flex: 1 1 50%;
+  flex: 0 0 65%; /* Fixed at 65% width, won't grow or shrink */
   display: flex;
   flex-direction: column;
   min-width: 0;
-  width: calc(50vw - 20px);
   height: calc(100vh - 300px);
   background: var(--surface);
   border: 2px solid var(--border);
   border-left: 3px solid var(--accent);
-  border-radius: 12px; /* Consistent with recording-controls */
+  border-radius: 12px;
   padding: var(--spacing-md);
   margin: 0;
   box-shadow: var(--shadow);
@@ -1830,48 +1829,21 @@ body {
   border-color: var(--primary-color);
 }
 
-/* Resize handle */
+/* Hide the resize handle since we no longer need it */
 .resize-handle {
-  width: 8px;
-  background: transparent;
-  cursor: ew-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  flex-shrink: 0;
-  transition: background-color 0.2s ease;
-}
-
-.resize-handle:hover {
-  background: var(--border);
-}
-
-.resize-handle-bar {
-  width: 2px;
-  height: 60px;
-  background: var(--text-muted);
-  border-radius: 1px;
-  transition: all 0.2s ease;
-}
-
-.resize-handle:hover .resize-handle-bar {
-  background: var(--primary-color);
-  width: 3px;
-  height: 80px;
+  display: none;
 }
 
 /* Transcription section */
 .transcription-section {
-  flex: 1 1 50%;
+  flex: 0 0 30%; /* Fixed at 30% width, won't grow or shrink */
   display: flex;
   flex-direction: column;
-  width: calc(50vw - 20px);
   height: calc(100vh - 300px);
   background: var(--surface);
   border: 2px solid var(--border);
   border-right: 3px solid var(--primary-color);
-  border-radius: 12px; /* Consistent with recording-controls */
+  border-radius: 12px;
   padding: var(--spacing-md);
   margin: 0;
   box-shadow: var(--shadow);
@@ -2476,9 +2448,14 @@ body {
     margin: 0 auto;
   }
   
-  .editor-section,
+  .editor-section {
+    width: 65%;
+    flex: 0 0 65%;
+  }
+  
   .transcription-section {
-    width: calc(50% - 20px);
+    width: 30%;
+    flex: 0 0 30%;
   }
 }
 
@@ -2498,9 +2475,15 @@ body {
     width: calc(100% - 16px);
   }
   
-  .editor-section,
+  .editor-section {
+    width: 65%;
+    flex: 0 0 65%;
+    height: calc(100vh - 320px);
+  }
+  
   .transcription-section {
-    width: calc(50% - 20px);
+    width: 30%;
+    flex: 0 0 30%;
     height: calc(100vh - 320px);
   }
 }
@@ -2516,9 +2499,16 @@ body {
     max-height: calc(100vh - 200px);
   }
   
-  .editor-section,
+  .editor-section {
+    width: 65%;
+    flex: 0 0 65%;
+    height: calc(100vh - 280px);
+    padding: var(--spacing-sm);
+  }
+  
   .transcription-section {
-    width: calc(50% - 16px);
+    width: 30%;
+    flex: 0 0 30%;
     height: calc(100vh - 280px);
     padding: var(--spacing-sm);
   }
@@ -2569,9 +2559,16 @@ body {
     max-height: calc(100vh - 180px);
   }
   
-  .editor-section,
+  .editor-section {
+    width: 65%;
+    flex: 0 0 65%;
+    height: calc(100vh - 250px);
+    padding: var(--spacing-sm);
+  }
+  
   .transcription-section {
-    width: calc(50% - 12px);
+    width: 30%;
+    flex: 0 0 30%;
     height: calc(100vh - 250px);
     padding: var(--spacing-sm);
   }
