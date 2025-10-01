@@ -1,6 +1,6 @@
 {
   "name": "scribecat",
-  "version": "1.6.5",
+  "version": "1.7.0",
   "description": "ScribeCat scribes and is cat - Desktop app for audio transcription and note-taking",
   "main": "dist/main/main.js",
   "homepage": ".",
